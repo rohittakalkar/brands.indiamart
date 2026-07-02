@@ -1,4 +1,5 @@
-import { Brand, Product, Supplier, Review } from './types';
+import 'server-only';
+import { Brand, Product, Supplier, Review, BuyLead } from '../types';
 
 export const CATEGORIES = [
   { id: 'machinery', name: 'Industrial Machinery', icon: 'Settings' },
@@ -529,3 +530,84 @@ export const BUYER_INTENT_SIGNALS = [
   { signal: 'RFQ Sent', volume: '620K+', growth: '+17%' },
   { signal: 'Repeat Buyers', volume: '520K+', growth: '+21%' }
 ];
+
+// ---- Data-access helpers (used directly by Server Components) ----
+
+export function getBrands(): Brand[] {
+  return BRANDS;
+}
+
+export function getBrandById(id: string): Brand | undefined {
+  return BRANDS.find(b => b.id === id);
+}
+
+export function getProducts(filter?: { category?: string; brandId?: string }): Product[] {
+  let result = PRODUCTS;
+  if (filter?.category && filter.category !== 'all') {
+    result = result.filter(p => p.category === filter.category);
+  }
+  if (filter?.brandId) {
+    result = result.filter(p => p.brandId === filter.brandId);
+  }
+  return result;
+}
+
+export function getProductById(id: string): Product | undefined {
+  return PRODUCTS.find(p => p.id === id);
+}
+
+export function getSuppliers(filter?: { brandId?: string }): Supplier[] {
+  let result = SUPPLIERS;
+  if (filter?.brandId) {
+    result = result.filter(s => s.brandId === filter.brandId);
+  }
+  return result;
+}
+
+export function getCategories() {
+  return CATEGORIES;
+}
+
+// ---- In-memory leads store (ephemeral, resets on server restart — matches prior in-memory React state fidelity) ----
+
+const leadsStore: BuyLead[] = [
+  {
+    id: 'BL98431057',
+    productName: 'Kirloskar Monoblock Pump',
+    brandName: 'Kirloskar Brothers Limited',
+    quantity: '2 Pieces',
+    location: 'Ahmedabad, Gujarat',
+    requirement: 'Require high-durability cast iron monoblock pumps for light agricultural sprinkle loops.',
+    timestamp: '2026-06-28T14:30:00Z',
+    status: 'completed'
+  },
+  {
+    id: 'BL84021793',
+    productName: 'Crompton Induction Motor (5HP)',
+    brandName: 'Crompton Greaves',
+    quantity: '1 Piece',
+    location: 'Pune, Maharashtra',
+    requirement: 'Need an IE3 highly efficient motor for workshop drill assemblies.',
+    timestamp: '2026-06-30T09:15:00Z',
+    status: 'connected'
+  }
+];
+
+export function getLeads(): BuyLead[] {
+  return leadsStore;
+}
+
+export function addLead(data: Omit<BuyLead, 'id' | 'timestamp' | 'status'>): BuyLead {
+  const newLead: BuyLead = {
+    id: `BL${Math.floor(100000000 + Math.random() * 900000000)}`,
+    productName: data.productName,
+    brandName: data.brandName || undefined,
+    quantity: data.quantity,
+    location: data.location,
+    requirement: data.requirement,
+    timestamp: new Date().toISOString(),
+    status: 'pending'
+  };
+  leadsStore.unshift(newLead);
+  return newLead;
+}

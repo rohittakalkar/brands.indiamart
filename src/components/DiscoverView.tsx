@@ -1,10 +1,15 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight, ShieldCheck, Star, Send, Heart, Eye, X, SlidersHorizontal } from 'lucide-react';
-import { CATEGORIES, BRANDS, PRODUCTS } from '../data';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Search, ChevronRight, Star, Send, Heart, X, SlidersHorizontal } from 'lucide-react';
 import { Brand, Product } from '../types';
+import { Category } from '../services/categories';
 import { BrandLogo } from './BrandLogo';
 import { CategoryIcon } from './CategoryIcon';
-import indiamartLogo from '../../assets/.aistudio/INDIAMART.NS_BIG.png';
+import { useShortlist } from './ShortlistProvider';
+import { useBuyLeadModal } from './BuyLeadModalProvider';
 
 interface InlineSectionSearchProps {
   value: string;
@@ -23,10 +28,10 @@ export function InlineSectionSearch({
 }: InlineSectionSearchProps) {
   return (
     <div className="flex items-center gap-1.5 transition-all duration-300">
-      <div 
+      <div
         className={`flex items-center bg-slate-50 border rounded-lg overflow-hidden transition-all duration-300 ${
-          isExpanded 
-            ? 'w-36 px-2 py-1 border-slate-300 bg-white' 
+          isExpanded
+            ? 'w-36 px-2 py-1 border-slate-300 bg-white'
             : 'w-0 border-transparent p-0'
         }`}
       >
@@ -39,9 +44,9 @@ export function InlineSectionSearch({
           autoFocus={isExpanded}
         />
         {isExpanded && value && (
-          <button 
+          <button
             type="button"
-            onClick={() => onChange('')} 
+            onClick={() => onChange('')}
             className="text-slate-400 hover:text-slate-600 font-extrabold text-[10px] shrink-0 ml-1"
           >
             ✕
@@ -57,8 +62,8 @@ export function InlineSectionSearch({
           setIsExpanded(!isExpanded);
         }}
         className={`p-1.5 rounded-lg transition duration-200 ${
-          isExpanded 
-            ? 'bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100/60' 
+          isExpanded
+            ? 'bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100/60'
             : 'bg-slate-50 border border-slate-200/50 text-slate-500 hover:bg-[#f2faf9] hover:text-[#028384]'
         }`}
         title={isExpanded ? "Close search" : "Search this section"}
@@ -90,8 +95,8 @@ export function InlineSectionFilterButton({
       type="button"
       onClick={() => setIsExpanded(!isExpanded)}
       className={`p-1.5 rounded-lg border transition duration-200 relative ${
-        isExpanded 
-          ? 'bg-teal-50 border-teal-300 text-[#028384] hover:bg-teal-100/40' 
+        isExpanded
+          ? 'bg-teal-50 border-teal-300 text-[#028384] hover:bg-teal-100/40'
           : hasActiveFilter
             ? 'bg-teal-50 border-[#028384]/40 text-[#028384] hover:bg-teal-100/40 font-bold'
             : 'bg-slate-50 border-slate-200/50 text-slate-500 hover:bg-[#f2faf9] hover:text-[#028384]'
@@ -107,34 +112,27 @@ export function InlineSectionFilterButton({
 }
 
 interface DiscoverViewProps {
-  onSelectBrand: (brand: Brand) => void;
-  onSelectCategory: (categoryId: string) => void;
-  onSelectProduct: (product: Product) => void;
-  onOpenRFQForm: () => void;
-  onSearch: (query: string) => void;
-  
-  // Shortlist props
-  shortlistedBrands: string[];
-  shortlistedProducts: string[];
-  shortlistedCategories: string[];
-  onToggleShortlistBrand: (id: string) => void;
-  onToggleShortlistProduct: (id: string) => void;
-  onToggleShortlistCategory: (id: string) => void;
+  brands: Brand[];
+  products: Product[];
+  categories: Category[];
 }
 
-export default function DiscoverView({
-  onSelectBrand,
-  onSelectCategory,
-  onSelectProduct,
-  onOpenRFQForm,
-  onSearch,
-  shortlistedBrands,
-  shortlistedProducts,
-  shortlistedCategories,
-  onToggleShortlistBrand,
-  onToggleShortlistProduct,
-  onToggleShortlistCategory
-}: DiscoverViewProps) {
+function categoryHref(catId: string) {
+  return catId === 'all' ? '/brands' : `/categories/${catId}`;
+}
+
+export default function DiscoverView({ brands, products, categories }: DiscoverViewProps) {
+  const router = useRouter();
+  const { open: openBuyLeadForm } = useBuyLeadModal();
+  const {
+    shortlistedBrands,
+    shortlistedProducts,
+    shortlistedCategories,
+    toggleShortlistBrand,
+    toggleShortlistProduct,
+    toggleShortlistCategory
+  } = useShortlist();
+
   const [localSearch, setLocalSearch] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -171,30 +169,34 @@ export default function DiscoverView({
     return () => clearInterval(interval);
   }, []);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (localSearch.trim()) {
-      onSearch(localSearch);
+  const runSearch = (query: string) => {
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query)}`);
       setIsSearchFocused(false);
     }
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(localSearch);
+  };
+
   const BrandMarquee = ({ reverse = false }: { reverse?: boolean }) => {
-    const doubleBrands = [...BRANDS, ...BRANDS, ...BRANDS];
+    const doubleBrands = [...brands, ...brands, ...brands];
     return (
       <div className="relative w-full overflow-hidden bg-slate-50 border-y border-slate-200/50 py-3 select-none shrink-0 my-3">
         <div className={`${reverse ? 'animate-marquee-reverse' : 'animate-marquee'} flex gap-5 items-center`}>
           {doubleBrands.map((brand, idx) => (
-            <button
+            <Link
               key={`${brand.id}-${reverse ? 'rev' : 'fwd'}-${idx}`}
-              onClick={() => onSelectBrand(brand)}
+              href={`/brands/${brand.id}`}
               className="flex items-center justify-center bg-white border border-slate-200 hover:border-[#028384]/50 rounded-lg p-2 shadow-xs hover:shadow-sm transition shrink-0 w-20 h-10 cursor-pointer group"
               title={`View ${brand.name}`}
             >
               <div className="w-full h-full flex items-center justify-center overflow-hidden">
                 <BrandLogo logo={brand.logo} name={brand.name} className="w-full h-full object-contain group-hover:scale-105 transition duration-200" />
               </div>
-            </button>
+            </Link>
           ))}
         </div>
       </div>
@@ -202,7 +204,7 @@ export default function DiscoverView({
   };
 
   // Pick some top products to showcase
-  const baseProductsToShow = PRODUCTS.filter(p => 
+  const baseProductsToShow = products.filter(p =>
     p.id === 'voltas-water-cooler' || p.id === 'atlas-copco-compressor' || p.id === 'siemens-plc-s71200'
   );
   let topProductsToShow = baseProductsToShow.filter(p =>
@@ -222,7 +224,7 @@ export default function DiscoverView({
   }
 
   // similar / Top Brands to showcase on home
-  const baseBrandsToShow = BRANDS.filter(b => b.id === 'atlascopco' || b.id === 'voltas' || b.id === 'kirloskar' || b.id === 'ksb' || b.id === 'siemens');
+  const baseBrandsToShow = brands.filter(b => b.id === 'atlascopco' || b.id === 'voltas' || b.id === 'kirloskar' || b.id === 'ksb' || b.id === 'siemens');
   let topBrandsToShow = baseBrandsToShow.filter(b =>
     b.name.toLowerCase().includes(brandsSearchQuery.toLowerCase()) ||
     b.description.toLowerCase().includes(brandsSearchQuery.toLowerCase())
@@ -232,27 +234,27 @@ export default function DiscoverView({
   } else if (brandsFilter === 'verified') {
     topBrandsToShow = topBrandsToShow.filter(b => b.verified);
   } else if (brandsFilter === 'north-west') {
-    topBrandsToShow = topBrandsToShow.filter(b => 
-      b.headquarters.toLowerCase().includes('delhi') || 
-      b.headquarters.toLowerCase().includes('mumbai') || 
-      b.headquarters.toLowerCase().includes('pune') || 
+    topBrandsToShow = topBrandsToShow.filter(b =>
+      b.headquarters.toLowerCase().includes('delhi') ||
+      b.headquarters.toLowerCase().includes('mumbai') ||
+      b.headquarters.toLowerCase().includes('pune') ||
       b.headquarters.toLowerCase().includes('gujarat')
     );
   }
 
   return (
     <div className="flex-1 bg-[#f4f6f8] overflow-y-auto pb-16 select-none font-sans text-slate-800 relative">
-      
+
       {/* 1. Official Branded IndiaMART Top Header with Profile Initials "RT" */}
       <div className="bg-white border-b border-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1.5">
           {/* IndiaMART Official Logo */}
-          <img src={indiamartLogo} alt="IndiaMART" className="h-8 w-auto select-none" />
+          <img src="/indiamart-logo.png" alt="IndiaMART" className="h-8 w-auto select-none" />
         </div>
 
         {/* Profile Avatar with RT initials for Rohit Takalkar */}
         <div className="flex items-center gap-2">
-          <div 
+          <div
             className="w-8 h-8 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white flex items-center justify-center text-[11px] font-black shadow-sm ring-2 ring-blue-50 hover:scale-105 transition cursor-pointer"
             title="Rohit Takalkar"
           >
@@ -297,9 +299,9 @@ export default function DiscoverView({
             </p>
             <div className="flex justify-between items-center px-1 text-[8.5px] font-black text-slate-600">
               {['Kirloskar', 'Voltas', 'Siemens', 'Atlas Copco', 'Crompton'].map((brand, bidx) => (
-                <span 
-                  key={bidx} 
-                  onClick={() => onSearch(brand)}
+                <span
+                  key={bidx}
+                  onClick={() => runSearch(brand)}
                   className="px-2 py-1 bg-slate-50 rounded border border-slate-150 hover:bg-slate-100 hover:text-blue-600 transition cursor-pointer truncate max-w-[68px]"
                 >
                   {brand}
@@ -371,8 +373,7 @@ export default function DiscoverView({
                     key={idx}
                     onClick={() => {
                       setLocalSearch(item.search);
-                      onSearch(item.search);
-                      setIsSearchFocused(false);
+                      runSearch(item.search);
                     }}
                     className="flex items-center justify-between p-3 bg-white border border-slate-200/60 rounded-xl hover:border-[#028384]/40 transition text-left shadow-xs"
                   >
@@ -390,13 +391,11 @@ export default function DiscoverView({
                 Trending Verified Brands
               </h4>
               <div className="grid grid-cols-2 gap-2">
-                {BRANDS.map((brand) => (
-                  <button
+                {brands.map((brand) => (
+                  <Link
                     key={brand.id}
-                    onClick={() => {
-                      onSelectBrand(brand);
-                      setIsSearchFocused(false);
-                    }}
+                    href={`/brands/${brand.id}`}
+                    onClick={() => setIsSearchFocused(false)}
                     className="bg-white border border-slate-200/80 hover:border-[#028384]/40 rounded-xl p-2.5 flex items-center gap-2 transition text-left shadow-xs cursor-pointer"
                   >
                     <div className="w-8 h-8 bg-teal-50 border border-teal-100 rounded-lg font-black text-[#028384] text-[9px] flex items-center justify-center shrink-0 overflow-hidden p-0.5 bg-white">
@@ -406,7 +405,7 @@ export default function DiscoverView({
                       <div className="text-[11px] font-extrabold text-slate-900 leading-tight truncate">{brand.name.split(' ')[0]}</div>
                       <span className="text-[8px] bg-emerald-50 text-emerald-600 font-extrabold px-1 rounded block mt-0.5 w-fit">Verified</span>
                     </div>
-                  </button>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -418,20 +417,19 @@ export default function DiscoverView({
       <BrandMarquee />
 
       {/* 4. Similar Brands Section (KEPT ON THE TOP, BELOW HERO!) */}
-      {/* Refactored into a high-fidelity horizontal scroll where cards peek out! */}
       <div className="mt-4 bg-white border-y border-slate-200/60 py-4">
         <div className="px-4 flex justify-between items-center mb-3">
           <div className="flex items-center gap-2">
             <h2 className="font-extrabold text-[12px] text-slate-900 tracking-tight uppercase">Similar Brands</h2>
             <div className="flex items-center gap-1">
-              <InlineSectionSearch 
+              <InlineSectionSearch
                 value={brandsSearchQuery}
                 onChange={setBrandsSearchQuery}
                 isExpanded={isBrandsSearchExpanded}
                 setIsExpanded={setIsBrandsSearchExpanded}
                 placeholder="Search brands..."
               />
-              <InlineSectionFilterButton 
+              <InlineSectionFilterButton
                 activeFilter={brandsFilter}
                 isExpanded={isBrandsFilterExpanded}
                 setIsExpanded={setIsBrandsFilterExpanded}
@@ -439,12 +437,12 @@ export default function DiscoverView({
             </div>
           </div>
           {!isBrandsSearchExpanded && !isBrandsFilterExpanded && (
-            <span 
-              onClick={() => onSelectCategory('all')} 
+            <Link
+              href="/brands"
               className="text-[10px] font-bold text-[#028384] hover:text-[#007072] transition cursor-pointer"
             >
               Explore All
-            </span>
+            </Link>
           )}
         </div>
 
@@ -489,11 +487,11 @@ export default function DiscoverView({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggleShortlistBrand(brand.id);
+                    toggleShortlistBrand(brand.id);
                   }}
                   className={`absolute top-2 right-2 p-1.5 rounded-full z-10 border transition ${
-                    isShortlisted 
-                      ? 'bg-rose-50 border-rose-200 text-rose-500 hover:text-rose-600' 
+                    isShortlisted
+                      ? 'bg-rose-50 border-rose-200 text-rose-500 hover:text-rose-600'
                       : 'bg-white/85 border-slate-200 text-slate-400 hover:text-rose-500'
                   }`}
                 >
@@ -501,18 +499,18 @@ export default function DiscoverView({
                 </button>
 
                 {/* Brand Logo & cover */}
-                <div 
-                  onClick={() => onSelectBrand(brand)}
+                <Link
+                  href={`/brands/${brand.id}`}
                   className="h-20 bg-slate-50 flex items-center justify-center p-2 border-b border-slate-100"
                 >
                   <div className="bg-white border border-[#028384]/20 rounded px-1.5 py-0.5 text-[10px] font-extrabold text-[#2e3192] tracking-tight shadow-xs w-20 h-10 flex items-center justify-center overflow-hidden p-1.5">
                     <BrandLogo logo={brand.logo} name={brand.name} />
                   </div>
-                </div>
+                </Link>
 
                 {/* Content */}
-                <div 
-                  onClick={() => onSelectBrand(brand)}
+                <Link
+                  href={`/brands/${brand.id}`}
                   className="p-2.5 flex-1 flex flex-col justify-between"
                 >
                   <div>
@@ -525,14 +523,16 @@ export default function DiscoverView({
                   </div>
 
                   <div className="pt-2 mt-2 border-t border-slate-50 flex items-center justify-between">
-                    <span className="text-[8px] font-extrabold text-emerald-600 bg-emerald-50 px-1 rounded">
-                      Verified
-                    </span>
-                    <span className="text-[9px] font-extrabold text-[#028384] uppercase tracking-wider">
+                    {brand.verified && (
+                      <span className="text-[8px] font-extrabold text-emerald-600 bg-emerald-50 px-1 rounded">
+                        Verified
+                      </span>
+                    )}
+                    <span className="text-[9px] font-extrabold text-[#028384] uppercase tracking-wider ml-auto">
                       View
                     </span>
                   </div>
-                </div>
+                </Link>
               </div>
             );
           })
@@ -541,20 +541,19 @@ export default function DiscoverView({
       </div>
 
       {/* 5. Top Products Carousel (Horizontal Slide) */}
-      {/* Refactored card widths to w-[255px] so the second card peeks out on standard width! */}
       <div className="mt-4 bg-white border-y border-slate-200/60 py-4">
         <div className="px-4 flex justify-between items-center mb-3">
           <div className="flex items-center gap-2">
             <h2 className="font-extrabold text-[12px] text-slate-900 tracking-tight uppercase">Top Products</h2>
             <div className="flex items-center gap-1">
-              <InlineSectionSearch 
+              <InlineSectionSearch
                 value={productsSearchQuery}
                 onChange={setProductsSearchQuery}
                 isExpanded={isProductsSearchExpanded}
                 setIsExpanded={setIsProductsSearchExpanded}
                 placeholder="Search products..."
               />
-              <InlineSectionFilterButton 
+              <InlineSectionFilterButton
                 activeFilter={productsFilter}
                 isExpanded={isProductsFilterExpanded}
                 setIsExpanded={setIsProductsFilterExpanded}
@@ -562,12 +561,12 @@ export default function DiscoverView({
             </div>
           </div>
           {!isProductsSearchExpanded && !isProductsFilterExpanded && (
-            <button
-              onClick={() => onSelectCategory('all')}
+            <Link
+              href="/categories"
               className="border border-[#028384] text-[#028384] hover:bg-[#f2faf9] px-2.5 py-1 rounded-md text-[10px] font-bold transition"
             >
               Categories
-            </button>
+            </Link>
           )}
         </div>
 
@@ -611,11 +610,11 @@ export default function DiscoverView({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggleShortlistProduct(product.id);
+                    toggleShortlistProduct(product.id);
                   }}
                   className={`absolute top-2 right-2 p-1.5 rounded-full z-10 border transition ${
-                    isShortlisted 
-                      ? 'bg-rose-50 border-rose-200 text-rose-500 hover:text-rose-600' 
+                    isShortlisted
+                      ? 'bg-rose-50 border-rose-200 text-rose-500 hover:text-rose-600'
                       : 'bg-white/90 border-slate-200 text-slate-400 hover:text-rose-500'
                   }`}
                 >
@@ -623,14 +622,14 @@ export default function DiscoverView({
                 </button>
 
                 {/* Product Left Side */}
-                <div 
-                  onClick={() => onSelectProduct(product)}
+                <Link
+                  href={`/products/${product.id}`}
                   className="w-[95px] relative bg-slate-50 border-r border-slate-100 flex flex-col justify-between p-1.5 shrink-0 cursor-pointer"
                 >
                   <div className="absolute top-1.5 left-1.5 bg-[#028384] text-white text-[7px] font-black uppercase px-1 py-0.5 rounded tracking-wider">
                     Top
                   </div>
-                  
+
                   <div className="flex-1 flex items-center justify-center mt-3 p-0.5">
                     <img
                       src={product.image}
@@ -645,21 +644,18 @@ export default function DiscoverView({
                       {product.brandName.split(' ')[0]}
                     </span>
                   </div>
-                </div>
+                </Link>
 
                 {/* Product Right Side */}
                 <div className="flex-1 p-2.5 flex flex-col justify-between min-w-0">
-                  <div 
-                    onClick={() => onSelectProduct(product)}
-                    className="cursor-pointer"
-                  >
+                  <Link href={`/products/${product.id}`} className="cursor-pointer">
                     <h4 className="font-bold text-[10.5px] text-slate-900 leading-snug line-clamp-2 hover:text-[#028384]">
                       {product.name}
                     </h4>
                     <p className="text-[8.5px] text-slate-400 mt-1 truncate">
                       By: <span className="text-slate-600 font-bold">{product.brandName.split(' ')[0]}</span>
                     </p>
-                  </div>
+                  </Link>
 
                   <div className="border-t border-slate-100 pt-2 flex items-center justify-between mt-1">
                     <div>
@@ -668,12 +664,12 @@ export default function DiscoverView({
                       </span>
                     </div>
 
-                    <button
-                      onClick={() => onSelectProduct(product)}
+                    <Link
+                      href={`/products/${product.id}`}
                       className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded px-2.5 py-1 text-[9px] transition shrink-0"
                     >
                       View
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -685,8 +681,8 @@ export default function DiscoverView({
 
       {/* 6. Custom Quick RFQ Requirement Banner */}
       <div className="px-4 mt-4">
-        <div 
-          onClick={onOpenRFQForm}
+        <div
+          onClick={() => openBuyLeadForm({})}
           className="bg-gradient-to-r from-[#028384] to-[#017075] hover:from-[#007072] hover:to-[#005e60] rounded-xl p-4 text-white flex items-center justify-between gap-4 cursor-pointer shadow-sm transition"
         >
           <div className="flex items-center gap-3">
@@ -703,20 +699,19 @@ export default function DiscoverView({
       </div>
 
       {/* 7. Browse by Industry (Categories) */}
-      {/* Refactored from 4x2 grid to an elegant single-line horizontal peeking list (w-[82px] cards) */}
       <div className="mt-5 px-4 space-y-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-2">
             <h2 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Browse by Industry</h2>
             <div className="flex items-center gap-1">
-              <InlineSectionSearch 
+              <InlineSectionSearch
                 value={categoriesSearchQuery}
                 onChange={setCategoriesSearchQuery}
                 isExpanded={isCategoriesSearchExpanded}
                 setIsExpanded={setIsCategoriesSearchExpanded}
                 placeholder="Search industries..."
               />
-              <InlineSectionFilterButton 
+              <InlineSectionFilterButton
                 activeFilter={categoriesFilter}
                 isExpanded={isCategoriesFilterExpanded}
                 setIsExpanded={setIsCategoriesFilterExpanded}
@@ -724,12 +719,12 @@ export default function DiscoverView({
             </div>
           </div>
           {!isCategoriesSearchExpanded && !isCategoriesFilterExpanded && (
-            <span 
-              onClick={() => onSelectCategory('all')}
+            <Link
+              href="/categories"
               className="text-[10px] font-bold text-[#028384] hover:text-[#007072] transition cursor-pointer"
             >
               View All
-            </span>
+            </Link>
           )}
         </div>
 
@@ -758,15 +753,15 @@ export default function DiscoverView({
         {/* Horizontal scroll where cards peek out! */}
         <div className="flex gap-2.5 overflow-x-auto pb-2.5 scrollbar-none snap-x scroll-smooth select-none">
           {(() => {
-            let filteredCats = CATEGORIES.filter(cat => 
+            let filteredCats = categories.filter(cat =>
               cat.name.toLowerCase().includes(categoriesSearchQuery.toLowerCase())
             );
             if (categoriesFilter === 'heavy') {
-              filteredCats = filteredCats.filter(cat => 
+              filteredCats = filteredCats.filter(cat =>
                 cat.id === 'machinery' || cat.id === 'construction' || cat.id === 'pipes' || cat.id === 'tools'
               );
             } else if (categoriesFilter === 'tech') {
-              filteredCats = filteredCats.filter(cat => 
+              filteredCats = filteredCats.filter(cat =>
                 cat.id === 'electrical' || cat.id === 'automation' || cat.id === 'solar'
               );
             }
@@ -788,7 +783,7 @@ export default function DiscoverView({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onToggleShortlistCategory(cat.id);
+                    toggleShortlistCategory(cat.id);
                   }}
                   className={`absolute top-1 right-1 p-0.5 rounded transition ${
                     isShortlisted ? 'text-rose-500' : 'text-slate-300 hover:text-rose-500'
@@ -797,19 +792,19 @@ export default function DiscoverView({
                   <Heart className={`w-2.5 h-2.5 ${isShortlisted ? 'fill-rose-500 text-rose-500' : ''}`} />
                 </button>
 
-                <div 
-                  onClick={() => onSelectCategory(cat.id)}
+                <Link
+                  href={categoryHref(cat.id)}
                   className="w-7 h-7 bg-teal-50 rounded-lg flex items-center justify-center text-[#028384] shrink-0 mt-1 cursor-pointer"
                 >
                   <CategoryIcon icon={cat.icon} />
-                </div>
-                
-                <span 
-                  onClick={() => onSelectCategory(cat.id)}
+                </Link>
+
+                <Link
+                  href={categoryHref(cat.id)}
                   className="text-[8px] font-bold text-slate-700 leading-tight block truncate w-full max-w-[70px] whitespace-normal cursor-pointer"
                 >
                   {cat.name.replace(' & Allied', '')}
-                </span>
+                </Link>
               </div>
             );
           });

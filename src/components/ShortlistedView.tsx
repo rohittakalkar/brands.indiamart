@@ -1,9 +1,14 @@
+'use client';
+
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Heart, Trash2, Send, ChevronRight, Layers, Building2, Package, ShieldCheck, Star, Search, X } from 'lucide-react';
 import { Brand, Product } from '../types';
-import { PRODUCTS, BRANDS, CATEGORIES } from '../data';
+import { Category } from '../services/categories';
 import { BrandLogo } from './BrandLogo';
 import { CategoryIcon } from './CategoryIcon';
+import { useShortlist } from './ShortlistProvider';
+import { useBuyLeadModal } from './BuyLeadModalProvider';
 
 interface InlineSectionSearchProps {
   value: string;
@@ -22,10 +27,10 @@ function InlineSectionSearch({
 }: InlineSectionSearchProps) {
   return (
     <div className="flex items-center gap-1.5 transition-all duration-300 ml-auto">
-      <div 
+      <div
         className={`flex items-center bg-slate-50 border rounded-lg overflow-hidden transition-all duration-300 ${
-          isExpanded 
-            ? 'w-36 px-2 py-1 border-slate-300 bg-white' 
+          isExpanded
+            ? 'w-36 px-2 py-1 border-slate-300 bg-white'
             : 'w-0 border-transparent p-0'
         }`}
       >
@@ -38,9 +43,9 @@ function InlineSectionSearch({
           autoFocus={isExpanded}
         />
         {isExpanded && value && (
-          <button 
+          <button
             type="button"
-            onClick={() => onChange('')} 
+            onClick={() => onChange('')}
             className="text-slate-400 hover:text-slate-600 font-extrabold text-[10px] shrink-0 ml-1"
           >
             ✕
@@ -56,8 +61,8 @@ function InlineSectionSearch({
           setIsExpanded(!isExpanded);
         }}
         className={`p-1.5 rounded-lg transition duration-200 ${
-          isExpanded 
-            ? 'bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100/60' 
+          isExpanded
+            ? 'bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100/60'
             : 'bg-slate-50 border border-slate-200/50 text-slate-500 hover:bg-[#f2faf9] hover:text-[#028384]'
         }`}
         title={isExpanded ? "Close search" : "Search this section"}
@@ -73,32 +78,22 @@ function InlineSectionSearch({
 }
 
 interface ShortlistedViewProps {
-  shortlistedBrands: string[];
-  shortlistedProducts: string[];
-  shortlistedCategories: string[];
-  onToggleShortlistBrand: (id: string) => void;
-  onToggleShortlistProduct: (id: string) => void;
-  onToggleShortlistCategory: (id: string) => void;
-  onSelectBrand: (brand: Brand) => void;
-  onSelectProduct: (product: Product) => void;
-  onSelectCategory: (categoryId: string) => void;
-  onOpenBuyLeadForm: (data: Partial<any>) => void;
-  onBrowseMore: () => void;
+  products: Product[];
+  brands: Brand[];
+  categories: Category[];
 }
 
-export default function ShortlistedView({
-  shortlistedBrands,
-  shortlistedProducts,
-  shortlistedCategories,
-  onToggleShortlistBrand,
-  onToggleShortlistProduct,
-  onToggleShortlistCategory,
-  onSelectBrand,
-  onSelectProduct,
-  onSelectCategory,
-  onOpenBuyLeadForm,
-  onBrowseMore
-}: ShortlistedViewProps) {
+export default function ShortlistedView({ products, brands, categories }: ShortlistedViewProps) {
+  const {
+    shortlistedBrands,
+    shortlistedProducts,
+    shortlistedCategories,
+    toggleShortlistBrand,
+    toggleShortlistProduct,
+    toggleShortlistCategory
+  } = useShortlist();
+  const { open: openBuyLeadForm } = useBuyLeadModal();
+
   // Section search query states
   const [productsSearchQuery, setProductsSearchQuery] = useState('');
   const [isProductsSearchExpanded, setIsProductsSearchExpanded] = useState(false);
@@ -108,23 +103,23 @@ export default function ShortlistedView({
 
   const [categoriesSearchQuery, setCategoriesSearchQuery] = useState('');
   const [isCategoriesSearchExpanded, setIsCategoriesSearchExpanded] = useState(false);
-  
-  // Resolve object arrays from state lists
-  const baseProducts = PRODUCTS.filter(p => shortlistedProducts.includes(p.id));
-  const baseBrands = BRANDS.filter(b => shortlistedBrands.includes(b.id));
-  const baseCategories = CATEGORIES.filter(c => shortlistedCategories.includes(c.id));
 
-  const products = baseProducts.filter(p => 
+  // Resolve object arrays from state lists
+  const baseProducts = products.filter(p => shortlistedProducts.includes(p.id));
+  const baseBrands = brands.filter(b => shortlistedBrands.includes(b.id));
+  const baseCategories = categories.filter(c => shortlistedCategories.includes(c.id));
+
+  const filteredProducts = baseProducts.filter(p =>
     p.name.toLowerCase().includes(productsSearchQuery.toLowerCase()) ||
     p.brandName.toLowerCase().includes(productsSearchQuery.toLowerCase())
   );
-  
-  const brands = baseBrands.filter(b => 
+
+  const filteredBrands = baseBrands.filter(b =>
     b.name.toLowerCase().includes(brandsSearchQuery.toLowerCase()) ||
     b.description.toLowerCase().includes(brandsSearchQuery.toLowerCase())
   );
 
-  const categories = baseCategories.filter(c => 
+  const filteredCategories = baseCategories.filter(c =>
     c.name.toLowerCase().includes(categoriesSearchQuery.toLowerCase())
   );
 
@@ -132,7 +127,7 @@ export default function ShortlistedView({
 
   return (
     <div className="flex-1 bg-[#f4f6f8] flex flex-col overflow-hidden select-none font-sans text-slate-800">
-      
+
       {/* Header bar (styled like brands header with white background) */}
       <div className="bg-white border-b border-slate-100 p-4 shrink-0">
         <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
@@ -157,12 +152,12 @@ export default function ShortlistedView({
                 Explore verified products & brands, then click the heart icon to save them here for consolidated price quotes.
               </p>
             </div>
-            <button
-              onClick={onBrowseMore}
-              className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-xs transition"
+            <Link
+              href="/categories"
+              className="inline-block px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-xs transition"
             >
               Browse Catalog Directory
-            </button>
+            </Link>
           </div>
         ) : (
           <>
@@ -172,9 +167,9 @@ export default function ShortlistedView({
                 <div className="flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Shortlisted Products ({products.length})</span>
+                    <span>Shortlisted Products ({filteredProducts.length})</span>
                   </h3>
-                  <InlineSectionSearch 
+                  <InlineSectionSearch
                     value={productsSearchQuery}
                     onChange={setProductsSearchQuery}
                     isExpanded={isProductsSearchExpanded}
@@ -183,19 +178,19 @@ export default function ShortlistedView({
                   />
                 </div>
                 <div className="space-y-3">
-                  {products.length === 0 ? (
+                  {filteredProducts.length === 0 ? (
                     <div className="text-slate-400 text-[10.5px] font-bold py-6 px-3 bg-white border border-slate-200/80 rounded-2xl text-center italic">
                       No matching products in your shortlist
                     </div>
                   ) : (
-                    products.map((prod) => (
+                    filteredProducts.map((prod) => (
                     <div
                       key={prod.id}
                       className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-[#028384]/40 transition duration-200 flex"
                     >
                       {/* Image side */}
-                      <div 
-                        onClick={() => onSelectProduct(prod)}
+                      <Link
+                        href={`/products/${prod.id}`}
                         className="w-24 bg-slate-50 flex items-center justify-center p-2 shrink-0 border-r border-slate-100 relative cursor-pointer"
                       >
                         <img
@@ -204,20 +199,20 @@ export default function ShortlistedView({
                           className="max-h-16 max-w-full object-contain rounded"
                           referrerPolicy="no-referrer"
                         />
-                      </div>
+                      </Link>
 
                       {/* Details side */}
                       <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
                         <div className="space-y-1">
                           <div className="flex justify-between items-start gap-2">
-                            <h4 
-                              onClick={() => onSelectProduct(prod)}
+                            <Link
+                              href={`/products/${prod.id}`}
                               className="font-bold text-[11px] text-slate-900 leading-snug line-clamp-2 hover:text-[#028384] cursor-pointer"
                             >
                               {prod.name}
-                            </h4>
+                            </Link>
                             <button
-                              onClick={() => onToggleShortlistProduct(prod.id)}
+                              onClick={() => toggleShortlistProduct(prod.id)}
                               className="text-slate-400 hover:text-rose-500 transition shrink-0 p-1 bg-slate-50 rounded"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -234,7 +229,7 @@ export default function ShortlistedView({
                         <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
                           <button
                             onClick={() =>
-                              onOpenBuyLeadForm({
+                              openBuyLeadForm({
                                 productName: prod.name,
                                 brandName: prod.brandName,
                                 requirement: `Hello, we would like to procure ${prod.name} with standard industrial requirements. Please provide FOB price quote and delivery lead-time details.`
@@ -260,9 +255,9 @@ export default function ShortlistedView({
                 <div className="flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Shortlisted Manufacturers ({brands.length})</span>
+                    <span>Shortlisted Manufacturers ({filteredBrands.length})</span>
                   </h3>
-                  <InlineSectionSearch 
+                  <InlineSectionSearch
                     value={brandsSearchQuery}
                     onChange={setBrandsSearchQuery}
                     isExpanded={isBrandsSearchExpanded}
@@ -271,19 +266,19 @@ export default function ShortlistedView({
                   />
                 </div>
                 <div className="space-y-3">
-                  {brands.length === 0 ? (
+                  {filteredBrands.length === 0 ? (
                     <div className="text-slate-400 text-[10.5px] font-bold py-6 px-3 bg-white border border-slate-200/80 rounded-2xl text-center italic">
                       No matching manufacturers in your shortlist
                     </div>
                   ) : (
-                    brands.map((brand) => (
+                    filteredBrands.map((brand) => (
                     <div
                       key={brand.id}
                       className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-xs hover:border-[#028384]/40 transition duration-200 space-y-3"
                     >
                       <div className="flex justify-between items-start gap-3">
-                        <div 
-                          onClick={() => onSelectBrand(brand)}
+                        <Link
+                          href={`/brands/${brand.id}`}
                           className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0"
                         >
                           <div className="w-9 h-9 bg-teal-50 border border-teal-100 rounded-xl flex items-center justify-center font-black text-[#028384] text-[10px] shrink-0 overflow-hidden p-0.5 bg-white">
@@ -302,10 +297,10 @@ export default function ShortlistedView({
                               <span>Est. {brand.establishedYear}</span>
                             </div>
                           </div>
-                        </div>
+                        </Link>
 
                         <button
-                          onClick={() => onToggleShortlistBrand(brand.id)}
+                          onClick={() => toggleShortlistBrand(brand.id)}
                           className="text-slate-400 hover:text-rose-500 transition shrink-0 p-1.5 bg-slate-50 rounded"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -317,15 +312,15 @@ export default function ShortlistedView({
                       </div>
 
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => onSelectBrand(brand)}
+                        <Link
+                          href={`/brands/${brand.id}`}
                           className="flex-1 py-1.5 border border-[#2563eb] text-[#2563eb] hover:bg-blue-50/10 rounded-lg text-[10px] font-extrabold text-center transition"
                         >
                           View Catalog
-                        </button>
+                        </Link>
                         <button
                           onClick={() =>
-                            onOpenBuyLeadForm({
+                            openBuyLeadForm({
                               brandName: brand.name,
                               requirement: `Dear Sales Team, we wish to connect with ${brand.name} regarding industrial supplies. Please contact us back with OEM pricing catalogs.`
                             })
@@ -349,9 +344,9 @@ export default function ShortlistedView({
                 <div className="flex items-center justify-between">
                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Shortlisted Categories ({categories.length})</span>
+                    <span>Shortlisted Categories ({filteredCategories.length})</span>
                   </h3>
-                  <InlineSectionSearch 
+                  <InlineSectionSearch
                     value={categoriesSearchQuery}
                     onChange={setCategoriesSearchQuery}
                     isExpanded={isCategoriesSearchExpanded}
@@ -360,39 +355,39 @@ export default function ShortlistedView({
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  {categories.length === 0 ? (
+                  {filteredCategories.length === 0 ? (
                     <div className="text-slate-400 text-[10.5px] font-bold py-6 px-3 bg-white border border-slate-200/80 rounded-2xl text-center italic">
                       No matching categories in your shortlist
                     </div>
                   ) : (
-                    categories.map((cat) => (
+                    filteredCategories.map((cat) => (
                     <div
                       key={cat.id}
                       className="bg-white border border-slate-200/80 rounded-xl px-3.5 py-2.5 flex items-center justify-between shadow-xs hover:border-[#028384]/40 transition"
                     >
-                      <div 
-                        onClick={() => onSelectCategory(cat.id)}
+                      <Link
+                        href={`/categories/${cat.id}`}
                         className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0"
                       >
                         <div className="w-7 h-7 bg-teal-50 rounded-lg flex items-center justify-center text-[#028384] shrink-0">
                           <CategoryIcon icon={cat.icon} />
                         </div>
                         <span className="text-xs font-bold text-slate-800 truncate hover:text-[#028384] transition">{cat.name}</span>
-                      </div>
+                      </Link>
 
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => onToggleShortlistCategory(cat.id)}
+                          onClick={() => toggleShortlistCategory(cat.id)}
                           className="text-slate-400 hover:text-rose-500 transition shrink-0 p-1.5 bg-slate-50 rounded"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => onSelectCategory(cat.id)}
+                        <Link
+                          href={`/categories/${cat.id}`}
                           className="p-1.5 bg-slate-50 border border-slate-200 hover:border-[#028384] hover:text-[#028384] text-slate-500 rounded transition"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   ))

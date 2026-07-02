@@ -1,17 +1,23 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { Search, Grid, List, ShieldCheck, Star, Award, Layers, Sparkles } from 'lucide-react';
-import { BRANDS, CATEGORIES } from '../data';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Search, ShieldCheck, Star, Award, Layers } from 'lucide-react';
 import { Brand } from '../types';
+import { Category } from '../services/categories';
 import { BrandLogo } from './BrandLogo';
 
 interface DirectoryViewProps {
-  onSelectBrand: (brand: Brand) => void;
-  onBack?: () => void;
+  brands: Brand[];
+  categories: Category[];
+  showBack?: boolean;
   initialCategory?: string;
   initialSearchQuery?: string;
 }
 
-export default function DirectoryView({ onSelectBrand, onBack, initialCategory, initialSearchQuery }: DirectoryViewProps) {
+export default function DirectoryView({ brands, categories, showBack, initialCategory, initialSearchQuery }: DirectoryViewProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory || 'all');
   const [selectedLetter, setSelectedLetter] = useState<string>('All');
@@ -33,7 +39,7 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
   const alphabet = ['All', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 
   // Filter logic
-  const filteredBrands = BRANDS.filter((brand) => {
+  const filteredBrands = brands.filter((brand) => {
     // 1. Search Query
     const matchesQuery = brand.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          brand.topProducts.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -57,9 +63,9 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
-              {onBack && (
+              {showBack && (
                 <button
-                  onClick={onBack}
+                  onClick={() => router.back()}
                   className="mr-1 p-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -94,8 +100,8 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
             key={letter}
             onClick={() => setSelectedLetter(letter)}
             className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition shrink-0 ${
-              selectedLetter === letter 
-                ? 'bg-[#028384] text-white shadow-xs' 
+              selectedLetter === letter
+                ? 'bg-[#028384] text-white shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -111,21 +117,21 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
           <button
             onClick={() => setSelectedCategory('all')}
             className={`px-2 py-3 text-center transition flex flex-col items-center gap-1.5 border-l-2 ${
-              selectedCategory === 'all' 
-                ? 'border-[#028384] bg-teal-50/50 text-[#028384]' 
+              selectedCategory === 'all'
+                ? 'border-[#028384] bg-teal-50/50 text-[#028384]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="text-[9px] font-extrabold tracking-wide uppercase text-center block leading-tight">All Industries</span>
           </button>
 
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-2 py-3 text-center transition flex flex-col items-center gap-1.5 border-l-2 ${
-                selectedCategory === cat.id 
-                  ? 'border-[#028384] bg-teal-50/50 text-[#028384]' 
+                selectedCategory === cat.id
+                  ? 'border-[#028384] bg-teal-50/50 text-[#028384]'
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
@@ -141,8 +147,8 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
           <div className="flex justify-between items-center px-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
             <span>Showing {filteredBrands.length} Brands</span>
             {selectedCategory !== 'all' && (
-              <button 
-                onClick={() => setSelectedCategory('all')} 
+              <button
+                onClick={() => setSelectedCategory('all')}
                 className="text-[#028384] font-extrabold"
               >
                 Clear Filter
@@ -157,10 +163,10 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
           ) : (
             <div className="space-y-3">
               {filteredBrands.map((brand) => (
-                <div
+                <Link
                   key={brand.id}
-                  onClick={() => onSelectBrand(brand)}
-                  className="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-3.5 hover:border-[#028384]/40 transition cursor-pointer shadow-xs"
+                  href={`/brands/${brand.id}`}
+                  className="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-3.5 hover:border-[#028384]/40 transition cursor-pointer shadow-xs block"
                 >
                   {/* Brand Meta */}
                   <div className="flex items-start justify-between">
@@ -199,7 +205,7 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
                     <strong className="text-slate-800 block mb-0.5">Key Capabilities:</strong>
                     <p className="line-clamp-2 leading-relaxed">{brand.description}</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

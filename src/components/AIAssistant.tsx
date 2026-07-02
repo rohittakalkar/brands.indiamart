@@ -1,6 +1,9 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, AlertCircle, ShoppingBag, MapPin, Layers, Check, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, AlertCircle, ShoppingBag, Layers, Check, Loader2 } from 'lucide-react';
 import { BuyLead } from '../types';
+import { askAssistant } from '../services/assistant';
 
 interface AIAssistantProps {
   onAutoFillLead: (lead: Partial<BuyLead>) => void;
@@ -60,20 +63,10 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
     setError(null);
 
     try {
-      const response = await fetch('/api/gemini/assistant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMsgText,
-          previousMessages: messages.slice(-6).map(m => ({ sender: m.sender, text: m.text }))
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Could not connect to B2B assistant. Please try again.');
-      }
-
-      const data = await response.json();
+      const data = await askAssistant(
+        userMsgText,
+        messages.slice(-6).map(m => ({ sender: m.sender, text: m.text }))
+      );
 
       const assistantMsg: Message = {
         id: Math.random().toString(),

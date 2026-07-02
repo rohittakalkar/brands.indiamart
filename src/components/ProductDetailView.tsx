@@ -1,30 +1,26 @@
+'use client';
+
 import React, { useState } from 'react';
-import { ArrowLeft, Share2, Heart, ShieldCheck, ShoppingBag, Eye, RefreshCw, Send, CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Share2, Heart, ShieldCheck, Send, CheckCircle2 } from 'lucide-react';
 import { Product } from '../types';
+import { useShortlist } from './ShortlistProvider';
+import { useBuyLeadModal } from './BuyLeadModalProvider';
 
 interface ProductDetailViewProps {
   product: Product;
-  onBack: () => void;
-  onOpenBuyLeadForm: (data: Partial<any>) => void;
-  onCompareSuppliers: () => void;
-  shortlistedProducts: string[];
-  onToggleShortlistProduct: (id: string) => void;
 }
 
-export default function ProductDetailView({ 
-  product, 
-  onBack, 
-  onOpenBuyLeadForm, 
-  onCompareSuppliers,
-  shortlistedProducts,
-  onToggleShortlistProduct
-}: ProductDetailViewProps) {
-  const [activeTab, setActiveTab] = useState<'specs' | 'suppliers' | 'reviews'>('specs');
-  
+export default function ProductDetailView({ product }: ProductDetailViewProps) {
+  const router = useRouter();
+  const { shortlistedProducts, toggleShortlistProduct } = useShortlist();
+  const { open: openBuyLeadForm } = useBuyLeadModal();
+  const [activeTab, setActiveTab] = useState<'specs' | 'suppliers'>('specs');
+
   const isSaved = shortlistedProducts.includes(product.id);
 
   const handleSendLead = () => {
-    onOpenBuyLeadForm({
+    openBuyLeadForm({
       productName: product.name,
       brandName: product.brandName,
       requirement: `Looking to purchase ${product.name}. Please provide quotation for the standard spec: ${Object.entries(product.specifications).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(', ')}.`
@@ -36,7 +32,7 @@ export default function ProductDetailView({
       {/* Product Header */}
       <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-1.5 hover:bg-slate-100 rounded-full transition">
+          <button onClick={() => router.back()} className="p-1.5 hover:bg-slate-100 rounded-full transition">
             <ArrowLeft className="w-4 h-4 text-slate-800" />
           </button>
           <div>
@@ -45,8 +41,8 @@ export default function ProductDetailView({
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <button 
-            onClick={() => onToggleShortlistProduct(product.id)}
+          <button
+            onClick={() => toggleShortlistProduct(product.id)}
             className="p-2 hover:bg-rose-50 rounded-full transition text-rose-500"
             title={isSaved ? "Remove from shortlist" : "Add to shortlist"}
           >
@@ -62,11 +58,11 @@ export default function ProductDetailView({
       <div className="flex-1 overflow-y-auto pb-6">
         {/* Product Image Panel */}
         <div className="relative bg-white border-b border-slate-100 p-6 flex flex-col items-center">
-          <img 
-            src={product.image} 
-            alt={product.name} 
+          <img
+            src={product.image}
+            alt={product.name}
             referrerPolicy="no-referrer"
-            className="w-48 h-48 object-contain rounded-2xl shadow-sm mix-blend-multiply" 
+            className="w-48 h-48 object-contain rounded-2xl shadow-sm mix-blend-multiply"
           />
           <div className="absolute bottom-3 left-4 flex gap-1.5">
             <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200 rounded-full px-2.5 py-0.5 flex items-center gap-1">
@@ -105,14 +101,14 @@ export default function ProductDetailView({
 
         {/* Tab switcher */}
         <div className="bg-white border-y border-slate-100 mt-3 px-5 flex text-xs select-none sticky top-[52px] z-10 shadow-xs">
-          <button 
+          <button
             onClick={() => setActiveTab('specs')}
             className={`flex-1 py-3 text-center font-bold relative transition ${activeTab === 'specs' ? 'text-[#028384]' : 'text-slate-500'}`}
           >
             Specifications
             {activeTab === 'specs' && <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#028384] rounded-full"></div>}
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('suppliers')}
             className={`flex-1 py-3 text-center font-bold relative transition ${activeTab === 'suppliers' ? 'text-[#028384]' : 'text-slate-500'}`}
           >
@@ -164,7 +160,7 @@ export default function ProductDetailView({
                   </p>
                 </div>
                 <button
-                  onClick={onCompareSuppliers}
+                  onClick={() => router.push('/compare')}
                   className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-[11px] transition shadow-xs"
                 >
                   Compare Top Suppliers

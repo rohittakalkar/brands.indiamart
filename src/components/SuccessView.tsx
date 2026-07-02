@@ -1,13 +1,13 @@
 import React from 'react';
-import { CheckCircle2, ChevronRight, Share2, ClipboardList, Shield, PhoneCall } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, ChevronRight, ClipboardList } from 'lucide-react';
 import { BuyLead } from '../types';
 
 interface SuccessViewProps {
   lead: BuyLead;
-  onBackToHome: () => void;
 }
 
-export default function SuccessView({ lead, onBackToHome }: SuccessViewProps) {
+export default function SuccessView({ lead }: SuccessViewProps) {
   return (
     <div className="flex-1 bg-white flex flex-col">
       {/* Scrollable Success Panel */}
@@ -91,19 +91,19 @@ export default function SuccessView({ lead, onBackToHome }: SuccessViewProps) {
 
       {/* Persistent Button Actions */}
       <div className="border-t border-slate-100 p-4 shrink-0 space-y-2 bg-white">
-        <button
-          onClick={onBackToHome}
+        <Link
+          href="/leads"
           className="w-full flex items-center justify-center gap-1.5 py-3 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-xs transition shadow-sm"
         >
           <span>Go to My BuyLeads</span>
           <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-        <button
-          onClick={onBackToHome}
-          className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
+        </Link>
+        <Link
+          href="/leads"
+          className="w-full block text-center py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
         >
           Back to Homepage
-        </button>
+        </Link>
       </div>
     </div>
   );

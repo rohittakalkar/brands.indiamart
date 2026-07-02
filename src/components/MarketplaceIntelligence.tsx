@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp, Users, FileSpreadsheet, Eye, ShieldCheck, MapPin, Sparkles, BarChart3, Radio } from 'lucide-react';
-import { MARKETPLACE_METRICS, TRENDING_CATEGORIES, MOST_INQUIRED_PRODUCTS, FASTEST_GROWING_BRANDS, REGIONAL_DEMAND, BUYER_INTENT_SIGNALS } from '../data';
+import { MARKETPLACE_METRICS, TRENDING_CATEGORIES, MOST_INQUIRED_PRODUCTS, REGIONAL_DEMAND, BUYER_INTENT_SIGNALS } from '../lib/data';
 
 export default function MarketplaceIntelligence() {
   return (

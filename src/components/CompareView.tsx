@@ -1,18 +1,23 @@
+'use client';
+
 import React, { useState } from 'react';
-import { ArrowLeft, Check, ShieldCheck, Clock, Award, Star, ThumbsUp, Send, X, Plus, Search, Sparkles } from 'lucide-react';
-import { SUPPLIERS, BRANDS } from '../data';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Check, ShieldCheck, Clock, Star, ThumbsUp, Send, X, Plus, Search, Sparkles } from 'lucide-react';
 import { Supplier, Brand } from '../types';
+import { useBuyLeadModal } from './BuyLeadModalProvider';
 
 interface CompareViewProps {
-  onBack: () => void;
-  onOpenBuyLeadForm: (data: Partial<any>) => void;
-  onSelectBrand?: (brandId: string) => void;
+  suppliers: Supplier[];
+  brands: Brand[];
   brandName?: string;
 }
 
-export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, brandName = 'Industrial Pumps' }: CompareViewProps) {
+export default function CompareView({ suppliers, brands, brandName = 'Industrial Pumps' }: CompareViewProps) {
+  const router = useRouter();
+  const { open: openBuyLeadForm } = useBuyLeadModal();
   // Use state for compared suppliers, initialized with preset suppliers
-  const [selectedSuppliers, setSelectedSuppliers] = useState<Supplier[]>(SUPPLIERS);
+  const [selectedSuppliers, setSelectedSuppliers] = useState<Supplier[]>(suppliers);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -24,9 +29,9 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
     // Check if already added
     if (selectedSuppliers.some(s => s.brandId === brand.id)) return;
 
-    // See if there's an existing supplier for this brand in SUPPLIERS database
-    const existingSupp = SUPPLIERS.find(s => s.brandId === brand.id);
-    
+    // See if there's an existing supplier for this brand in the supplier database
+    const existingSupp = suppliers.find(s => s.brandId === brand.id);
+
     let newSupplier: Supplier;
     if (existingSupp) {
       newSupplier = { ...existingSupp, id: `${existingSupp.id}-dyn-${Date.now()}` };
@@ -55,9 +60,9 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
 
   const handleCompareQuotes = () => {
     if (selectedSuppliers.length === 0) return;
-    
+
     const names = selectedSuppliers.map(s => s.brandName).join(' & ');
-    onOpenBuyLeadForm({
+    openBuyLeadForm({
       productName: 'OEM Supply Contract - Direct Quote Request',
       brandName: names,
       requirement: `Please provide competitive quotation with catalogs and pricing sheets for side-by-side compared suppliers: ${names}.`
@@ -67,7 +72,7 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
   // Dynamic statistics for comparison summary
   const getComparisonStats = () => {
     if (selectedSuppliers.length === 0) return null;
-    
+
     // Sort suppliers by rating
     const sortedByRating = [...selectedSuppliers].sort((a, b) => b.rating - a.rating);
     // Find fastest response
@@ -90,8 +95,8 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
   const stats = getComparisonStats();
 
   // Filter available brands to add (search query & exclude already selected brand ids)
-  const filteredBrands = BRANDS.filter(brand => {
-    const matchesSearch = brand.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredBrands = brands.filter(brand => {
+    const matchesSearch = brand.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           brand.headquarters.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           brand.subCategories.some(cat => cat.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesSearch;
@@ -102,7 +107,7 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
       {/* Header bar */}
       <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-1.5 hover:bg-slate-100 rounded-full transition">
+          <button onClick={() => router.back()} className="p-1.5 hover:bg-slate-100 rounded-full transition">
             <ArrowLeft className="w-4 h-4 text-slate-800" />
           </button>
           <div>
@@ -112,9 +117,9 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{brandName}</span>
           </div>
         </div>
-        
+
         {selectedSuppliers.length < 5 && (
-          <button 
+          <button
             onClick={() => setIsAddOpen(true)}
             className="flex items-center gap-1 px-2.5 py-1 bg-teal-50 hover:bg-teal-100/80 border border-teal-100 text-[#028384] text-[10px] font-black uppercase tracking-wider rounded-lg transition"
           >
@@ -140,12 +145,12 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
         {/* Side by side columns - Horizontally scrollable to avoid column squeeze */}
         <div className="overflow-x-auto pb-3 -mx-4 px-4 scrollbar-thin flex gap-3 select-none">
           {selectedSuppliers.map((supp, sIdx) => (
-            <div 
-              key={supp.id} 
+            <div
+              key={supp.id}
               className="w-[145px] bg-white border border-slate-200/80 rounded-2xl p-2.5 flex flex-col justify-between shadow-xs shrink-0 relative hover:border-[#028384]/40 transition duration-200"
             >
               {/* Delete button */}
-              <button 
+              <button
                 onClick={() => handleRemoveSupplier(supp.id)}
                 className="absolute top-1.5 right-1.5 p-1 rounded-full text-slate-300 hover:text-rose-500 hover:bg-slate-100 transition z-10"
                 title="Remove from comparison"
@@ -218,12 +223,12 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
 
               {/* View Profile Action */}
               <div className="pt-2 border-t border-slate-100 mt-2.5 text-center">
-                <span 
-                  onClick={() => onSelectBrand?.(supp.brandId)}
+                <Link
+                  href={`/brands/${supp.brandId}`}
                   className="text-[9px] font-extrabold text-[#028384] hover:underline cursor-pointer"
                 >
                   View Profile
-                </span>
+                </Link>
               </div>
             </div>
           ))}
@@ -249,7 +254,7 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
               <Sparkles className="w-4 h-4 text-[#028384]" />
               <span>Smart Comparison Insights</span>
             </h3>
-            
+
             <div className="space-y-2.5 text-[11px] text-slate-600 font-medium">
               <div className="flex items-start gap-2 text-slate-600">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -258,7 +263,7 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
                   <strong className="text-slate-900">{stats?.bestRated.rating} ★</strong> ({stats?.bestRated.reviewsCount} verified buyers).
                 </span>
               </div>
-              
+
               <div className="flex items-start gap-2 text-slate-600">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
@@ -300,7 +305,7 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
         <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex flex-col justify-end z-30 transition duration-300">
           {/* Backdrop click to close */}
           <div className="absolute inset-0 -z-10" onClick={() => setIsAddOpen(false)} />
-          
+
           <div className="bg-white rounded-t-3xl max-h-[80%] flex flex-col overflow-hidden shadow-2xl">
             {/* Header */}
             <div className="px-4 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50 shrink-0">
@@ -308,7 +313,7 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
                 <h3 className="font-extrabold text-xs text-slate-900">Add Manufacturer to Compare</h3>
                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Select from registered Indian brands</span>
               </div>
-              <button 
+              <button
                 onClick={() => setIsAddOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition"
               >
@@ -345,17 +350,17 @@ export default function CompareView({ onBack, onOpenBuyLeadForm, onSelectBrand, 
                       disabled={isAlreadyAdded}
                       onClick={() => handleAddBrand(brand)}
                       className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition text-left ${
-                        isAlreadyAdded 
-                          ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed' 
+                        isAlreadyAdded
+                          ? 'bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed'
                           : 'bg-white border-slate-200/60 hover:border-[#028384]/30 hover:bg-teal-50/20 text-slate-800 cursor-pointer'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 bg-white rounded-lg border border-slate-150 p-0.5 flex items-center justify-center shrink-0">
                           {brand.logo ? (
-                            <img 
-                              src={brand.logo} 
-                              alt={brand.name} 
+                            <img
+                              src={brand.logo}
+                              alt={brand.name}
                               className="w-full h-full object-contain"
                               referrerPolicy="no-referrer"
                             />

@@ -1,17 +1,6 @@
-import express from 'express';
-import path from 'path';
-import { createServer as createViteServer } from 'vite';
+import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from '@google/genai';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
-const app = express();
-app.use(express.json());
-
-const PORT = 3000;
-
-// Lazy initialization of GoogleGenAI
 let aiClient: GoogleGenAI | null = null;
 
 function getAiClient(): GoogleGenAI {
@@ -32,23 +21,17 @@ function getAiClient(): GoogleGenAI {
   return aiClient;
 }
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
-});
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { message, previousMessages = [] } = body;
+  if (!message) {
+    return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+  }
 
-// Gemini AI B2B Assistant Endpoint
-app.post('/api/gemini/assistant', async (req, res) => {
   try {
-    const { message, previousMessages = [] } = req.body;
-    if (!message) {
-       res.status(400).json({ error: 'Message is required' });
-       return;
-    }
-
     const ai = getAiClient();
 
-    const systemPrompt = `You are the IndiaMART Brands AI Smart Assistant. 
+    const systemPrompt = `You are the IndiaMART Brands AI Smart Assistant.
 Your goal is to help B2B buyers discover the best verified brands, compare standard products, and draft high-quality BuyLeads (RFQs/inquiries).
 Available Top Brands to recommend:
 1. Kirloskar Brothers Limited (Specializes in Pumps, Valves, Engines, Compressors)
@@ -117,16 +100,16 @@ Ensure your JSON matches the schema.`;
     });
 
     const resultText = response.text || '{}';
-    res.json(JSON.parse(resultText));
+    return NextResponse.json(JSON.parse(resultText));
   } catch (error: any) {
     console.error('Gemini Assistant Error:', error);
     // If API key is missing or invalid, we return a fallback response with simulated B2B logic so the UI doesn't break.
     // This is part of the "fail gracefully and explain" rule.
     const isApiKeyError = error.message && (error.message.includes('GEMINI_API_KEY') || error.message.includes('API_KEY_INVALID') || error.message.includes('not configured'));
-    
+
     if (isApiKeyError) {
       // Simulate standard search recommendations so the app is 100% interactive even without a personal key
-      const queryLower = (req.body.message || '').toLowerCase();
+      const queryLower = (message || '').toLowerCase();
       let reply = "I've drafted standard recommendations based on your query. **Note: For real-time intelligent Gemini suggestions, please set a valid `GEMINI_API_KEY` in the AI Studio Secrets panel.**\n\n";
       let recommendedBrandId = 'kirloskar';
       let productName = 'Centrifugal Pump - Horizontal End Suction';
@@ -155,7 +138,7 @@ Ensure your JSON matches the schema.`;
         reply += 'Based on your query, we recommend **Kirloskar Brothers Limited** (KBL). Founded in 1888, they are India\'s pioneer pump manufacturers, offering a comprehensive selection of end-suction, monoblock, and split-case centrifugal pumps for liquid transport.';
       }
 
-      res.json({
+      return NextResponse.json({
         reply,
         recommendedBrandId,
         recommendedCategory: 'machinery',
@@ -170,30 +153,7 @@ Ensure your JSON matches the schema.`;
         _apiKeyMsg: 'GEMINI_API_KEY is not configured or holds a placeholder value. Please configure it in AI Studio Secrets.'
       });
     } else {
-      res.status(500).json({ error: error.message || 'Internal Server Error' });
+      return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
     }
   }
-});
-
-// Setup Vite or Static assets serving
-async function bootstrap() {
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa'
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
-  });
 }
-
-bootstrap();

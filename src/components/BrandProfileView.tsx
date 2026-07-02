@@ -1,34 +1,29 @@
+'use client';
+
 import React, { useState } from 'react';
-import { ArrowLeft, ExternalLink, ShieldCheck, MapPin, Star, Building2, Globe, FileText, Send, Calendar, Users, Briefcase, Heart } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Send } from 'lucide-react';
 import { Brand, Product, Supplier, Review } from '../types';
-import { PRODUCTS, SUPPLIERS, REVIEWS } from '../data';
 import { BrandLogo } from './BrandLogo';
+import { useShortlist } from './ShortlistProvider';
+import { useBuyLeadModal } from './BuyLeadModalProvider';
 
 interface BrandProfileViewProps {
   brand: Brand;
-  onBack: () => void;
-  onSelectProduct: (product: Product) => void;
-  onOpenBuyLeadForm: (data: Partial<any>) => void;
-  shortlistedBrands: string[];
-  onToggleShortlistBrand: (id: string) => void;
+  brandProducts: Product[];
+  brandSuppliers: Supplier[];
+  reviews: Review[];
 }
 
-export default function BrandProfileView({ 
-  brand, 
-  onBack, 
-  onSelectProduct, 
-  onOpenBuyLeadForm,
-  shortlistedBrands,
-  onToggleShortlistBrand
-}: BrandProfileViewProps) {
+export default function BrandProfileView({ brand, brandProducts, brandSuppliers, reviews }: BrandProfileViewProps) {
+  const router = useRouter();
+  const { shortlistedBrands, toggleShortlistBrand } = useShortlist();
+  const { open: openBuyLeadForm } = useBuyLeadModal();
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'products' | 'suppliers' | 'trust'>('overview');
 
-  // Filter products and suppliers specifically for this brand
-  const brandProducts = PRODUCTS.filter(p => p.brandId === brand.id);
-  const brandSuppliers = SUPPLIERS.filter(s => s.brandId === brand.id);
-
   const handleInquireAll = () => {
-    onOpenBuyLeadForm({
+    openBuyLeadForm({
       brandName: brand.name,
       productName: brand.topProducts[0] || 'Industrial Spec Machinery',
       requirement: `Requesting standard quotes for ${brand.name} solutions. Please share product catalogs, pricing guidelines, and nearest dealership locations.`
@@ -42,7 +37,7 @@ export default function BrandProfileView({
       {/* Brand Header */}
       <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between shrink-0 relative z-10">
         <div className="flex items-center gap-3">
-          <button onClick={onBack} className="p-1.5 hover:bg-slate-100 rounded-full transition">
+          <button onClick={() => router.back()} className="p-1.5 hover:bg-slate-100 rounded-full transition">
             <ArrowLeft className="w-4 h-4 text-slate-800" />
           </button>
           <div>
@@ -51,18 +46,18 @@ export default function BrandProfileView({
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <button 
-            onClick={() => onToggleShortlistBrand(brand.id)}
+          <button
+            onClick={() => toggleShortlistBrand(brand.id)}
             className="p-1.5 hover:bg-rose-50 rounded-full text-rose-500 transition"
             title={isBrandSaved ? "Remove Brand from Shortlist" : "Shortlist Brand"}
           >
             <Heart className={`w-4.5 h-4.5 ${isBrandSaved ? 'text-rose-500 fill-rose-500' : 'text-slate-400'}`} />
           </button>
           {brand.website && (
-            <a 
-              href={`https://${brand.website}`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <a
+              href={`https://${brand.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="p-1.5 hover:bg-slate-100 rounded-full text-slate-600 transition"
               title="Visit Official Website"
             >
@@ -110,28 +105,28 @@ export default function BrandProfileView({
 
         {/* Quick Horizontal Scroll Sub Tabs */}
         <div className="bg-white border-b border-slate-100 flex text-xs select-none sticky top-0 z-10 shadow-xs px-2 overflow-x-auto whitespace-nowrap scrollbar-none">
-          <button 
+          <button
             onClick={() => setActiveSubTab('overview')}
             className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'overview' ? 'text-[#028384]' : 'text-slate-500'}`}
           >
             Overview
             {activeSubTab === 'overview' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#028384] rounded-full"></div>}
           </button>
-          <button 
+          <button
             onClick={() => setActiveSubTab('products')}
             className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'products' ? 'text-[#028384]' : 'text-slate-500'}`}
           >
             Products ({brandProducts.length})
             {activeSubTab === 'products' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#028384] rounded-full"></div>}
           </button>
-          <button 
+          <button
             onClick={() => setActiveSubTab('suppliers')}
             className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'suppliers' ? 'text-[#028384]' : 'text-slate-500'}`}
           >
             Sellers ({brandSuppliers.length})
             {activeSubTab === 'suppliers' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#028384] rounded-full"></div>}
           </button>
-          <button 
+          <button
             onClick={() => setActiveSubTab('trust')}
             className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'trust' ? 'text-[#028384]' : 'text-slate-500'}`}
           >
@@ -230,17 +225,17 @@ export default function BrandProfileView({
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {brandProducts.map((prod) => (
-                    <div 
-                      key={prod.id} 
-                      onClick={() => onSelectProduct(prod)}
+                    <Link
+                      key={prod.id}
+                      href={`/products/${prod.id}`}
                       className="bg-white border border-slate-200/80 rounded-2xl p-3 flex flex-col justify-between shadow-xs hover:border-[#028384]/40 transition cursor-pointer"
                     >
                       <div>
-                        <img 
-                          src={prod.image} 
-                          alt={prod.name} 
+                        <img
+                          src={prod.image}
+                          alt={prod.name}
                           referrerPolicy="no-referrer"
-                          className="w-full h-24 object-contain rounded-xl bg-slate-50 mix-blend-multiply" 
+                          className="w-full h-24 object-contain rounded-xl bg-slate-50 mix-blend-multiply"
                         />
                         <h4 className="font-bold text-[11px] text-slate-900 mt-2 line-clamp-2 leading-tight">
                           {prod.name}
@@ -250,7 +245,7 @@ export default function BrandProfileView({
                         <span className="text-[10px] font-extrabold text-[#028384] block">{prod.priceRange}</span>
                         <span className="text-[8px] text-slate-400 font-bold block mt-0.5 uppercase font-mono">MOQ: {prod.moq}</span>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -327,7 +322,7 @@ export default function BrandProfileView({
               <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs space-y-3">
                 <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Buyer Voices</h3>
                 <div className="space-y-4">
-                  {REVIEWS.map((rev) => (
+                  {reviews.map((rev) => (
                     <div key={rev.id} className="space-y-1.5 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
                       <div className="flex justify-between items-start">
                         <div>

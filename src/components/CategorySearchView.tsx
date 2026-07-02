@@ -1,42 +1,40 @@
+'use client';
+
 import React, { useState } from 'react';
-import { Search, Layers, ChevronRight, Heart, Send, CheckCircle2, Building2 } from 'lucide-react';
-import { CATEGORIES, BRANDS, PRODUCTS } from '../data';
+import Link from 'next/link';
+import { Search, Layers, ChevronRight, Heart, Send } from 'lucide-react';
 import { Brand, Product } from '../types';
+import { Category } from '../services/categories';
 import { CategoryIcon } from './CategoryIcon';
+import { useShortlist } from './ShortlistProvider';
+import { useBuyLeadModal } from './BuyLeadModalProvider';
 
 interface CategorySearchViewProps {
-  onSelectCategory: (categoryId: string) => void;
-  onOpenBuyLeadForm: (data: Partial<any>) => void;
-  shortlistedCategories: string[];
-  onToggleShortlistCategory: (id: string) => void;
+  categories: Category[];
+  brands: Brand[];
+  products: Product[];
 }
 
-export default function CategorySearchView({
-  onSelectCategory,
-  onOpenBuyLeadForm,
-  shortlistedCategories,
-  onToggleShortlistCategory
-}: CategorySearchViewProps) {
+export default function CategorySearchView({ categories, brands, products }: CategorySearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const { shortlistedCategories, toggleShortlistCategory } = useShortlist();
+  const { open: openBuyLeadForm } = useBuyLeadModal();
 
-  // Filter categories based on search input
-  const filteredCategories = CATEGORIES.filter(cat =>
+  const filteredCategories = categories.filter(cat =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Helper to get number of brands in a category
   const getBrandCount = (catId: string) => {
-    return BRANDS.filter(b => b.category === catId).length;
+    return brands.filter(b => b.category === catId).length;
   };
 
-  // Helper to get top products in a category
   const getProductsForCategory = (catId: string) => {
-    return PRODUCTS.filter(p => p.category === catId).slice(0, 2);
+    return products.filter(p => p.category === catId).slice(0, 2);
   };
 
   return (
     <div className="flex-1 bg-[#f4f6f8] flex flex-col overflow-hidden select-none font-sans text-slate-800">
-      
+
       {/* Header & Search Section (styled like brands header with white background) */}
       <div className="bg-white border-b border-slate-100 p-4 space-y-3 shrink-0">
         <div className="flex items-center justify-between">
@@ -83,8 +81,8 @@ export default function CategorySearchView({
               >
                 {/* Category Main Bar */}
                 <div className="p-3.5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-                  <div 
-                    onClick={() => onSelectCategory(cat.id)}
+                  <Link
+                    href={`/categories/${cat.id}`}
                     className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
                   >
                     <div className="w-9 h-9 bg-teal-50 border border-teal-100/60 rounded-xl flex items-center justify-center text-[#028384] shrink-0 shadow-xs">
@@ -98,12 +96,12 @@ export default function CategorySearchView({
                         {brandCount > 0 ? `${brandCount} Verified OEMs` : 'Direct Factory Catalogs'}
                       </span>
                     </div>
-                  </div>
+                  </Link>
 
                   <div className="flex items-center gap-1.5 shrink-0">
                     {/* Shortlist Category Button */}
                     <button
-                      onClick={() => onToggleShortlistCategory(cat.id)}
+                      onClick={() => toggleShortlistCategory(cat.id)}
                       className={`p-2 rounded-lg border transition ${
                         isShortlisted
                           ? 'bg-rose-50 border-rose-200 text-rose-500'
@@ -115,12 +113,12 @@ export default function CategorySearchView({
                     </button>
 
                     {/* View All Button */}
-                    <button
-                      onClick={() => onSelectCategory(cat.id)}
+                    <Link
+                      href={`/categories/${cat.id}`}
                       className="p-2 bg-white border border-slate-200 hover:border-[#028384] hover:text-[#028384] text-slate-500 rounded-lg transition"
                     >
                       <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
 
@@ -147,7 +145,7 @@ export default function CategorySearchView({
 
                           <button
                             onClick={() =>
-                              onOpenBuyLeadForm({
+                              openBuyLeadForm({
                                 productName: prod.name,
                                 brandName: prod.brandName,
                                 requirement: `Hi, I am interested in procuring ${prod.name} from standard manufacturers. Please share delivery timeline & price quote.`

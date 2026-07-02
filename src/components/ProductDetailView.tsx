@@ -7,11 +7,21 @@ interface ProductDetailViewProps {
   onBack: () => void;
   onOpenBuyLeadForm: (data: Partial<any>) => void;
   onCompareSuppliers: () => void;
+  shortlistedProducts: string[];
+  onToggleShortlistProduct: (id: string) => void;
 }
 
-export default function ProductDetailView({ product, onBack, onOpenBuyLeadForm, onCompareSuppliers }: ProductDetailViewProps) {
+export default function ProductDetailView({ 
+  product, 
+  onBack, 
+  onOpenBuyLeadForm, 
+  onCompareSuppliers,
+  shortlistedProducts,
+  onToggleShortlistProduct
+}: ProductDetailViewProps) {
   const [activeTab, setActiveTab] = useState<'specs' | 'suppliers' | 'reviews'>('specs');
-  const [isSaved, setIsSaved] = useState(false);
+  
+  const isSaved = shortlistedProducts.includes(product.id);
 
   const handleSendLead = () => {
     onOpenBuyLeadForm({
@@ -36,10 +46,11 @@ export default function ProductDetailView({ product, onBack, onOpenBuyLeadForm, 
         </div>
         <div className="flex items-center gap-1.5">
           <button 
-            onClick={() => setIsSaved(!isSaved)}
-            className="p-2 hover:bg-slate-50 rounded-full transition"
+            onClick={() => onToggleShortlistProduct(product.id)}
+            className="p-2 hover:bg-rose-50 rounded-full transition text-rose-500"
+            title={isSaved ? "Remove from shortlist" : "Add to shortlist"}
           >
-            <Heart className={`w-4.5 h-4.5 ${isSaved ? 'text-red-500 fill-red-500' : 'text-slate-600'}`} />
+            <Heart className={`w-4.5 h-4.5 ${isSaved ? 'text-rose-500 fill-rose-500' : 'text-slate-400'}`} />
           </button>
           <button className="p-2 hover:bg-slate-50 rounded-full transition">
             <Share2 className="w-4.5 h-4.5 text-slate-600" />
@@ -154,7 +165,7 @@ export default function ProductDetailView({ product, onBack, onOpenBuyLeadForm, 
                 </div>
                 <button
                   onClick={onCompareSuppliers}
-                  className="px-4 py-2 bg-[#028384] hover:bg-[#007072] text-white font-bold rounded-xl text-[11px] transition shadow-xs"
+                  className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-[11px] transition shadow-xs"
                 >
                   Compare Top Suppliers
                 </button>
@@ -168,7 +179,7 @@ export default function ProductDetailView({ product, onBack, onOpenBuyLeadForm, 
       <div className="border-t border-slate-100 p-4 bg-white flex gap-3.5 shrink-0">
         <button
           onClick={handleSendLead}
-          className="flex-1 bg-[#028384] hover:bg-[#007072] text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
+          className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
         >
           <Send className="w-4 h-4" />
           <span>Generate BuyLeads - Get Quotes</span>

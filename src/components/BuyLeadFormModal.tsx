@@ -85,8 +85,8 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
         {/* Scrollable form */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 p-2.5 rounded-xl flex items-center gap-2 text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-2.5 rounded-xl flex items-center gap-2 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-500" />
               <span>{error}</span>
             </div>
           )}
@@ -167,7 +167,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
         <div className="border-t border-slate-100 p-4 bg-white">
           <button
             onClick={handleSubmit}
-            className="w-full bg-[#028384] hover:bg-[#007072] text-white py-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+            className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Generate BuyLead - Get Quotes From All</span>

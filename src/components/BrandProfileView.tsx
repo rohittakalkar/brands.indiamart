@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ExternalLink, ShieldCheck, MapPin, Star, Building2, Globe, FileText, Send, Calendar, Users, Briefcase } from 'lucide-react';
+import { ArrowLeft, ExternalLink, ShieldCheck, MapPin, Star, Building2, Globe, FileText, Send, Calendar, Users, Briefcase, Heart } from 'lucide-react';
 import { Brand, Product, Supplier, Review } from '../types';
 import { PRODUCTS, SUPPLIERS, REVIEWS } from '../data';
+import { BrandLogo } from './BrandLogo';
 
 interface BrandProfileViewProps {
   brand: Brand;
   onBack: () => void;
   onSelectProduct: (product: Product) => void;
   onOpenBuyLeadForm: (data: Partial<any>) => void;
+  shortlistedBrands: string[];
+  onToggleShortlistBrand: (id: string) => void;
 }
 
-export default function BrandProfileView({ brand, onBack, onSelectProduct, onOpenBuyLeadForm }: BrandProfileViewProps) {
+export default function BrandProfileView({ 
+  brand, 
+  onBack, 
+  onSelectProduct, 
+  onOpenBuyLeadForm,
+  shortlistedBrands,
+  onToggleShortlistBrand
+}: BrandProfileViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'products' | 'suppliers' | 'trust'>('overview');
 
   // Filter products and suppliers specifically for this brand
@@ -25,10 +35,12 @@ export default function BrandProfileView({ brand, onBack, onSelectProduct, onOpe
     });
   };
 
+  const isBrandSaved = shortlistedBrands.includes(brand.id);
+
   return (
-    <div className="flex-1 bg-slate-50 flex flex-col">
+    <div className="flex-1 bg-slate-50 flex flex-col h-full overflow-hidden">
       {/* Brand Header */}
-      <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shrink-0">
+      <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between shrink-0 relative z-10">
         <div className="flex items-center gap-3">
           <button onClick={onBack} className="p-1.5 hover:bg-slate-100 rounded-full transition">
             <ArrowLeft className="w-4 h-4 text-slate-800" />
@@ -39,6 +51,13 @@ export default function BrandProfileView({ brand, onBack, onSelectProduct, onOpe
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          <button 
+            onClick={() => onToggleShortlistBrand(brand.id)}
+            className="p-1.5 hover:bg-rose-50 rounded-full text-rose-500 transition"
+            title={isBrandSaved ? "Remove Brand from Shortlist" : "Shortlist Brand"}
+          >
+            <Heart className={`w-4.5 h-4.5 ${isBrandSaved ? 'text-rose-500 fill-rose-500' : 'text-slate-400'}`} />
+          </button>
           {brand.website && (
             <a 
               href={`https://${brand.website}`} 
@@ -59,11 +78,11 @@ export default function BrandProfileView({ brand, onBack, onSelectProduct, onOpe
         <div className="bg-gradient-to-r from-[#028384] to-[#005e60] px-5 py-6 text-white relative">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#028384] font-extrabold text-base border-2 border-white shadow-md">
-                {brand.logo}
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#028384] font-extrabold text-base border-2 border-white shadow-md overflow-hidden p-1.5">
+                <BrandLogo logo={brand.logo} name={brand.name} />
               </div>
               <h1 className="text-base font-extrabold tracking-tight mt-3">{brand.name}</h1>
-              <p className="text-[10px] text-red-100 leading-snug">{brand.description}</p>
+              <p className="text-[10px] text-teal-100 leading-snug">{brand.description}</p>
             </div>
             {brand.verified && (
               <span className="bg-white/20 border border-white/40 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
@@ -76,15 +95,15 @@ export default function BrandProfileView({ brand, onBack, onSelectProduct, onOpe
           <div className="grid grid-cols-3 gap-2.5 mt-5 border-t border-white/20 pt-4 text-center">
             <div>
               <div className="text-sm font-extrabold">{brand.reviewsCount}+</div>
-              <div className="text-[8px] text-red-100 font-bold uppercase tracking-wide">Reviews</div>
+              <div className="text-[8px] text-teal-100 font-bold uppercase tracking-wide">Reviews</div>
             </div>
             <div className="border-x border-white/20">
               <div className="text-sm font-extrabold">{brand.rating} / 5</div>
-              <div className="text-[8px] text-red-100 font-bold uppercase tracking-wide">Avg Rating</div>
+              <div className="text-[8px] text-teal-100 font-bold uppercase tracking-wide">Avg Rating</div>
             </div>
             <div>
               <div className="text-sm font-extrabold">30K+</div>
-              <div className="text-[8px] text-red-100 font-bold uppercase tracking-wide">Buyers Connected</div>
+              <div className="text-[8px] text-teal-100 font-bold uppercase tracking-wide">Buyers Connected</div>
             </div>
           </div>
         </div>
@@ -335,7 +354,7 @@ export default function BrandProfileView({ brand, onBack, onSelectProduct, onOpe
       <div className="border-t border-slate-100 p-4 bg-white shrink-0">
         <button
           onClick={handleInquireAll}
-          className="w-full bg-[#028384] hover:bg-[#007072] text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+          className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
         >
           <Send className="w-4 h-4" />
           <span>Inquire With Brand Distributors</span>

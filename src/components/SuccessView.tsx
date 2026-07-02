@@ -8,8 +8,6 @@ interface SuccessViewProps {
 }
 
 export default function SuccessView({ lead, onBackToHome }: SuccessViewProps) {
-  const generatedId = `BL${Math.floor(100000000 + Math.random() * 900000000)}`;
-
   return (
     <div className="flex-1 bg-white flex flex-col">
       {/* Scrollable Success Panel */}
@@ -29,13 +27,13 @@ export default function SuccessView({ lead, onBackToHome }: SuccessViewProps) {
         {/* BuyLead ID Banner */}
         <div className="mt-4 bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-2 flex items-center justify-between gap-6 w-full max-w-xs shadow-sm">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">BuyLead ID</span>
-          <span className="text-xs font-mono font-extrabold text-red-600">{generatedId}</span>
+          <span className="text-xs font-mono font-extrabold text-[#028384]">{lead.id}</span>
         </div>
 
         {/* Inquiry Card */}
         <div className="mt-5 border border-slate-200/80 rounded-2xl p-4 w-full max-w-xs space-y-3 shadow-sm bg-white">
           <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 text-slate-800 font-bold text-xs">
-            <ClipboardList className="w-4 h-4 text-red-600 animate-pulse" />
+            <ClipboardList className="w-4 h-4 text-[#028384]" />
             <span>Your Inquiry Details</span>
           </div>
 
@@ -95,7 +93,7 @@ export default function SuccessView({ lead, onBackToHome }: SuccessViewProps) {
       <div className="border-t border-slate-100 p-4 shrink-0 space-y-2 bg-white">
         <button
           onClick={onBackToHome}
-          className="w-full flex items-center justify-center gap-1.5 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition shadow-sm"
+          className="w-full flex items-center justify-center gap-1.5 py-3 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-xs transition shadow-sm"
         >
           <span>Go to My BuyLeads</span>
           <ChevronRight className="w-3.5 h-3.5" />

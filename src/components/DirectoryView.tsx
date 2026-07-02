@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Grid, List, ShieldCheck, Star, Award, Layers, Sparkles } from 'lucide-react';
 import { BRANDS, CATEGORIES } from '../data';
 import { Brand } from '../types';
+import { BrandLogo } from './BrandLogo';
 
 interface DirectoryViewProps {
   onSelectBrand: (brand: Brand) => void;
@@ -53,12 +54,24 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
     <div className="flex-1 bg-slate-50 flex flex-col overflow-hidden">
       {/* Search & Header Section */}
       <div className="bg-white border-b border-slate-100 p-4 space-y-3 shrink-0">
-        <div>
-          <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-[#028384]" />
-            <span>Brand Directory</span>
-          </h2>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Explore verified B2B brands across industries</span>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="mr-1 p-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+              <Layers className="w-4 h-4 text-[#028384]" />
+              <span>Brand Directory</span>
+            </h2>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Explore verified B2B brands across industries</span>
+          </div>
         </div>
 
         {/* Input box */}
@@ -153,8 +166,8 @@ export default function DirectoryView({ onSelectBrand, onBack, initialCategory, 
                   <div className="flex items-start justify-between">
                     <div className="flex gap-2.5">
                       {/* Logo Frame */}
-                      <div className="w-10 h-10 bg-teal-50 border border-teal-100 rounded-xl text-[#028384] font-extrabold text-xs flex items-center justify-center shrink-0">
-                        {brand.logo}
+                      <div className="w-10 h-10 bg-teal-50 border border-teal-100 rounded-xl text-[#028384] font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden p-1 bg-white">
+                        <BrandLogo logo={brand.logo} name={brand.name} />
                       </div>
                       <div>
                         <h4 className="font-extrabold text-xs text-slate-900 leading-tight">{brand.name}</h4>

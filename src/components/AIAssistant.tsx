@@ -106,7 +106,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
           </div>
         </div>
         <div className="bg-white/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-          Gemini 2.5
+          Gemini 3.5
         </div>
       </div>
 

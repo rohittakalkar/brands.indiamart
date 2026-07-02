@@ -2,26 +2,29 @@ import React, { useState } from 'react';
 import PhoneContainer from './components/PhoneContainer';
 import DiscoverView from './components/DiscoverView';
 import DirectoryView from './components/DirectoryView';
-import AIAssistant from './components/AIAssistant';
-import MarketplaceIntelligence from './components/MarketplaceIntelligence';
 import BrandProfileView from './components/BrandProfileView';
 import ProductDetailView from './components/ProductDetailView';
 import CompareView from './components/CompareView';
+import CategorySearchView from './components/CategorySearchView';
+import ShortlistedView from './components/ShortlistedView';
 import BuyLeadFormModal from './components/BuyLeadFormModal';
 import SuccessView from './components/SuccessView';
-import { Home, Search, Sparkles, LineChart, FileText, CheckCircle2, Clock, Eye, ChevronRight } from 'lucide-react';
+import { Home, Layers, GitCompare, Heart, FileText, Clock, Building2 } from 'lucide-react';
 import { Brand, Product, BuyLead } from './types';
 import { PRODUCTS, BRANDS, CATEGORIES } from './data';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState<'home' | 'directory' | 'ai' | 'pulse' | 'leads'>('home');
+  const [currentTab, setCurrentTab] = useState<'home' | 'categories' | 'compare' | 'shortlisted' | 'brands' | 'leads'>('home');
   
   // Detail views state
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isCompareActive, setIsCompareActive] = useState(false);
-  const [searchInitialCategory, setSearchInitialCategory] = useState<string>('all');
-  const [searchInitialQuery, setSearchInitialQuery] = useState<string>('');
+  const [directoryState, setDirectoryState] = useState<{ category: string; query: string } | null>(null);
+
+  // Shortlisted tracking state (prefilled with 1 item of each type to make the UI look rich and functional initially)
+  const [shortlistedBrands, setShortlistedBrands] = useState<string[]>(['kirloskar']);
+  const [shortlistedProducts, setShortlistedProducts] = useState<string[]>(['voltas-water-cooler']);
+  const [shortlistedCategories, setShortlistedCategories] = useState<string[]>(['machinery']);
 
   // Modal & Success States
   const [isBuyLeadModalOpen, setIsBuyLeadModalOpen] = useState(false);
@@ -52,6 +55,25 @@ export default function App() {
     }
   ]);
 
+  // Shortlist Toggles
+  const toggleShortlistBrand = (id: string) => {
+    setShortlistedBrands(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleShortlistProduct = (id: string) => {
+    setShortlistedProducts(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleShortlistCategory = (id: string) => {
+    setShortlistedCategories(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
   // Open inquiry form
   const handleOpenBuyLeadForm = (data: Partial<any>) => {
     setPrefilledLeadData(data);
@@ -75,12 +97,6 @@ export default function App() {
     setShowSuccessLead(newLead);
   };
 
-  // Auto fill inquiry triggered from AI assistant recommendations
-  const handleAutoFillFromAI = (leadData: Partial<BuyLead>) => {
-    setPrefilledLeadData(leadData);
-    setIsBuyLeadModalOpen(true);
-  };
-
   // Handle B2B Search submit trigger
   const handleB2BSearch = (query: string) => {
     const q = query.toLowerCase().trim();
@@ -89,7 +105,7 @@ export default function App() {
     // Reset details first
     setSelectedBrand(null);
     setSelectedProduct(null);
-    setIsCompareActive(false);
+    setDirectoryState(null);
 
     // 1. Check for exact/partial Brand Match
     const matchedBrand = BRANDS.find(b => 
@@ -158,16 +174,12 @@ export default function App() {
       c.id.toLowerCase() === q
     );
     if (matchedCategory) {
-      setCurrentTab('directory');
-      setSearchInitialCategory(matchedCategory.id);
-      setSearchInitialQuery('');
+      setDirectoryState({ category: matchedCategory.id, query: '' });
       return;
     }
 
     // 5. Default: general search query in Directory view
-    setCurrentTab('directory');
-    setSearchInitialCategory('all');
-    setSearchInitialQuery(query);
+    setDirectoryState({ category: 'all', query: query });
   };
 
   const handleSelectBrandId = (brandId: string) => {
@@ -175,17 +187,14 @@ export default function App() {
     if (brandObj) {
       setSelectedBrand(brandObj);
       setSelectedProduct(null);
-      setIsCompareActive(false);
+      setDirectoryState(null);
     }
   };
 
   const handleSelectCategoryId = (catId: string) => {
     setSelectedBrand(null);
     setSelectedProduct(null);
-    setIsCompareActive(false);
-    setCurrentTab('directory');
-    setSearchInitialCategory(catId);
-    setSearchInitialQuery('');
+    setDirectoryState({ category: catId, query: '' });
   };
 
   // Sub-navigation render routers
@@ -199,19 +208,9 @@ export default function App() {
             setShowSuccessLead(null);
             setSelectedBrand(null);
             setSelectedProduct(null);
-            setIsCompareActive(false);
+            setDirectoryState(null);
             setCurrentTab('leads');
           }}
-        />
-      );
-    }
-
-    // If an active compare board is open
-    if (isCompareActive) {
-      return (
-        <CompareView 
-          onBack={() => setIsCompareActive(false)} 
-          onOpenBuyLeadForm={handleOpenBuyLeadForm}
         />
       );
     }
@@ -223,7 +222,12 @@ export default function App() {
           product={selectedProduct}
           onBack={() => setSelectedProduct(null)}
           onOpenBuyLeadForm={handleOpenBuyLeadForm}
-          onCompareSuppliers={() => setIsCompareActive(true)}
+          onCompareSuppliers={() => {
+            setCurrentTab('compare');
+            setSelectedProduct(null);
+          }}
+          shortlistedProducts={shortlistedProducts}
+          onToggleShortlistProduct={toggleShortlistProduct}
         />
       );
     }
@@ -236,6 +240,20 @@ export default function App() {
           onBack={() => setSelectedBrand(null)}
           onSelectProduct={(p) => setSelectedProduct(p)}
           onOpenBuyLeadForm={handleOpenBuyLeadForm}
+          shortlistedBrands={shortlistedBrands}
+          onToggleShortlistBrand={toggleShortlistBrand}
+        />
+      );
+    }
+
+    // If a directory search overlay is active
+    if (directoryState) {
+      return (
+        <DirectoryView 
+          initialCategory={directoryState.category}
+          initialSearchQuery={directoryState.query}
+          onSelectBrand={(b) => setSelectedBrand(b)}
+          onBack={() => setDirectoryState(null)}
         />
       );
     }
@@ -247,70 +265,98 @@ export default function App() {
           <DiscoverView 
             onSelectBrand={(b) => setSelectedBrand(b)}
             onSelectCategory={handleSelectCategoryId}
+            onSelectProduct={(p) => setSelectedProduct(p)}
             onOpenRFQForm={() => handleOpenBuyLeadForm({})}
             onSearch={handleB2BSearch}
+            shortlistedBrands={shortlistedBrands}
+            shortlistedProducts={shortlistedProducts}
+            shortlistedCategories={shortlistedCategories}
+            onToggleShortlistBrand={toggleShortlistBrand}
+            onToggleShortlistProduct={toggleShortlistProduct}
+            onToggleShortlistCategory={toggleShortlistCategory}
           />
         );
-      case 'directory':
+      case 'categories':
+        return (
+          <CategorySearchView 
+            onSelectCategory={handleSelectCategoryId}
+            onOpenBuyLeadForm={handleOpenBuyLeadForm}
+            shortlistedCategories={shortlistedCategories}
+            onToggleShortlistCategory={toggleShortlistCategory}
+          />
+        );
+      case 'compare':
+        return (
+          <CompareView 
+            onBack={() => setCurrentTab('home')} 
+            onOpenBuyLeadForm={handleOpenBuyLeadForm}
+            onSelectBrand={handleSelectBrandId}
+          />
+        );
+      case 'shortlisted':
+        return (
+          <ShortlistedView 
+            shortlistedBrands={shortlistedBrands}
+            shortlistedProducts={shortlistedProducts}
+            shortlistedCategories={shortlistedCategories}
+            onToggleShortlistBrand={toggleShortlistBrand}
+            onToggleShortlistProduct={toggleShortlistProduct}
+            onToggleShortlistCategory={toggleShortlistCategory}
+            onSelectBrand={(b) => setSelectedBrand(b)}
+            onSelectProduct={(p) => setSelectedProduct(p)}
+            onSelectCategory={handleSelectCategoryId}
+            onOpenBuyLeadForm={handleOpenBuyLeadForm}
+            onBrowseMore={() => setCurrentTab('categories')}
+          />
+        );
+      case 'brands':
         return (
           <DirectoryView 
-            initialCategory={searchInitialCategory}
-            initialSearchQuery={searchInitialQuery}
             onSelectBrand={(b) => setSelectedBrand(b)}
           />
         );
-      case 'ai':
-        return (
-          <AIAssistant 
-            onAutoFillLead={handleAutoFillFromAI}
-            onSelectBrand={handleSelectBrandId}
-            onSelectCategory={handleSelectCategoryId}
-          />
-        );
-      case 'pulse':
-        return <MarketplaceIntelligence />;
       case 'leads':
         return (
           <div className="flex-1 bg-slate-50 flex flex-col overflow-hidden select-none">
-            {/* Leads list header */}
+            {/* Leads list header in IndiaMART style */}
             <div className="bg-white border-b border-slate-100 p-4 shrink-0">
               <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-red-600" />
+                <FileText className="w-4 h-4 text-[#028384]" />
                 <span>My BuyLeads Tracker</span>
               </h2>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Monitor quotation proposals from matching brands</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">Monitor response quotations from verified manufacturers</span>
             </div>
 
             {/* List layout */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {createdLeads.length === 0 ? (
-                <div className="bg-white border rounded-2xl p-8 text-center text-slate-400 text-xs">
-                  No BuyLeads created yet. Try talking with the AI Assistant or visiting a product catalog to request quotes!
+                <div className="bg-white border rounded-2xl p-8 text-center text-slate-400 text-xs shadow-xs">
+                  No BuyLeads created yet. Send a custom inquiry to receive competitive price proposals.
                 </div>
               ) : (
                 createdLeads.map((lead) => (
                   <div key={lead.id} className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-xs">
                     <div className="flex justify-between items-start">
                       <div>
-                        <span className="text-[9px] text-red-600 font-bold uppercase tracking-widest">{lead.id}</span>
+                        <span className="text-[9px] text-[#028384] font-black uppercase tracking-widest">{lead.id}</span>
                         <h4 className="font-extrabold text-xs text-slate-900 leading-tight mt-0.5">{lead.productName}</h4>
                       </div>
-                      <span className={`px-2 py-0.5 text-[8px] font-bold rounded-full uppercase tracking-wider ${
-                        lead.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-                        lead.status === 'connected' ? 'bg-indigo-100 text-indigo-800' :
-                        'bg-amber-100 text-amber-800'
+                      <span className={`px-2 py-0.5 text-[8px] font-black rounded-full uppercase tracking-wider ${
+                        lead.status === 'completed' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                        lead.status === 'connected' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' :
+                        'bg-amber-100 text-amber-800 border border-amber-200'
                       }`}>
                         {lead.status}
                       </span>
                     </div>
 
                     <div className="text-[11px] text-slate-600 font-medium leading-relaxed bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                      <div><strong className="text-slate-800">Qty:</strong> {lead.quantity}</div>
-                      <div className="mt-0.5"><strong className="text-slate-800">Deliv. Area:</strong> {lead.location}</div>
-                      <p className="mt-1.5 text-[10px] italic font-normal text-slate-500 border-t border-slate-100/60 pt-1.5">"{lead.requirement}"</p>
+                      <div><strong className="text-slate-800 font-bold">Qty Required:</strong> {lead.quantity}</div>
+                      <div className="mt-0.5"><strong className="text-slate-800 font-bold">Delivery Location:</strong> {lead.location}</div>
+                      <p className="mt-1.5 text-[10px] italic font-normal text-slate-500 border-t border-slate-150/60 pt-1.5">"{lead.requirement}"</p>
                     </div>
 
-                    <div className="text-[9px] text-slate-400 font-bold flex items-center gap-1">
+                    <div className="text-[9px] text-slate-400 font-bold flex items-center gap-1 pt-1">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       <span>Submitted on {new Date(lead.timestamp).toLocaleDateString()}</span>
                     </div>
@@ -325,6 +371,9 @@ export default function App() {
     }
   };
 
+  // Sum of shortlisted counts for tab badge
+  const shortlistedTotalCount = shortlistedBrands.length + shortlistedProducts.length + shortlistedCategories.length;
+
   return (
     <PhoneContainer>
       {/* Screen body */}
@@ -334,93 +383,124 @@ export default function App() {
 
       {/* Floating Bottom Nav Bar */}
       {!showSuccessLead && (
-        <nav className="h-[52px] bg-white border-t border-slate-150/80 grid grid-cols-5 select-none shrink-0 z-20">
+        <nav className="h-[52px] bg-white border-t border-slate-200 grid grid-cols-6 select-none shrink-0 z-20">
+          
+          {/* 1. Home */}
           <button 
             onClick={() => {
               setCurrentTab('home');
               setSelectedBrand(null);
               setSelectedProduct(null);
-              setIsCompareActive(false);
+              setDirectoryState(null);
             }}
-            className={`flex flex-col items-center justify-center gap-0.5 transition ${
-              currentTab === 'home' && !selectedBrand && !selectedProduct && !isCompareActive 
-                ? 'text-[#028384] font-bold' 
+            className={`flex flex-col items-center justify-center gap-0.5 transition w-full ${
+              currentTab === 'home' && !selectedBrand && !selectedProduct && !directoryState 
+                ? 'text-[#028384] font-black' 
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Home className="w-4.5 h-4.5" />
-            <span className="text-[8px] font-bold tracking-wide uppercase scale-90">Home</span>
+            <Home className="w-4 h-4" />
+            <span className="text-[8px] font-black tracking-tighter uppercase">Home</span>
           </button>
 
+          {/* 2. Categories */}
           <button 
             onClick={() => {
-              setCurrentTab('directory');
+              setCurrentTab('categories');
               setSelectedBrand(null);
               setSelectedProduct(null);
-              setIsCompareActive(false);
-              setSearchInitialCategory('all');
+              setDirectoryState(null);
             }}
-            className={`flex flex-col items-center justify-center gap-0.5 transition ${
-              currentTab === 'directory' && !selectedBrand && !selectedProduct && !isCompareActive 
-                ? 'text-[#028384] font-bold' 
+            className={`flex flex-col items-center justify-center gap-0.5 transition w-full ${
+              currentTab === 'categories' && !selectedBrand && !selectedProduct && !directoryState 
+                ? 'text-[#028384] font-black' 
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Search className="w-4.5 h-4.5" />
-            <span className="text-[8px] font-bold tracking-wide uppercase scale-90">Directory</span>
+            <Layers className="w-4 h-4" />
+            <span className="text-[8px] font-black tracking-tighter uppercase">Categories</span>
           </button>
 
+          {/* 3. Compare (PRIME FEATURE IN THE CENTER!) */}
+          <div className="relative flex items-center justify-center -mt-3.5 w-full">
+            <button 
+              onClick={() => {
+                setCurrentTab('compare');
+                setSelectedBrand(null);
+                setSelectedProduct(null);
+                setDirectoryState(null);
+              }}
+              className={`flex flex-col items-center justify-center w-11 h-11 rounded-full border-2 transition shadow-md ${
+                currentTab === 'compare' 
+                  ? 'bg-[#2563eb] border-[#2563eb] text-white' 
+                  : 'bg-[#3b82f6] border-[#3b82f6] text-white hover:bg-[#1d4ed8]'
+              }`}
+              title="Compare Industrial Suppliers side-by-side"
+            >
+              <GitCompare className="w-4.5 h-4.5 animate-bounce-slow" />
+            </button>
+            <span className="absolute bottom-[-13px] text-[8px] text-slate-500 font-extrabold tracking-tighter uppercase">Compare</span>
+          </div>
+
+          {/* 4. Shortlist */}
           <button 
             onClick={() => {
-              setCurrentTab('ai');
+              setCurrentTab('shortlisted');
               setSelectedBrand(null);
               setSelectedProduct(null);
-              setIsCompareActive(false);
+              setDirectoryState(null);
             }}
-            className={`flex flex-col items-center justify-center gap-0.5 transition relative ${
-              currentTab === 'ai' && !selectedBrand && !selectedProduct && !isCompareActive 
-                ? 'text-[#028384] font-bold' 
+            className={`flex flex-col items-center justify-center gap-0.5 transition relative w-full ${
+              currentTab === 'shortlisted' && !selectedBrand && !selectedProduct && !directoryState 
+                ? 'text-[#028384] font-black' 
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Sparkles className="w-4.5 h-4.5 fill-amber-300/40 text-amber-500 animate-pulse" />
-            <span className="text-[8px] font-bold tracking-wide uppercase scale-90">AI Smart</span>
+            <Heart className={`w-4 h-4 ${currentTab === 'shortlisted' ? 'fill-rose-500 text-rose-500' : ''}`} />
+            <span className="text-[8px] font-black tracking-tighter uppercase">Shortlist</span>
+            {shortlistedTotalCount > 0 && (
+              <span className="absolute top-1 right-1.5 bg-[#2563eb] text-white text-[7.5px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center scale-90 ring-1 ring-white">
+                {shortlistedTotalCount}
+              </span>
+            )}
           </button>
 
+          {/* 5. Brands */}
           <button 
             onClick={() => {
-              setCurrentTab('pulse');
+              setCurrentTab('brands');
               setSelectedBrand(null);
               setSelectedProduct(null);
-              setIsCompareActive(false);
+              setDirectoryState(null);
             }}
-            className={`flex flex-col items-center justify-center gap-0.5 transition ${
-              currentTab === 'pulse' && !selectedBrand && !selectedProduct && !isCompareActive 
-                ? 'text-[#028384] font-bold' 
+            className={`flex flex-col items-center justify-center gap-0.5 transition relative w-full ${
+              currentTab === 'brands' && !selectedBrand && !selectedProduct && !directoryState 
+                ? 'text-[#028384] font-black' 
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <LineChart className="w-4.5 h-4.5" />
-            <span className="text-[8px] font-bold tracking-wide uppercase scale-90">Pulse</span>
+            <Building2 className="w-4 h-4" />
+            <span className="text-[8px] font-black tracking-tighter uppercase">Brands</span>
           </button>
 
+          {/* 6. Leads */}
           <button 
             onClick={() => {
               setCurrentTab('leads');
               setSelectedBrand(null);
               setSelectedProduct(null);
-              setIsCompareActive(false);
+              setDirectoryState(null);
             }}
-            className={`flex flex-col items-center justify-center gap-0.5 transition relative ${
-              currentTab === 'leads' && !selectedBrand && !selectedProduct && !isCompareActive 
-                ? 'text-[#028384] font-bold' 
+            className={`flex flex-col items-center justify-center gap-0.5 transition relative w-full ${
+              currentTab === 'leads' && !selectedBrand && !selectedProduct && !directoryState 
+                ? 'text-[#028384] font-black' 
                 : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <FileText className="w-4.5 h-4.5" />
-            <span className="text-[8px] font-bold tracking-wide uppercase scale-90">My Leads</span>
+            <FileText className="w-4 h-4" />
+            <span className="text-[8px] font-black tracking-tighter uppercase">Leads</span>
             {createdLeads.length > 0 && (
-              <span className="absolute top-1 right-3 bg-red-600 text-white text-[8px] font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center scale-90 ring-1 ring-white">
+              <span className="absolute top-1 right-2 bg-slate-400 text-white text-[7.5px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center scale-90 ring-1 ring-white">
                 {createdLeads.length}
               </span>
             )}

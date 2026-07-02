@@ -1,0 +1,6 @@
+{
+  "name": "IndiaMART Brands",
+  "description": "A buyer-first mobile experience to discover, compare, and connect with verified brands, standard products, and quality B2B suppliers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

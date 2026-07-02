@@ -1,8 +1,8 @@
 import { Product } from '../types';
 
-export async function getProducts(filter?: { category?: string; brandId?: string }): Promise<Product[]> {
+export async function getProducts(filter?: { mcatId?: string; brandId?: string }): Promise<Product[]> {
   const params = new URLSearchParams();
-  if (filter?.category) params.set('category', filter.category);
+  if (filter?.mcatId) params.set('mcatId', filter.mcatId);
   if (filter?.brandId) params.set('brandId', filter.brandId);
   const qs = params.toString();
   const res = await fetch(`/api/products${qs ? `?${qs}` : ''}`);

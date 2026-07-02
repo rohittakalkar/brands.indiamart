@@ -32,7 +32,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
     {
       id: 'welcome',
       sender: 'assistant',
-      text: "👋 Hello! I'm your **IndiaMART Brands AI Assistant**.\n\nTell me what B2B products or brands you're looking for! E.g. _'Need 50HP submersible pumps for heavy irrigation in Gujarat'_ or _'Compare Kirloskar vs KSB pumps for chemical usage.'_\n\nI can analyze specifications, suggest verified brands, and draft your BuyLead inquiry automatically!",
+      text: "👋 Hello! I'm your **IndiaMART Brands AI Assistant**.\n\nTell me what B2B products or brands you're looking for! E.g. _'Need 50HP submersible pumps for heavy irrigation in Gujarat'_ or _'Compare Kirloskar vs KSB pumps for chemical usage.'_\n\nI can analyze specifications, suggest verified brands, and draft your requirement automatically!",
       timestamp: new Date()
     }
   ]);
@@ -90,12 +90,12 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* AI Assistant Header */}
-      <div className="bg-gradient-to-r from-[#028384] to-[#005e60] px-4 py-3.5 text-white flex items-center justify-between shadow-md shrink-0">
+      <div className="bg-gradient-to-r from-primary to-secondary px-4 py-3.5 text-white flex items-center justify-between shadow-md shrink-0">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-teal-300 fill-teal-300/20" />
+          <Sparkles className="w-5 h-5 text-accent-blue fill-accent-blue/20" />
           <div>
             <h2 className="font-bold text-sm leading-none">IndiaMART Smart AI</h2>
-            <span className="text-[10px] text-teal-50 font-medium">Verified Brand & RFQ Companion</span>
+            <span className="text-[10px] text-white/80 font-medium">Verified Brand & RFQ Companion</span>
           </div>
         </div>
         <div className="bg-white/10 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
@@ -111,14 +111,14 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
             <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[85%] flex gap-2.5 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                 {/* Avatar */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isUser ? 'bg-zinc-800 text-white' : 'bg-teal-50 text-[#028384]'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isUser ? 'bg-zinc-800 text-white' : 'bg-accent-blue/10 text-accent-blue'}`}>
                   {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
 
                 {/* Content Bubble */}
                 <div className="flex flex-col gap-1.5">
-                  <div className={`rounded-2xl px-4 py-2.5 text-xs shadow-sm leading-relaxed ${isUser ? 'bg-[#028384] text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
-                    <div className="whitespace-pre-line prose prose-sm prose-teal max-w-none">
+                  <div className={`rounded-2xl px-4 py-2.5 text-xs shadow-sm leading-relaxed ${isUser ? 'bg-accent-blue text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
+                    <div className="whitespace-pre-line prose prose-sm prose-slate max-w-none">
                       {/* Simple markdown parsing for bold text */}
                       {msg.text.split('\n').map((line, lIdx) => {
                         // Very simple bold replacement **text**
@@ -196,7 +196,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
                               location: msg.draftedBuyLead?.location || 'Pune, Maharashtra',
                               requirement: msg.draftedBuyLead?.requirement
                             })}
-                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-[#028384] hover:bg-[#007072] text-white font-bold rounded-lg transition text-[11px] shadow-sm"
+                            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-accent-blue hover:bg-secondary text-white font-bold rounded-lg transition text-[11px] shadow-sm"
                           >
                             <Check className="w-3.5 h-3.5" />
                             Instant Auto-Fill & Send Inquiry
@@ -214,11 +214,11 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
         {isLoading && (
           <div className="flex justify-start">
             <div className="max-w-[85%] flex gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-teal-50 text-[#028384] flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center shrink-0">
                 <Bot className="w-4 h-4" />
               </div>
               <div className="bg-white border border-slate-200 text-slate-500 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs shadow-sm flex items-center gap-2">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#028384]" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-blue" />
                 <span>Gemini is analyzing brands & drafting RFQ...</span>
               </div>
             </div>
@@ -245,12 +245,12 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask AI or describe your B2B requirements..."
-          className="flex-1 bg-slate-50 border border-slate-200 focus:border-[#028384] focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
+          className="flex-1 bg-slate-50 border border-slate-200 focus:border-accent-blue focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
           disabled={isLoading}
         />
         <button
           type="submit"
-          className="bg-[#028384] hover:bg-[#007072] disabled:bg-zinc-300 text-white p-2.5 rounded-xl transition shrink-0"
+          className="bg-accent-blue hover:bg-secondary disabled:bg-zinc-300 text-white p-2.5 rounded-xl transition shrink-0"
           disabled={!input.trim() || isLoading}
         >
           <Send className="w-4 h-4" />

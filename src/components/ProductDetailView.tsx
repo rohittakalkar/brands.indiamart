@@ -1,29 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Share2, Heart, ShieldCheck, Send, CheckCircle2 } from 'lucide-react';
-import { Product } from '../types';
+import { ArrowLeft, Share2, Heart, Send, GitCompare, ShoppingBag } from 'lucide-react';
+import { Product, Brand, Supplier, AlternativeProduct } from '../types';
+import { TrustBadge } from './TrustBadge';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
+import { useRecentlyViewed } from './RecentlyViewedProvider';
+import { useQuoteBasket } from './QuoteBasketProvider';
 
 interface ProductDetailViewProps {
   product: Product;
+  brand: Brand;
+  suppliers: Supplier[];
+  alternatives: AlternativeProduct[];
 }
 
-export default function ProductDetailView({ product }: ProductDetailViewProps) {
+export default function ProductDetailView({ product, brand, suppliers, alternatives }: ProductDetailViewProps) {
   const router = useRouter();
   const { shortlistedProducts, toggleShortlistProduct } = useShortlist();
   const { open: openBuyLeadForm } = useBuyLeadModal();
-  const [activeTab, setActiveTab] = useState<'specs' | 'suppliers'>('specs');
+  const { trackView } = useRecentlyViewed();
+  const { items: basketItems, addToBasket } = useQuoteBasket();
+  const [activeTab, setActiveTab] = useState<'specs' | 'sellers' | 'highlights'>('specs');
+
+  useEffect(() => {
+    trackView('product', product.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   const isSaved = shortlistedProducts.includes(product.id);
+  const inBasket = basketItems.some(i => i.productId === product.id);
 
   const handleSendLead = () => {
     openBuyLeadForm({
       productName: product.name,
       brandName: product.brandName,
       requirement: `Looking to purchase ${product.name}. Please provide quotation for the standard spec: ${Object.entries(product.specifications).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(', ')}.`
+    });
+  };
+
+  const handleAddToBasket = () => {
+    addToBasket({
+      productId: product.id,
+      productName: product.name,
+      brandName: product.brandName,
+      quantity: product.moq
+    });
+  };
+
+  const handleSellerQuote = (supplier: Supplier) => {
+    openBuyLeadForm({
+      productName: product.name,
+      brandName: product.brandName,
+      requirement: `Requesting a quote for ${product.name} (Model ${product.modelNumber}) from ${supplier.name}.`
     });
   };
 
@@ -64,25 +95,29 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
             referrerPolicy="no-referrer"
             className="w-48 h-48 object-contain rounded-2xl shadow-sm mix-blend-multiply"
           />
-          <div className="absolute bottom-3 left-4 flex gap-1.5">
-            <span className="bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200 rounded-full px-2.5 py-0.5 flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              Verified Brand
-            </span>
-            <span className="bg-indigo-50 text-indigo-800 text-[10px] font-bold border border-indigo-200 rounded-full px-2.5 py-0.5 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
-              Standard Product
-            </span>
+          <div className="absolute bottom-3 left-4 flex flex-wrap gap-1.5 max-w-[calc(100%-32px)]">
+            <TrustBadge type="manufacturer-oem" who={brand.name} />
+            {brand.verified && (
+              <TrustBadge type="verified-supplier" who="IndiaMART" since={brand.verifiedSince} />
+            )}
+            {product.certifications && product.certifications.length > 0 && (
+              <TrustBadge type="certified-product" who={product.certifiedBy || brand.name} since={product.certifiedYear} />
+            )}
           </div>
         </div>
 
         {/* Product core info */}
         <div className="bg-white px-5 py-4 space-y-3 shadow-xs">
           <div>
-            <span className="text-[10px] text-[#028384] font-bold tracking-widest uppercase">{product.brandName}</span>
+            <span className="text-[10px] text-accent-blue font-bold tracking-widest uppercase">{product.brandName}</span>
             <h1 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-0.5">
               {product.name}
             </h1>
+            <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500 font-semibold">
+              <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Model: {product.modelNumber}</span>
+              <span>&bull;</span>
+              <span>{product.keySpecLabel}: <strong className="text-slate-800">{product.keySpecValue}</strong></span>
+            </div>
           </div>
 
           {/* Pricing indicator */}
@@ -103,17 +138,24 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
         <div className="bg-white border-y border-slate-100 mt-3 px-5 flex text-xs select-none sticky top-[52px] z-10 shadow-xs">
           <button
             onClick={() => setActiveTab('specs')}
-            className={`flex-1 py-3 text-center font-bold relative transition ${activeTab === 'specs' ? 'text-[#028384]' : 'text-slate-500'}`}
+            className={`flex-1 py-3 text-center font-bold relative transition ${activeTab === 'specs' ? 'text-accent-blue' : 'text-slate-500'}`}
           >
             Specifications
-            {activeTab === 'specs' && <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#028384] rounded-full"></div>}
+            {activeTab === 'specs' && <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
           <button
-            onClick={() => setActiveTab('suppliers')}
-            className={`flex-1 py-3 text-center font-bold relative transition ${activeTab === 'suppliers' ? 'text-[#028384]' : 'text-slate-500'}`}
+            onClick={() => setActiveTab('sellers')}
+            className={`flex-1 py-3 text-center font-bold relative transition ${activeTab === 'sellers' ? 'text-accent-blue' : 'text-slate-500'}`}
           >
-            Key Highlights
-            {activeTab === 'suppliers' && <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#028384] rounded-full"></div>}
+            Sellers ({suppliers.length})
+            {activeTab === 'sellers' && <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent-blue rounded-full"></div>}
+          </button>
+          <button
+            onClick={() => setActiveTab('highlights')}
+            className={`flex-1 py-3 text-center font-bold relative transition ${activeTab === 'highlights' ? 'text-accent-blue' : 'text-slate-500'}`}
+          >
+            Highlights
+            {activeTab === 'highlights' && <div className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
         </div>
 
@@ -134,10 +176,74 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                   </tbody>
                 </table>
               </div>
+
+              {product.certifications && product.certifications.length > 0 && (
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-2.5 shadow-xs">
+                  <TrustBadge type="certified-product" who={product.certifiedBy || brand.name} since={product.certifiedYear} detail />
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {product.certifications.map((cert, idx) => (
+                      <span key={idx} className="text-[9px] font-bold text-slate-600 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+                        {cert}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {activeTab === 'suppliers' && (
+          {activeTab === 'sellers' && (
+            <div className="space-y-3">
+              <h3 className="font-extrabold text-slate-950 text-xs uppercase tracking-wider">Authorized Sellers of This Product</h3>
+              {suppliers.length === 0 ? (
+                <div className="bg-white rounded-2xl p-6 border text-center text-slate-400 text-xs">
+                  No authorized seller listed yet for this exact model. Send a requirement and we'll match you with verified sellers.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {suppliers.map((supp) => (
+                    <div key={supp.id} className="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs text-slate-900 leading-tight">{supp.name}</h4>
+                          <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{supp.location}</span>
+                        </div>
+                        <div className="flex flex-col gap-1 items-end shrink-0">
+                          {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}
+                          {supp.isAuthorizedDealer && <TrustBadge type="authorized-dealer" who={brand.name} since={supp.authorizedSince} />}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-600 font-medium">
+                        <div>
+                          <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Rating</span>
+                          <span className="font-bold text-slate-900 block mt-0.5">{supp.rating} ★</span>
+                        </div>
+                        <div className="border-x border-slate-100">
+                          <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Resp. Time</span>
+                          <span className="font-bold text-slate-900 block mt-0.5">{supp.responseTime}</span>
+                        </div>
+                        <div>
+                          <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Delivery</span>
+                          <span className="font-bold text-slate-900 block mt-0.5">{supp.deliveryTimeRange}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => handleSellerQuote(supp)}
+                        className="w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
+                      >
+                        <Send className="w-3 h-3" />
+                        Get Quote From This Seller
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'highlights' && (
             <div className="space-y-4">
               <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3.5 shadow-xs">
                 <h3 className="font-extrabold text-slate-950 text-xs uppercase tracking-wider">Product Highlights</h3>
@@ -151,34 +257,70 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                 </div>
               </div>
 
-              {/* Compare Supplier Promo Card */}
-              <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4 space-y-3 shadow-xs">
-                <div>
-                  <h4 className="font-extrabold text-slate-900 text-xs">Unsure which supplier is best?</h4>
-                  <p className="text-[10px] text-slate-600 mt-1 leading-relaxed font-medium">
-                    We've aggregated delivery times, reviews, response metrics, and certifications for 3 top verified distributors.
-                  </p>
+              {product.useCases && product.useCases.length > 0 && (
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-xs">
+                  <h3 className="font-extrabold text-slate-950 text-xs uppercase tracking-wider">Use Cases</h3>
+                  <div className="grid grid-cols-1 gap-2">
+                    {product.useCases.map((useCase, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 text-[11px] font-semibold text-slate-700">
+                        {useCase}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <button
-                  onClick={() => router.push('/compare')}
-                  className="px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-[11px] transition shadow-xs"
-                >
-                  Compare Top Suppliers
-                </button>
+              )}
+            </div>
+          )}
+
+          {/* Compare Alternatives — similar products from OTHER brands, kept separate from this product's own sellers */}
+          {alternatives.length > 0 && (
+            <div className="mt-4 bg-accent-blue/10 border border-accent-blue/25 rounded-2xl p-4 space-y-3 shadow-xs">
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-xs flex items-center gap-1.5">
+                  <GitCompare className="w-3.5 h-3.5 text-accent-blue" />
+                  Compare Alternatives from Other Brands
+                </h4>
+                <p className="text-[10px] text-slate-600 mt-1 leading-relaxed font-medium">
+                  Similar products from other manufacturers, for reference — not sellers of this exact item.
+                </p>
               </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {alternatives.map((alt) => (
+                  <div key={alt.id} className="bg-white border border-slate-200/80 rounded-xl p-2.5 space-y-1">
+                    <span className="text-[10px] font-extrabold text-slate-900 block truncate">{alt.brandName}</span>
+                    <span className="text-[8.5px] text-slate-500 font-semibold block truncate">{alt.modelNumber}</span>
+                    <span className="text-[8.5px] text-slate-400 block">{alt.keySpecLabel}: {alt.keySpecValue}</span>
+                    <span className="text-[10px] font-black text-accent-blue block">{alt.priceRange}</span>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => router.push(`/compare?productId=${product.id}`)}
+                className="w-full px-4 py-2 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl text-[11px] transition shadow-xs"
+              >
+                Compare Offers
+              </button>
             </div>
           )}
         </div>
       </div>
 
       {/* Persistent lead generation footer */}
-      <div className="border-t border-slate-100 p-4 bg-white flex gap-3.5 shrink-0">
+      <div className="border-t border-slate-100 p-4 bg-white flex gap-2.5 shrink-0">
+        <button
+          onClick={handleAddToBasket}
+          disabled={inBasket}
+          className="px-4 bg-white border border-primary text-primary hover:bg-primary/5 disabled:border-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shrink-0"
+          title={inBasket ? 'Already in your quote basket' : 'Add to quote basket'}
+        >
+          <ShoppingBag className="w-4 h-4" />
+        </button>
         <button
           onClick={handleSendLead}
-          className="flex-1 bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
+          className="flex-1 bg-cta hover:bg-cta-hover text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
         >
           <Send className="w-4 h-4" />
-          <span>Generate BuyLeads - Get Quotes</span>
+          <span>Get Quotes From Sellers</span>
         </button>
       </div>
     </div>

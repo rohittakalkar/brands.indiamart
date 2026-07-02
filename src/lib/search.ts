@@ -1,6 +1,6 @@
 import 'server-only';
-import { BRANDS, PRODUCTS, CATEGORIES } from './data';
-import { Brand, Product } from '../types';
+import { BRANDS, PRODUCTS, MCATS, BRAND_MCATS } from './data';
+import { Brand, Product, MCat, BrandMCat } from '../types';
 
 export type SearchResolution =
   | { type: 'product'; product: Product }
@@ -34,7 +34,7 @@ export function resolveSearch(query: string): SearchResolution {
         const matchedProd = PRODUCTS.find(p =>
           p.brandId === brand.id &&
           (p.name.toLowerCase().includes(remainingQuery) ||
-           p.category.toLowerCase().includes(remainingQuery) ||
+           p.mcatId.toLowerCase().includes(remainingQuery) ||
            p.description.toLowerCase().includes(remainingQuery))
         );
         if (matchedProd) {
@@ -66,8 +66,8 @@ export function resolveSearch(query: string): SearchResolution {
     return { type: 'product', product: matchedProduct };
   }
 
-  // 4. Check for standalone Category Match
-  const matchedCategory = CATEGORIES.find(c =>
+  // 4. Check for standalone MCat Match
+  const matchedCategory = MCATS.find(c =>
     c.name.toLowerCase().includes(q) ||
     q.includes(c.name.toLowerCase()) ||
     c.id.toLowerCase() === q
@@ -78,4 +78,25 @@ export function resolveSearch(query: string): SearchResolution {
 
   // 5. Default: general search query in Directory view
   return { type: 'fallback', query };
+}
+
+export interface GroupedSearchResults {
+  products: Product[];
+  brands: Brand[];
+  categories: MCat[];
+  brandMCats: BrandMCat[];
+}
+
+export function getGroupedSearchResults(query: string): GroupedSearchResults {
+  const q = query.toLowerCase().trim();
+  return {
+    products: PRODUCTS.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.brandName.toLowerCase().includes(q) ||
+      p.modelNumber.toLowerCase().includes(q)
+    ).slice(0, 8),
+    brands: BRANDS.filter(b => b.name.toLowerCase().includes(q)).slice(0, 6),
+    categories: MCATS.filter(c => c.name.toLowerCase().includes(q)).slice(0, 6),
+    brandMCats: BRAND_MCATS.filter(m => m.name.toLowerCase().includes(q)).slice(0, 6)
+  };
 }

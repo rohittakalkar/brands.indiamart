@@ -1,10 +1,10 @@
 import CategorySearchView from '@/components/CategorySearchView';
-import { getCategories, getBrands, getProducts } from '@/lib/data';
+import { getMcats, getBrands, getProducts } from '@/lib/data';
 
 export default function Page() {
   return (
     <CategorySearchView
-      categories={getCategories()}
+      categories={getMcats()}
       brands={getBrands()}
       products={getProducts()}
     />

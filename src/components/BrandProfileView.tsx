@@ -1,26 +1,36 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Send } from 'lucide-react';
-import { Brand, Product, Supplier, Review } from '../types';
+import { ArrowLeft, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Send, GitCompare, Download, FileText, Wrench, Phone, Clock, LayoutGrid } from 'lucide-react';
+import { Brand, Product, Supplier, Review, BrandMCat, ServiceCenter } from '../types';
 import { BrandLogo } from './BrandLogo';
+import { TrustBadge } from './TrustBadge';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
+import { useRecentlyViewed } from './RecentlyViewedProvider';
 
 interface BrandProfileViewProps {
   brand: Brand;
+  brandMCats: BrandMCat[];
   brandProducts: Product[];
   brandSuppliers: Supplier[];
+  serviceCenters: ServiceCenter[];
   reviews: Review[];
 }
 
-export default function BrandProfileView({ brand, brandProducts, brandSuppliers, reviews }: BrandProfileViewProps) {
+export default function BrandProfileView({ brand, brandMCats, brandProducts, brandSuppliers, serviceCenters, reviews }: BrandProfileViewProps) {
   const router = useRouter();
   const { shortlistedBrands, toggleShortlistBrand } = useShortlist();
   const { open: openBuyLeadForm } = useBuyLeadModal();
+  const { trackView } = useRecentlyViewed();
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'products' | 'suppliers' | 'trust'>('overview');
+
+  useEffect(() => {
+    trackView('brand', brand.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brand.id]);
 
   const handleInquireAll = () => {
     openBuyLeadForm({
@@ -28,6 +38,10 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
       productName: brand.topProducts[0] || 'Industrial Spec Machinery',
       requirement: `Requesting standard quotes for ${brand.name} solutions. Please share product catalogs, pricing guidelines, and nearest dealership locations.`
     });
+  };
+
+  const handleExploreProducts = () => {
+    setActiveSubTab('products');
   };
 
   const isBrandSaved = shortlistedBrands.includes(brand.id);
@@ -70,35 +84,35 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
       {/* Main brand scroll area */}
       <div className="flex-1 overflow-y-auto">
         {/* Brand Banner Card */}
-        <div className="bg-gradient-to-r from-[#028384] to-[#005e60] px-5 py-6 text-white relative">
+        <div className="bg-gradient-to-r from-primary to-secondary px-5 py-6 text-white relative">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#028384] font-extrabold text-base border-2 border-white shadow-md overflow-hidden p-1.5">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-accent-blue font-extrabold text-base border-2 border-white shadow-md overflow-hidden p-1.5">
                 <BrandLogo logo={brand.logo} name={brand.name} />
               </div>
               <h1 className="text-base font-extrabold tracking-tight mt-3">{brand.name}</h1>
-              <p className="text-[10px] text-teal-100 leading-snug">{brand.description}</p>
+              <p className="text-[10px] text-white/70 leading-snug">{brand.description}</p>
             </div>
-            {brand.verified && (
-              <span className="bg-white/20 border border-white/40 rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-white fill-emerald-500/80" />
-                Verified Brand
-              </span>
-            )}
+            <div className="flex flex-col gap-1 items-end shrink-0">
+              <TrustBadge type="manufacturer-oem" who={brand.name} className="!bg-white/20 !text-white !border-white/40" />
+              {brand.verified && (
+                <TrustBadge type="verified-supplier" who="IndiaMART" since={brand.verifiedSince} className="!bg-white/20 !text-white !border-white/40" />
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-2.5 mt-5 border-t border-white/20 pt-4 text-center">
             <div>
               <div className="text-sm font-extrabold">{brand.reviewsCount}+</div>
-              <div className="text-[8px] text-teal-100 font-bold uppercase tracking-wide">Reviews</div>
+              <div className="text-[8px] text-white/70 font-bold uppercase tracking-wide">Reviews</div>
             </div>
             <div className="border-x border-white/20">
               <div className="text-sm font-extrabold">{brand.rating} / 5</div>
-              <div className="text-[8px] text-teal-100 font-bold uppercase tracking-wide">Avg Rating</div>
+              <div className="text-[8px] text-white/70 font-bold uppercase tracking-wide">Avg Rating</div>
             </div>
             <div>
               <div className="text-sm font-extrabold">30K+</div>
-              <div className="text-[8px] text-teal-100 font-bold uppercase tracking-wide">Buyers Connected</div>
+              <div className="text-[8px] text-white/70 font-bold uppercase tracking-wide">Buyers Connected</div>
             </div>
           </div>
         </div>
@@ -107,31 +121,31 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
         <div className="bg-white border-b border-slate-100 flex text-xs select-none sticky top-0 z-10 shadow-xs px-2 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
             onClick={() => setActiveSubTab('overview')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'overview' ? 'text-[#028384]' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'overview' ? 'text-accent-blue' : 'text-slate-500'}`}
           >
             Overview
-            {activeSubTab === 'overview' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#028384] rounded-full"></div>}
+            {activeSubTab === 'overview' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
           <button
             onClick={() => setActiveSubTab('products')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'products' ? 'text-[#028384]' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'products' ? 'text-accent-blue' : 'text-slate-500'}`}
           >
             Products ({brandProducts.length})
-            {activeSubTab === 'products' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#028384] rounded-full"></div>}
+            {activeSubTab === 'products' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
           <button
             onClick={() => setActiveSubTab('suppliers')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'suppliers' ? 'text-[#028384]' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'suppliers' ? 'text-accent-blue' : 'text-slate-500'}`}
           >
             Sellers ({brandSuppliers.length})
-            {activeSubTab === 'suppliers' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#028384] rounded-full"></div>}
+            {activeSubTab === 'suppliers' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
           <button
             onClick={() => setActiveSubTab('trust')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'trust' ? 'text-[#028384]' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'trust' ? 'text-accent-blue' : 'text-slate-500'}`}
           >
             Trust & Credentials
-            {activeSubTab === 'trust' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#028384] rounded-full"></div>}
+            {activeSubTab === 'trust' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
         </div>
 
@@ -212,11 +226,48 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
                   )}
                 </div>
               </div>
+
+              {/* Downloadable Catalogue */}
+              {brand.catalogueUrl && (
+                <a
+                  href={brand.catalogueUrl}
+                  className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center gap-3 hover:border-accent-blue/40 transition"
+                >
+                  <div className="w-10 h-10 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-center shrink-0 text-rose-500">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-extrabold text-slate-900 text-xs truncate">{brand.name} Product Catalogue</h4>
+                    <span className="text-[9.5px] text-slate-400 font-semibold">PDF &middot; {brand.catalogueSizeMb} MB &middot; Updated {brand.catalogueUpdated}</span>
+                  </div>
+                  <Download className="w-4 h-4 text-accent-blue shrink-0" />
+                </a>
+              )}
             </div>
           )}
 
           {activeSubTab === 'products' && (
-            <div className="space-y-3">
+            <div className="space-y-5">
+              {brandMCats.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Product Lines</h3>
+                  <div className="grid grid-cols-1 gap-2.5">
+                    {brandMCats.map((mcat) => (
+                      <Link
+                        key={mcat.id}
+                        href={`/brands/${brand.id}/${mcat.mcatId}`}
+                        className="bg-white border border-slate-200/80 rounded-xl p-3 flex items-center justify-between hover:border-accent-blue/40 transition"
+                      >
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-[11px] text-slate-900 truncate">{mcat.name}</h4>
+                          <p className="text-[9px] text-slate-400 mt-0.5 truncate">{mcat.tagline}</p>
+                        </div>
+                        <span className="text-[9px] font-extrabold text-accent-blue uppercase tracking-wider shrink-0 ml-2">View</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
               <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Active Standard Catalog</h3>
               {brandProducts.length === 0 ? (
                 <div className="bg-white rounded-2xl p-6 border text-center text-slate-400 text-xs">
@@ -228,13 +279,14 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
                     <Link
                       key={prod.id}
                       href={`/products/${prod.id}`}
-                      className="bg-white border border-slate-200/80 rounded-2xl p-3 flex flex-col justify-between shadow-xs hover:border-[#028384]/40 transition cursor-pointer"
+                      className="bg-white border border-slate-200/80 rounded-2xl p-3 flex flex-col justify-between shadow-xs hover:border-accent-blue/40 transition cursor-pointer"
                     >
                       <div>
                         <img
                           src={prod.image}
                           alt={prod.name}
                           referrerPolicy="no-referrer"
+                          loading="lazy"
                           className="w-full h-24 object-contain rounded-xl bg-slate-50 mix-blend-multiply"
                         />
                         <h4 className="font-bold text-[11px] text-slate-900 mt-2 line-clamp-2 leading-tight">
@@ -242,7 +294,7 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
                         </h4>
                       </div>
                       <div className="border-t border-slate-100 pt-2 mt-2">
-                        <span className="text-[10px] font-extrabold text-[#028384] block">{prod.priceRange}</span>
+                        <span className="text-[10px] font-extrabold text-accent-blue block">{prod.priceRange}</span>
                         <span className="text-[8px] text-slate-400 font-bold block mt-0.5 uppercase font-mono">MOQ: {prod.moq}</span>
                       </div>
                     </Link>
@@ -254,7 +306,25 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
 
           {activeSubTab === 'suppliers' && (
             <div className="space-y-3">
-              <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Authorized Channels</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Dealer Network</h3>
+                {brandSuppliers.length > 0 && (
+                  <Link
+                    href={`/compare?brandId=${brand.id}`}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-accent-blue/10 hover:bg-accent-blue/15 border border-accent-blue/20 text-accent-blue text-[9.5px] font-black uppercase tracking-wider rounded-lg transition"
+                  >
+                    <GitCompare className="w-3.5 h-3.5" />
+                    Compare Sellers
+                  </Link>
+                )}
+              </div>
+              {brandSuppliers.length > 0 && (
+                <div className="bg-primary/5 border border-primary/10 rounded-xl px-3.5 py-2.5 flex items-center gap-4 text-[10px]">
+                  <span className="font-bold text-primary">{brandSuppliers.length} Authorized Dealer{brandSuppliers.length !== 1 ? 's' : ''}</span>
+                  <span className="text-slate-400">&bull;</span>
+                  <span className="font-bold text-primary">{new Set(brandSuppliers.map(s => s.location.split(',').pop()?.trim())).size} States Covered</span>
+                </div>
+              )}
               {brandSuppliers.length === 0 ? (
                 <div className="bg-white rounded-2xl p-6 border text-center text-slate-400 text-xs">
                   No local authorized supplier recorded. Inquire directly to match nearest dealer.
@@ -271,12 +341,10 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
                             {supp.location}
                           </span>
                         </div>
-                        {supp.verified && (
-                          <span className="bg-emerald-50 text-emerald-800 text-[9px] font-bold px-2 py-0.5 border border-emerald-200 rounded-full shrink-0 flex items-center gap-0.5">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                            Verified
-                          </span>
-                        )}
+                        <div className="flex flex-col gap-1 items-end shrink-0">
+                          {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}
+                          {supp.isAuthorizedDealer && <TrustBadge type="authorized-dealer" who={brand.name} since={supp.authorizedSince} />}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-600 font-medium">
@@ -298,6 +366,46 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Service Network */}
+              {serviceCenters.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <Wrench className="w-3.5 h-3.5 text-accent-purple" />
+                    Service Network
+                  </h3>
+                  <div className="space-y-3">
+                    {serviceCenters.map((svc) => (
+                      <div key={svc.id} className="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+                        <div>
+                          <h4 className="font-bold text-xs text-slate-900 leading-tight">{svc.name}</h4>
+                          <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3 text-slate-400" />
+                            {svc.location}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {svc.servicesOffered.map((s, idx) => (
+                            <span key={idx} className="bg-accent-purple/10 border border-accent-purple/20 text-accent-purple rounded-full px-2 py-0.5 text-[9px] font-bold">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-[10px] text-slate-600 font-medium">
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            {svc.contactPhone}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-slate-400" />
+                            {svc.workingHours}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -345,14 +453,21 @@ export default function BrandProfileView({ brand, brandProducts, brandSuppliers,
         </div>
       </div>
 
-      {/* Persistent brand-wide inquiry trigger */}
-      <div className="border-t border-slate-100 p-4 bg-white shrink-0">
+      {/* Sticky CTA — primary action is exploring products by category, Get Quotes stays available as a secondary path */}
+      <div className="border-t border-slate-100 p-4 bg-white shrink-0 flex items-center gap-2.5">
+        <button
+          onClick={handleExploreProducts}
+          className="flex-1 bg-cta hover:bg-cta-hover text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+        >
+          <LayoutGrid className="w-4 h-4" />
+          <span>Explore Products by Category</span>
+        </button>
         <button
           onClick={handleInquireAll}
-          className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
+          className="shrink-0 px-4 py-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <Send className="w-4 h-4" />
-          <span>Inquire With Brand Distributors</span>
+          <span className="hidden md:inline">Get Quotes</span>
         </button>
       </div>
     </div>

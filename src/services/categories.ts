@@ -1,10 +1,9 @@
-export interface Category {
-  id: string;
-  name: string;
-  icon: string;
-}
+import { MCat } from '../types';
 
-export async function getCategories(): Promise<Category[]> {
+export type { MCat };
+export type Category = MCat;
+
+export async function getCategories(): Promise<MCat[]> {
   const res = await fetch('/api/categories');
   return res.json();
 }

@@ -3,7 +3,7 @@ import { getProducts } from '@/lib/data';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const category = searchParams.get('category') || undefined;
+  const mcatId = searchParams.get('mcatId') || undefined;
   const brandId = searchParams.get('brandId') || undefined;
-  return NextResponse.json(getProducts({ category, brandId }));
+  return NextResponse.json(getProducts({ mcatId, brandId }));
 }

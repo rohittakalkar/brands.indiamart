@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import BrandProfileView from '@/components/BrandProfileView';
-import { getBrandById, getProducts, getSuppliers, REVIEWS } from '@/lib/data';
+import { getBrandById, getProducts, getSuppliers, getBrandMCats, getServiceCenters, REVIEWS } from '@/lib/data';
 
 export default async function Page({ params }: { params: Promise<{ brandId: string }> }) {
   const { brandId } = await params;
@@ -10,8 +10,10 @@ export default async function Page({ params }: { params: Promise<{ brandId: stri
   return (
     <BrandProfileView
       brand={brand}
+      brandMCats={getBrandMCats({ brandId: brand.id })}
       brandProducts={getProducts({ brandId: brand.id })}
       brandSuppliers={getSuppliers({ brandId: brand.id })}
+      serviceCenters={getServiceCenters({ brandId: brand.id })}
       reviews={REVIEWS}
     />
   );

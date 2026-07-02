@@ -62,7 +62,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
   };
 
   return (
-    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-end justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-end justify-center z-50">
       <div className="bg-white rounded-t-3xl w-full max-h-[88%] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300">
         {/* Header bar */}
         <div className="bg-slate-50 border-b border-slate-100 px-5 py-4 flex items-center justify-between">
@@ -70,11 +70,11 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
             <h3 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
               {initialData?.requirement ? (
                 <>
-                  <Sparkles className="w-4 h-4 text-[#028384] fill-teal-400/20" />
-                  <span>Verify Draft & Submit BuyLead</span>
+                  <Sparkles className="w-4 h-4 text-accent-blue fill-accent-blue/20" />
+                  <span>Review & Send Requirement</span>
                 </>
               ) : (
-                <span>Request Quotations (BuyLead)</span>
+                <span>Get Quotes From Sellers</span>
               )}
             </h3>
             <span className="text-[10px] text-slate-400 font-medium">Get instant quotes from multiple verified suppliers</span>
@@ -101,7 +101,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               placeholder="E.g., Centrifugal Pump"
-              className="w-full bg-slate-50 border border-slate-200 focus:border-[#028384] focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-accent-blue focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
             />
           </div>
 
@@ -113,7 +113,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
               value={brandName}
               onChange={(e) => setBrandName(e.target.value)}
               placeholder="E.g., Kirloskar Brothers Limited"
-              className="w-full bg-slate-50 border border-slate-200 focus:border-[#028384] focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-accent-blue focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="E.g., 2 Pieces"
-                className="w-full bg-slate-50 border border-slate-200 focus:border-[#028384] focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
+                className="w-full bg-slate-50 border border-slate-200 focus:border-accent-blue focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
               />
             </div>
 
@@ -138,7 +138,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="E.g., Pune, Maharashtra"
-                className="w-full bg-slate-50 border border-slate-200 focus:border-[#028384] focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
+                className="w-full bg-slate-50 border border-slate-200 focus:border-accent-blue focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
               />
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
               value={requirement}
               onChange={(e) => setRequirement(e.target.value)}
               placeholder="Provide flow rate, voltage, material, applications, power (HP), or certification needs (GST, ISO) to help suppliers submit highly competitive quotes."
-              className="w-full bg-slate-50 border border-slate-200 focus:border-[#028384] focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition resize-none leading-relaxed"
+              className="w-full bg-slate-50 border border-slate-200 focus:border-accent-blue focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition resize-none leading-relaxed"
             />
           </div>
 
@@ -169,10 +169,10 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
         <div className="border-t border-slate-100 p-4 bg-white">
           <button
             onClick={handleSubmit}
-            className="w-full bg-[#2563eb] hover:bg-[#1d4ed8] text-white py-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+            className="w-full bg-cta hover:bg-cta-hover text-white py-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Generate BuyLead - Get Quotes From All</span>
+            <span>Send Requirement & Get Quotes</span>
           </button>
         </div>
       </div>

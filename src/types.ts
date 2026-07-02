@@ -1,10 +1,33 @@
+export interface PMcat {
+  id: string;
+  name: string;
+  icon: string;
+}
+
+export interface MCat {
+  id: string;
+  name: string;
+  icon: string;
+  pmcatId: string;
+}
+
+export interface BrandMCat {
+  id: string;
+  brandId: string;
+  mcatId: string;
+  name: string;
+  tagline: string;
+  description: string;
+  applications: string[];
+}
+
 export interface Brand {
   id: string;
   name: string;
   logo: string; // Tailwind icon class or placeholder abbreviation
   description: string;
   longDescription?: string;
-  category: string;
+  mcatId: string;
   subCategories: string[];
   rating: number;
   reviewsCount: number;
@@ -19,11 +42,26 @@ export interface Brand {
   employees: string;
   annualTurnover?: string;
   verified: boolean;
+  verifiedSince?: number;
+  isOEM: boolean;
   certifications: string[];
   manufacturingUnits: number;
   countriesServed: number;
   topProducts: string[];
   features?: string[];
+  catalogueUrl?: string;
+  catalogueSizeMb?: number;
+  catalogueUpdated?: string;
+}
+
+export interface ServiceCenter {
+  id: string;
+  brandId: string;
+  name: string;
+  location: string;
+  servicesOffered: string[];
+  contactPhone: string;
+  workingHours: string;
 }
 
 export interface Product {
@@ -31,8 +69,12 @@ export interface Product {
   name: string;
   brandId: string;
   brandName: string;
-  category: string;
+  mcatId: string;
+  brandMCatId?: string;
   image: string;
+  modelNumber: string;
+  keySpecLabel: string;
+  keySpecValue: string;
   priceRange: string;
   moq: string;
   deliveryTime: string;
@@ -40,6 +82,10 @@ export interface Product {
   specifications: Record<string, string>;
   description: string;
   features: string[];
+  useCases?: string[];
+  certifications?: string[];
+  certifiedBy?: string;
+  certifiedYear?: number;
 }
 
 export interface Supplier {
@@ -47,14 +93,28 @@ export interface Supplier {
   name: string;
   brandId: string;
   brandName: string;
+  productId?: string;
   location: string;
   rating: number;
   reviewsCount: number;
   experienceYears: number;
   verified: boolean;
+  isAuthorizedDealer: boolean;
+  authorizedSince?: number;
   responseTime: string;
   deliveryTimeRange: string;
   priceEstimate: string;
+}
+
+export interface AlternativeProduct {
+  id: string;
+  productId: string;
+  brandName: string;
+  modelNumber: string;
+  mcatId: string;
+  priceRange: string;
+  keySpecLabel: string;
+  keySpecValue: string;
 }
 
 export interface BuyLead {

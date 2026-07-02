@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
-import DirectoryView from '@/components/DirectoryView';
-import { resolveSearch } from '@/lib/search';
-import { getBrands, getCategories } from '@/lib/data';
+import SearchResultsView from '@/components/SearchResultsView';
+import { resolveSearch, getGroupedSearchResults } from '@/lib/search';
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = '' } = await searchParams;
@@ -22,14 +21,16 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ q
     redirect(`/categories/${resolution.categoryId}`);
   }
 
-  // Fallback: general search query in Directory view
+  // Fallback: no single confident match — show grouped results
+  const results = getGroupedSearchResults(resolution.query);
+
   return (
-    <DirectoryView
-      brands={getBrands()}
-      categories={getCategories()}
-      showBack
-      initialCategory="all"
-      initialSearchQuery={resolution.query}
+    <SearchResultsView
+      query={resolution.query}
+      products={results.products}
+      brands={results.brands}
+      categories={results.categories}
+      brandMCats={results.brandMCats}
     />
   );
 }

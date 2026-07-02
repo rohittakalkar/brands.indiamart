@@ -18,22 +18,22 @@ export default function SuccessView({ lead }: SuccessViewProps) {
         </div>
 
         <h1 className="text-lg font-extrabold text-slate-950 text-center tracking-tight leading-tight">
-          BuyLead Generated Successfully!
+          Requirement Sent Successfully!
         </h1>
         <p className="text-xs text-slate-500 text-center mt-1">
           Your inquiry has been sent to standard matching suppliers.
         </p>
 
-        {/* BuyLead ID Banner */}
+        {/* Request ID Banner */}
         <div className="mt-4 bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-2 flex items-center justify-between gap-6 w-full max-w-xs shadow-sm">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">BuyLead ID</span>
-          <span className="text-xs font-mono font-extrabold text-[#028384]">{lead.id}</span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Request ID</span>
+          <span className="text-xs font-mono font-extrabold text-accent-blue">{lead.id}</span>
         </div>
 
         {/* Inquiry Card */}
         <div className="mt-5 border border-slate-200/80 rounded-2xl p-4 w-full max-w-xs space-y-3 shadow-sm bg-white">
           <div className="flex items-center gap-1.5 border-b border-slate-100 pb-2 text-slate-800 font-bold text-xs">
-            <ClipboardList className="w-4 h-4 text-[#028384]" />
+            <ClipboardList className="w-4 h-4 text-accent-blue" />
             <span>Your Inquiry Details</span>
           </div>
 
@@ -93,13 +93,13 @@ export default function SuccessView({ lead }: SuccessViewProps) {
       <div className="border-t border-slate-100 p-4 shrink-0 space-y-2 bg-white">
         <Link
           href="/leads"
-          className="w-full flex items-center justify-center gap-1.5 py-3 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl text-xs transition shadow-sm"
+          className="w-full flex items-center justify-center gap-1.5 py-3 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl text-xs transition shadow-sm"
         >
-          <span>Go to My BuyLeads</span>
+          <span>View My Quote Requests</span>
           <ChevronRight className="w-3.5 h-3.5" />
         </Link>
         <Link
-          href="/leads"
+          href="/"
           className="w-full block text-center py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
         >
           Back to Homepage

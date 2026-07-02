@@ -25,22 +25,22 @@ export default function CategorySearchView({ categories, brands, products }: Cat
   );
 
   const getBrandCount = (catId: string) => {
-    return brands.filter(b => b.category === catId).length;
+    return brands.filter(b => b.mcatId === catId).length;
   };
 
   const getProductsForCategory = (catId: string) => {
-    return products.filter(p => p.category === catId).slice(0, 2);
+    return products.filter(p => p.mcatId === catId).slice(0, 2);
   };
 
   return (
-    <div className="flex-1 bg-[#f4f6f8] flex flex-col overflow-hidden select-none font-sans text-slate-800">
+    <div className="flex-1 bg-canvas flex flex-col overflow-hidden select-none font-sans text-slate-800">
 
       {/* Header & Search Section (styled like brands header with white background) */}
       <div className="bg-white border-b border-slate-100 p-4 space-y-3 shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-[#028384]" />
+              <Layers className="w-4 h-4 text-accent-blue" />
               <span>Category Search Hub</span>
             </h2>
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">
@@ -56,7 +56,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search all B2B categories & industry divisions..."
-            className="w-full bg-slate-50 border border-slate-300 focus:border-[#028384] focus:bg-white rounded-xl pl-9 pr-4 py-2.5 text-xs outline-none transition font-semibold"
+            className="w-full bg-slate-50 border border-slate-300 focus:border-accent-blue focus:bg-white rounded-xl pl-9 pr-4 py-2.5 text-xs outline-none transition font-semibold"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
         </div>
@@ -77,7 +77,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
             return (
               <div
                 key={cat.id}
-                className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-[#028384]/40 transition duration-200"
+                className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-accent-blue/40 transition duration-200"
               >
                 {/* Category Main Bar */}
                 <div className="p-3.5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
@@ -85,11 +85,11 @@ export default function CategorySearchView({ categories, brands, products }: Cat
                     href={`/categories/${cat.id}`}
                     className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
                   >
-                    <div className="w-9 h-9 bg-teal-50 border border-teal-100/60 rounded-xl flex items-center justify-center text-[#028384] shrink-0 shadow-xs">
+                    <div className="w-9 h-9 bg-accent-blue/10 border border-accent-blue/20 rounded-xl flex items-center justify-center text-accent-blue shrink-0 shadow-xs">
                       <CategoryIcon icon={cat.icon} className="w-4.5 h-4.5" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-extrabold text-[12px] text-slate-900 leading-tight truncate hover:text-[#028384] transition">
+                      <h3 className="font-extrabold text-[12px] text-slate-900 leading-tight truncate hover:text-accent-blue transition">
                         {cat.name}
                       </h3>
                       <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block mt-0.5">
@@ -115,7 +115,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
                     {/* View All Button */}
                     <Link
                       href={`/categories/${cat.id}`}
-                      className="p-2 bg-white border border-slate-200 hover:border-[#028384] hover:text-[#028384] text-slate-500 rounded-lg transition"
+                      className="p-2 bg-white border border-slate-200 hover:border-accent-blue hover:text-accent-blue text-slate-500 rounded-lg transition"
                     >
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
@@ -125,7 +125,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
                 {/* Sub-featured Products inside Category Card for Premium Sourcing */}
                 {categoryProducts.length > 0 && (
                   <div className="p-3.5 space-y-3 bg-white">
-                    <span className="text-[8.5px] font-extrabold uppercase tracking-wider text-[#028384] bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100">
+                    <span className="text-[8.5px] font-extrabold uppercase tracking-wider text-accent-blue bg-accent-blue/10 px-1.5 py-0.5 rounded border border-accent-blue/20">
                       Top Verified Products
                     </span>
                     <div className="grid grid-cols-2 gap-3">
@@ -138,7 +138,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
                             <h4 className="font-bold text-[10px] text-slate-800 leading-snug line-clamp-2">
                               {prod.name}
                             </h4>
-                            <span className="text-[8.5px] text-[#028384] font-black block">
+                            <span className="text-[8.5px] text-accent-blue font-black block">
                               {prod.priceRange.split(' - ')[0]}
                             </span>
                           </div>
@@ -151,7 +151,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
                                 requirement: `Hi, I am interested in procuring ${prod.name} from standard manufacturers. Please share delivery timeline & price quote.`
                               })
                             }
-                            className="w-full py-1.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition"
+                            className="w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition"
                           >
                             <Send className="w-2.5 h-2.5" />
                             Get Quote

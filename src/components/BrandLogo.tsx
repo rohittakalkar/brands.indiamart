@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 
 interface BrandLogoProps {
@@ -34,18 +36,19 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ logo, name, className = "w
 
   if (!isUrl || error) {
     return (
-      <span className="font-extrabold text-[#028384] text-[9px] tracking-tight uppercase select-none">
+      <span className="font-extrabold text-accent-blue text-[9px] tracking-tight uppercase select-none">
         {getInitials(name)}
       </span>
     );
   }
 
   return (
-    <img 
-      src={logo} 
-      alt={name} 
-      className={className} 
+    <img
+      src={logo}
+      alt={name}
+      className={className}
       referrerPolicy="no-referrer"
+      loading="lazy"
       onError={() => setError(true)}
     />
   );

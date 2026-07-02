@@ -3,6 +3,7 @@ import { Heart, Trash2, Send, ChevronRight, Layers, Building2, Package, ShieldCh
 import { Brand, Product } from '../types';
 import { PRODUCTS, BRANDS, CATEGORIES } from '../data';
 import { BrandLogo } from './BrandLogo';
+import { CategoryIcon } from './CategoryIcon';
 
 interface InlineSectionSearchProps {
   value: string;
@@ -374,7 +375,7 @@ export default function ShortlistedView({
                         className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0"
                       >
                         <div className="w-7 h-7 bg-teal-50 rounded-lg flex items-center justify-center text-[#028384] shrink-0">
-                          <Layers className="w-3.5 h-3.5" />
+                          <CategoryIcon icon={cat.icon} />
                         </div>
                         <span className="text-xs font-bold text-slate-800 truncate hover:text-[#028384] transition">{cat.name}</span>
                       </div>

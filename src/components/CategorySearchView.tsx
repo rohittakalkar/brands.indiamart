@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Layers, ChevronRight, Heart, Send, CheckCircle2, Building2 } from 'lucide-react';
 import { CATEGORIES, BRANDS, PRODUCTS } from '../data';
 import { Brand, Product } from '../types';
+import { CategoryIcon } from './CategoryIcon';
 
 interface CategorySearchViewProps {
   onSelectCategory: (categoryId: string) => void;
@@ -87,7 +88,7 @@ export default function CategorySearchView({
                     className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
                   >
                     <div className="w-9 h-9 bg-teal-50 border border-teal-100/60 rounded-xl flex items-center justify-center text-[#028384] shrink-0 shadow-xs">
-                      <Layers className="w-4.5 h-4.5" />
+                      <CategoryIcon icon={cat.icon} className="w-4.5 h-4.5" />
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-extrabold text-[12px] text-slate-900 leading-tight truncate hover:text-[#028384] transition">

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight, ShieldCheck, Star, Layers, Send, Heart, Eye, X, SlidersHorizontal } from 'lucide-react';
+import { Search, ChevronRight, ShieldCheck, Star, Send, Heart, Eye, X, SlidersHorizontal } from 'lucide-react';
 import { CATEGORIES, BRANDS, PRODUCTS } from '../data';
 import { Brand, Product } from '../types';
 import { BrandLogo } from './BrandLogo';
+import { CategoryIcon } from './CategoryIcon';
+import indiamartLogo from '../../assets/.aistudio/INDIAMART.NS_BIG.png';
 
 interface InlineSectionSearchProps {
   value: string;
@@ -244,21 +246,8 @@ export default function DiscoverView({
       {/* 1. Official Branded IndiaMART Top Header with Profile Initials "RT" */}
       <div className="bg-white border-b border-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-1.5">
-          {/* IndiaMART High-Fidelity Vector Logo */}
-          <div className="flex items-end h-8 relative w-9 shrink-0">
-            {/* Heads */}
-            <div className="absolute top-1 left-[3px] w-2.5 h-2.5 rounded-full bg-[#028384]" />
-            <div className="absolute top-1 left-[19px] w-2.5 h-2.5 rounded-full bg-[#d61f27]" />
-            {/* Bodies forming M */}
-            <svg className="w-8 h-6 mb-0.5" viewBox="0 0 40 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 24V14C5 10.5 8.5 8 12 8C15.5 8 18.5 10.5 18.5 14V24" stroke="#028384" strokeWidth="4" strokeLinecap="round" />
-              <path d="M18.5 24V14C18.5 10.5 21.5 8 25 8C28.5 8 32 10.5 32 14V24" stroke="#d61f27" strokeWidth="4" strokeLinecap="round" />
-              <path d="M12 24V16C12 14 14 12.5 16 12.5C18 12.5 20 14 20 16V24" stroke="#028384" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
-          </div>
-          <span className="text-xl font-extrabold tracking-tighter text-[#028384] flex items-center select-none">
-            india<span className="text-[#d61f27] font-black">m</span>art
-          </span>
+          {/* IndiaMART Official Logo */}
+          <img src={indiamartLogo} alt="IndiaMART" className="h-8 w-auto select-none" />
         </div>
 
         {/* Profile Avatar with RT initials for Rohit Takalkar */}
@@ -812,7 +801,7 @@ export default function DiscoverView({
                   onClick={() => onSelectCategory(cat.id)}
                   className="w-7 h-7 bg-teal-50 rounded-lg flex items-center justify-center text-[#028384] shrink-0 mt-1 cursor-pointer"
                 >
-                  <Layers className="w-3.5 h-3.5" />
+                  <CategoryIcon icon={cat.icon} />
                 </div>
                 
                 <span 

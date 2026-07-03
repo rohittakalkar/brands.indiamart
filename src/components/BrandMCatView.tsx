@@ -7,6 +7,7 @@ import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useShortlist } from './ShortlistProvider';
+import { buildRfqRequirement } from '../lib/rfq';
 
 interface BrandMCatViewProps {
   brandMCat: BrandMCat;
@@ -15,6 +16,10 @@ interface BrandMCatViewProps {
   products: Product[];
   suppliers: Supplier[];
   reviews: Review[];
+  // Carried forward from a category-page spec filter or the Brand Hub's "Continue with..."
+  // link (via ?model=) — preselects the buyer's actual model instead of defaulting to
+  // whichever product happens to sit first in the underlying array.
+  initialModelId?: string;
 }
 
 const FAQ_TEMPLATE = (mcatName: string, brandName: string) => [
@@ -32,11 +37,16 @@ const FAQ_TEMPLATE = (mcatName: string, brandName: string) => [
   }
 ];
 
-export default function BrandMCatView({ brandMCat, brand, categoryName, products, suppliers, reviews }: BrandMCatViewProps) {
+export default function BrandMCatView({ brandMCat, brand, categoryName, products, suppliers, reviews, initialModelId }: BrandMCatViewProps) {
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { shortlistedProducts, toggleShortlistProduct } = useShortlist();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [selectedModelId, setSelectedModelId] = useState<string | undefined>(products[0]?.id);
+  // Prefer the buyer's carried-forward model selection; fall back to the first product
+  // only when there's no prior context (e.g. a cold visit via search or direct link).
+  const initialProductExists = initialModelId && products.some(p => p.id === initialModelId);
+  const [selectedModelId, setSelectedModelId] = useState<string | undefined>(
+    initialProductExists ? initialModelId : products[0]?.id
+  );
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [showAllModelsDealers, setShowAllModelsDealers] = useState(false);
 
@@ -72,7 +82,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
       productName: selectedProduct ? `${selectedProduct.name} (${selectedProduct.modelNumber})` : brandMCat.name,
       brandName: brand.name,
       requirement: selectedProduct
-        ? `Interested in the ${selectedProduct.name} (Model: ${selectedProduct.modelNumber}). Please share the technical datasheet, exact pricing, and delivery timeline for my requirement.`
+        ? buildRfqRequirement(selectedProduct)
         : `Interested in ${brandMCat.name}. Please share available models, technical datasheets, and best pricing for my requirement.`
     });
   };
@@ -91,7 +101,9 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               <ChevronRight className="w-2.5 h-2.5 shrink-0" />
               <Link href={`/brands/${brand.id}`} className="hover:text-accent-blue">{brand.name}</Link>
             </div>
-            <h1 className="font-heading font-extrabold text-sm md:text-base text-primary tracking-tight truncate">{brandMCat.name}</h1>
+            {/* Page heading lives once, in the hero below — this is a compact sticky
+                restatement, not a second <h1>. */}
+            <p className="font-heading font-extrabold text-sm md:text-base text-primary tracking-tight truncate">{brandMCat.name}</p>
           </div>
         </div>
       </div>

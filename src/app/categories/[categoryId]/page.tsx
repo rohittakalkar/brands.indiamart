@@ -1,8 +1,22 @@
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import CategoryBrandsView from '@/components/CategoryBrandsView';
 import { getMcatById, getPMcatById, getBrands, getProducts, getSuppliers, getBrandMCats } from '@/lib/data';
 
-export default async function Page({ params }: { params: Promise<{ categoryId: string }> }) {
+type PageProps = { params: Promise<{ categoryId: string }> };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { categoryId } = await params;
+  const category = getMcatById(categoryId);
+  if (!category) return {};
+  const brandCount = getBrands({ mcatId: category.id }).length;
+  return {
+    title: `${category.name} — Compare ${brandCount > 0 ? `${brandCount} Verified Brands` : 'Brands'} & Sellers | IndiaMART Brands`,
+    description: `Compare ${category.name} brands, models, pricing and verified sellers on IndiaMART Brands.`
+  };
+}
+
+export default async function Page({ params }: PageProps) {
   const { categoryId } = await params;
 
   const category = getMcatById(categoryId);

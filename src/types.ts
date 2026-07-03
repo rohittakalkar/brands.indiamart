@@ -131,6 +131,8 @@ export interface BuyLead {
 
 export interface Review {
   id: string;
+  brandId: string;
+  productId?: string;
   userName: string;
   userRole: string;
   companyName: string;

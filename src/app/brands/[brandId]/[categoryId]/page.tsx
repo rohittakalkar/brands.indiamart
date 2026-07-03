@@ -1,9 +1,27 @@
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import BrandMCatView from '@/components/BrandMCatView';
-import { getBrandById, getBrandMCats, getProducts, getSuppliers, getMcatById, REVIEWS } from '@/lib/data';
+import { getBrandById, getBrandMCats, getProducts, getSuppliers, getMcatById, getReviews } from '@/lib/data';
 
-export default async function Page({ params }: { params: Promise<{ brandId: string; categoryId: string }> }) {
+type PageProps = {
+  params: Promise<{ brandId: string; categoryId: string }>;
+  searchParams: Promise<{ model?: string }>;
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { brandId, categoryId } = await params;
+  const brand = getBrandById(brandId);
+  const [brandMCat] = brand ? getBrandMCats({ brandId, mcatId: categoryId }) : [];
+  if (!brand || !brandMCat) return {};
+  return {
+    title: `${brandMCat.name} — Models, Pricing & Verified Dealers | IndiaMART Brands`,
+    description: brandMCat.tagline
+  };
+}
+
+export default async function Page({ params, searchParams }: PageProps) {
+  const { brandId, categoryId } = await params;
+  const { model } = await searchParams;
 
   const brand = getBrandById(brandId);
   if (!brand) notFound();
@@ -25,7 +43,8 @@ export default async function Page({ params }: { params: Promise<{ brandId: stri
       categoryName={category.name}
       products={products}
       suppliers={suppliers}
-      reviews={REVIEWS}
+      reviews={getReviews({ brandId: brand.id })}
+      initialModelId={model}
     />
   );
 }

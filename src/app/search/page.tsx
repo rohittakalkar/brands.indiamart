@@ -1,8 +1,16 @@
+import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import SearchResultsView from '@/components/SearchResultsView';
 import { resolveSearch, getGroupedSearchResults } from '@/lib/search';
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+type PageProps = { searchParams: Promise<{ q?: string }> };
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const { q = '' } = await searchParams;
+  return { title: q.trim() ? `"${q.trim()}" — Search Results | IndiaMART Brands` : 'Search | IndiaMART Brands' };
+}
+
+export default async function Page({ searchParams }: PageProps) {
   const { q = '' } = await searchParams;
 
   if (!q.trim()) {

@@ -9,6 +9,7 @@ import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
+import { buildRfqRequirement } from '../lib/rfq';
 
 interface ProductDetailViewProps {
   product: Product;
@@ -45,7 +46,7 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
     openBuyLeadForm({
       productName: product.name,
       brandName: product.brandName,
-      requirement: `Looking to purchase ${product.name}. Please provide quotation for the standard spec: ${Object.entries(product.specifications).slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(', ')}.`
+      requirement: buildRfqRequirement(product)
     });
   };
 

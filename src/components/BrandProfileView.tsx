@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Send, GitCompare, Download, FileText, Wrench, Phone, Clock, LayoutGrid } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Send, GitCompare, Download, FileText, Wrench, Phone, Clock, LayoutGrid } from 'lucide-react';
 import { Brand, Product, Supplier, Review, BrandMCat, ServiceCenter } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { TrustBadge } from './TrustBadge';
@@ -18,14 +18,20 @@ interface BrandProfileViewProps {
   brandSuppliers: Supplier[];
   serviceCenters: ServiceCenter[];
   reviews: Review[];
+  // Present only when the buyer arrived here from a filtered category page — lets the
+  // Brand Hub surface "you were exploring X" instead of losing that intent on navigation.
+  contextCategory?: { id: string; name: string };
+  contextProduct?: Product;
 }
 
-export default function BrandProfileView({ brand, brandMCats, brandProducts, brandSuppliers, serviceCenters, reviews }: BrandProfileViewProps) {
+export default function BrandProfileView({ brand, brandMCats, brandProducts, brandSuppliers, serviceCenters, reviews, contextCategory, contextProduct }: BrandProfileViewProps) {
   const router = useRouter();
   const { shortlistedBrands, toggleShortlistBrand } = useShortlist();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { trackView } = useRecentlyViewed();
-  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'products' | 'suppliers' | 'trust'>('overview');
+  // Arriving with category context means the buyer already has purchase intent for a
+  // specific product line — open straight to Products instead of making them find the tab.
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'products' | 'suppliers' | 'trust'>(contextCategory ? 'products' : 'overview');
 
   useEffect(() => {
     trackView('brand', brand.id);
@@ -116,6 +122,32 @@ export default function BrandProfileView({ brand, brandMCats, brandProducts, bra
             </div>
           </div>
         </div>
+
+        {/* Intent-continuity banner — only renders when the buyer arrived from a
+            filtered category page, so it's purely additive and never shown on a
+            cold/search-driven visit to this brand. */}
+        {contextCategory && (
+          <div className="bg-accent-blue/5 border-b border-accent-blue/15 px-4 py-3">
+            <div className="flex items-start gap-2 text-[11px] text-slate-700 font-semibold leading-snug">
+              <Sparkles className="w-3.5 h-3.5 text-accent-blue shrink-0 mt-0.5" />
+              <span>
+                You were exploring{' '}
+                <strong className="text-slate-900">
+                  {brand.name.split(' ')[0]}{contextProduct ? ` ${contextProduct.keySpecValue.split(',')[0]}` : ''} {contextCategory.name}
+                </strong>
+              </span>
+            </div>
+            {contextProduct && (
+              <Link
+                href={`/brands/${brand.id}/${contextCategory.id}?model=${contextProduct.id}`}
+                className="inline-flex items-center gap-1 mt-1.5 ml-5 text-[11px] font-bold text-accent-blue hover:text-primary transition"
+              >
+                Continue with {contextProduct.modelNumber}
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* Quick Horizontal Scroll Sub Tabs */}
         <div className="bg-white border-b border-slate-100 flex text-xs select-none sticky top-0 z-10 shadow-xs px-2 overflow-x-auto whitespace-nowrap scrollbar-none">
@@ -252,19 +284,32 @@ export default function BrandProfileView({ brand, brandMCats, brandProducts, bra
                 <div className="space-y-3">
                   <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Product Lines</h3>
                   <div className="grid grid-cols-1 gap-2.5">
-                    {brandMCats.map((mcat) => (
-                      <Link
-                        key={mcat.id}
-                        href={`/brands/${brand.id}/${mcat.mcatId}`}
-                        className="bg-white border border-slate-200/80 rounded-xl p-3 flex items-center justify-between hover:border-accent-blue/40 transition"
-                      >
-                        <div className="min-w-0">
-                          <h4 className="font-bold text-[11px] text-slate-900 truncate">{mcat.name}</h4>
-                          <p className="text-[9px] text-slate-400 mt-0.5 truncate">{mcat.tagline}</p>
-                        </div>
-                        <span className="text-[9px] font-extrabold text-accent-blue uppercase tracking-wider shrink-0 ml-2">View</span>
-                      </Link>
-                    ))}
+                    {brandMCats.map((mcat) => {
+                      const isContextMatch = contextCategory?.id === mcat.mcatId;
+                      const href = isContextMatch && contextProduct
+                        ? `/brands/${brand.id}/${mcat.mcatId}?model=${contextProduct.id}`
+                        : `/brands/${brand.id}/${mcat.mcatId}`;
+                      return (
+                        <Link
+                          key={mcat.id}
+                          href={href}
+                          className={`bg-white border rounded-xl p-3 flex items-center justify-between transition ${
+                            isContextMatch ? 'border-accent-blue ring-1 ring-accent-blue/30' : 'border-slate-200/80 hover:border-accent-blue/40'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="font-bold text-[11px] text-slate-900 truncate">{mcat.name}</h4>
+                              {isContextMatch && (
+                                <span className="text-[7.5px] font-black text-accent-blue uppercase bg-accent-blue/10 px-1.5 py-0.5 rounded-full shrink-0">You were here</span>
+                              )}
+                            </div>
+                            <p className="text-[9px] text-slate-400 mt-0.5 truncate">{mcat.tagline}</p>
+                          </div>
+                          <span className="text-[9px] font-extrabold text-accent-blue uppercase tracking-wider shrink-0 ml-2">View</span>
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               )}

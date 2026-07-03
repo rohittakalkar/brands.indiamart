@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import CompareView from '@/components/CompareView';
 import { getSuppliers, getBrandById, getProductById, getMcats, getProducts } from '@/lib/data';
 
@@ -7,7 +8,18 @@ interface CompareSearchParams {
   category?: string;
 }
 
-export default async function Page({ searchParams }: { searchParams: Promise<CompareSearchParams> }) {
+type PageProps = { searchParams: Promise<CompareSearchParams> };
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const { productId, brandId, category } = await searchParams;
+  let scope = 'Compare Sellers';
+  if (productId) scope = getProductById(productId)?.name || scope;
+  else if (brandId) scope = getBrandById(brandId)?.name || scope;
+  else if (category) scope = getMcats().find(c => c.id === category)?.name || scope;
+  return { title: `Compare — ${scope} | IndiaMART Brands` };
+}
+
+export default async function Page({ searchParams }: PageProps) {
   const { productId, brandId, category } = await searchParams;
 
   const products = getProducts();

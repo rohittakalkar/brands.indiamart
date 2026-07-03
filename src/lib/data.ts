@@ -1069,9 +1069,13 @@ export const ALTERNATIVE_PRODUCTS: AlternativeProduct[] = [
   ...GENERATED_ALTERNATIVES
 ];
 
+// Scoped per brand (brandId) and, where relevant, per exact product (productId) —
+// each brand/brand-mcat page filters to only its own reviews, so a buyer looking at
+// air compressors never sees a review praising a competitor's centrifugal pumps.
 export const REVIEWS: Review[] = [
   {
-    id: 'rev-1',
+    id: 'rev-kirloskar-1',
+    brandId: 'kirloskar',
     userName: 'Rakesh Mehta',
     userRole: 'Operations Manager',
     companyName: 'Mehta Industries, Pune',
@@ -1080,13 +1084,158 @@ export const REVIEWS: Review[] = [
     date: '2026-06-25'
   },
   {
-    id: 'rev-2',
+    id: 'rev-kirloskar-2',
+    brandId: 'kirloskar',
+    productId: 'kirloskar-dg-625',
+    userName: 'Sunil Deshpande',
+    userRole: 'Facility Head',
+    companyName: 'Deshpande Textiles, Nagpur',
+    rating: 4.5,
+    comment: 'Our 62.5 kVA diesel genset has run through two summers of daily load-shedding without a single unplanned breakdown. Fuel efficiency is better than the previous brand we used.',
+    date: '2026-06-10'
+  },
+  {
+    id: 'rev-ksb-1',
+    brandId: 'ksb',
+    userName: 'Vinod Kulkarni',
+    userRole: 'Purchase Head',
+    companyName: 'Kulkarni Borewells, Nashik',
+    rating: 4.5,
+    comment: 'KSB submersible pumps have held up well even with our variable voltage supply in rural sites. Genuine spare parts are easy to source through the authorized dealer.',
+    date: '2026-06-20'
+  },
+  {
+    id: 'rev-ksb-2',
+    brandId: 'ksb',
+    userName: 'Farida Sheikh',
+    userRole: 'Plant Engineer',
+    companyName: 'Sheikh Process Equipments, Aurangabad',
+    rating: 4.0,
+    comment: 'Reliable pump curves match the datasheet closely, which made sizing our process line straightforward. Delivery took a bit longer than quoted but quality was worth the wait.',
+    date: '2026-05-29'
+  },
+  {
+    id: 'rev-crompton-1',
+    brandId: 'crompton',
+    userName: 'Anil Rathi',
+    userRole: 'Maintenance Manager',
+    companyName: 'Rathi Steel Rolling Mills, Ludhiana',
+    rating: 4.5,
+    comment: 'Crompton induction motors run cooler than what we had before, even under continuous three-shift operation. Noise levels are noticeably lower too.',
+    date: '2026-06-14'
+  },
+  {
+    id: 'rev-crompton-2',
+    brandId: 'crompton',
+    userName: 'Priya Nair',
+    userRole: 'Procurement Executive',
+    companyName: 'Nair Engineering Works, Coimbatore',
+    rating: 4.0,
+    comment: 'Good product range and strong technical documentation. IE3 efficiency motors have brought our electricity bill down measurably over six months.',
+    date: '2026-05-22'
+  },
+  {
+    id: 'rev-bosch-1',
+    brandId: 'bosch',
+    userName: 'Manoj Bhatia',
+    userRole: 'Site Supervisor',
+    companyName: 'Bhatia Construction Co., Jaipur',
+    rating: 4.5,
+    comment: 'The Bosch laser distance meter has become standard kit on every site visit — accurate readings even outdoors in bright sunlight, and the battery lasts weeks.',
+    date: '2026-06-08'
+  },
+  {
+    id: 'rev-bosch-2',
+    brandId: 'bosch',
+    userName: 'Kavita Iyer',
+    userRole: 'QA Manager',
+    companyName: 'Iyer Precision Tools, Chennai',
+    rating: 4.5,
+    comment: 'Measuring instruments hold calibration well between service intervals. Authorized dealer was quick to arrange a replacement under warranty when one unit had a display fault.',
+    date: '2026-05-16'
+  },
+  {
+    id: 'rev-siemens-1',
+    brandId: 'siemens',
+    productId: 'siemens-plc-s71200',
+    userName: 'Rahul Verma',
+    userRole: 'Automation Engineer',
+    companyName: 'Verma Auto Components, Gurugram',
+    rating: 5.0,
+    comment: 'SIMATIC S7-1200 has been rock solid for our packaging line automation. TIA Portal documentation is thorough and the local support engineer resolved our commissioning query same day.',
+    date: '2026-06-27'
+  },
+  {
+    id: 'rev-siemens-2',
+    brandId: 'siemens',
+    userName: 'Neha Kapoor',
+    userRole: 'Plant Head',
+    companyName: 'Kapoor Process Industries, Vadodara',
+    rating: 4.0,
+    comment: 'Strong technical expertise from the authorized channel partner during selection. Pricing is on the higher side but the reliability track record justifies it for critical processes.',
+    date: '2026-05-11'
+  },
+  {
+    id: 'rev-havells-1',
+    brandId: 'havells',
+    userName: 'Suresh Pillai',
+    userRole: 'Electrical Contractor',
+    companyName: 'Pillai Electricals, Kochi',
+    rating: 4.5,
+    comment: 'Havells ACBs are straightforward to install and the build quality feels a notch above other brands in this price range. Dealer stock availability has never been an issue.',
+    date: '2026-06-05'
+  },
+  {
+    id: 'rev-havells-2',
+    brandId: 'havells',
+    userName: 'Deepa Reddy',
+    userRole: 'Facilities Manager',
+    companyName: 'Reddy Business Park, Hyderabad',
+    rating: 4.0,
+    comment: 'Switchgear panels have run without a single trip since installation eighteen months ago. Documentation for statutory compliance was provided promptly.',
+    date: '2026-04-30'
+  },
+  {
+    id: 'rev-voltas-1',
+    brandId: 'voltas',
+    productId: 'voltas-water-cooler',
     userName: 'Amit Sharma',
     userRole: 'Purchase Head',
     companyName: 'Sharma Traders, Delhi',
     rating: 4.0,
-    comment: 'Good product range and strong technical expertise. Very satisfied with the overall purchase experience. Highly recommended for heavy duty industrial needs.',
+    comment: 'The 80 litre storage water cooler easily keeps up with our factory floor staff strength through peak summer. Cooling is consistent and service response has been quick.',
     date: '2026-06-18'
+  },
+  {
+    id: 'rev-voltas-2',
+    brandId: 'voltas',
+    userName: 'Ritu Chawla',
+    userRole: 'Admin Manager',
+    companyName: 'Chawla Corporate Services, Gurugram',
+    rating: 4.5,
+    comment: 'Good product range and strong technical support from the dealer when we needed a custom chiller configuration for our office building. Delivery was on schedule.',
+    date: '2026-05-24'
+  },
+  {
+    id: 'rev-atlascopco-1',
+    brandId: 'atlascopco',
+    productId: 'atlascopco-ga11',
+    userName: 'Harpreet Singh',
+    userRole: 'Production Manager',
+    companyName: 'Singh Auto Ancillaries, Ludhiana',
+    rating: 5.0,
+    comment: 'Switched to the GA 11 VSD+ from a fixed-speed compressor and our compressed air electricity cost dropped noticeably within the first quarter. VSD makes a real difference at partial load.',
+    date: '2026-06-22'
+  },
+  {
+    id: 'rev-atlascopco-2',
+    brandId: 'atlascopco',
+    userName: 'Meera Joshi',
+    userRole: 'Maintenance Head',
+    companyName: 'Joshi Precision Castings, Pune',
+    rating: 4.5,
+    comment: 'Atlas Copco\'s authorized service network responded within hours for an urgent breakdown. Genuine spares were available locally, which minimized our downtime.',
+    date: '2026-06-02'
   }
 ];
 
@@ -1176,6 +1325,15 @@ export function getProductById(id: string): Product | undefined {
   return PRODUCTS.find(p => p.id === id);
 }
 
+// Resolves a buyer's active spec-value filter (e.g. "11 kW (15 HP), VSD" picked on a
+// category page) to the one matching product for a given brand+category — used to carry
+// "the buyer was just looking at this exact spec" forward across screens via the URL,
+// and to preselect that same model on the Brand-MCat page instead of defaulting to
+// whichever product happens to sit first in the PRODUCTS array.
+export function findProductBySpec(brandId: string, mcatId: string, specValue: string): Product | undefined {
+  return PRODUCTS.find(p => p.brandId === brandId && p.mcatId === mcatId && p.keySpecValue === specValue);
+}
+
 export function getSuppliers(filter?: { brandId?: string; productId?: string }): Supplier[] {
   let result = SUPPLIERS;
   if (filter?.brandId) {
@@ -1196,6 +1354,13 @@ export function getServiceCenters(filter?: { brandId?: string }): ServiceCenter[
     return SERVICE_CENTERS.filter(s => s.brandId === filter.brandId);
   }
   return SERVICE_CENTERS;
+}
+
+export function getReviews(filter?: { brandId?: string }): Review[] {
+  if (filter?.brandId) {
+    return REVIEWS.filter(r => r.brandId === filter.brandId);
+  }
+  return REVIEWS;
 }
 
 export function getMcats(): MCat[] {

@@ -143,9 +143,11 @@ function assert(cond, msg) {
   });
 
   await record('CF-09', 'Brand card navigates to Brand Hub', async () => {
+    // Brand card links now legitimately carry ?fromCategory=... (mentor-feedback intent-
+    // continuity fix) so the exact href match is intentionally a prefix match here.
     await page.goto(BASE_URL + '/categories/diesel-generators');
-    await page.locator('a[href="/brands/kirloskar"]').first().click();
-    await page.waitForURL(/\/brands\/kirloskar$/, { timeout: 10000 });
+    await page.locator('a[href^="/brands/kirloskar"]').first().click();
+    await page.waitForURL(/\/brands\/kirloskar(\?|$)/, { timeout: 10000 });
   });
 
   await record('CF-10', 'Category with zero brands shows an empty state, not a broken page', async () => {

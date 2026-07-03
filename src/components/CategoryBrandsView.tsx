@@ -117,6 +117,14 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
 
   const hasActiveFilters = selectedBrandIds.size > 0 || !!selectedSpecValue || selectedPriceBucket !== null;
 
+  // Carries "the buyer was just looking at Air Compressors, 15 HP" forward as URL
+  // params so the Brand Hub can surface that context instead of losing it on navigation.
+  const brandHref = (brandId: string) => {
+    const params = new URLSearchParams({ fromCategory: category.id });
+    if (selectedSpecValue) params.set('spec', selectedSpecValue);
+    return `/brands/${brandId}?${params.toString()}`;
+  };
+
   const handleGetQuotes = () => {
     openBuyLeadForm({
       productName: category.name,
@@ -133,7 +141,9 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
         </Link>
         <div className="min-w-0">
           <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block truncate">{industryName}</span>
-          <h1 className="font-heading font-extrabold text-sm md:text-base text-primary tracking-tight truncate">{category.name} Brands</h1>
+          {/* Page heading lives once, in the hero below — this is a compact sticky
+              restatement, not a second <h1>. */}
+          <p className="font-heading font-extrabold text-sm md:text-base text-primary tracking-tight truncate">{category.name} Brands</p>
         </div>
       </div>
 
@@ -257,7 +267,7 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
                   {brands.map((brand) => (
                     <Link
                       key={brand.id}
-                      href={`/brands/${brand.id}`}
+                      href={brandHref(brand.id)}
                       className="bg-surface border border-line rounded-2xl p-3.5 flex items-start gap-3 hover:border-accent-blue/40 transition shadow-xs"
                     >
                       <div className="w-11 h-11 bg-canvas border border-line rounded-xl flex items-center justify-center shrink-0 overflow-hidden p-1.5 bg-white">
@@ -302,7 +312,7 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
                         {sortedByRating.map((brand, idx) => (
                           <tr key={brand.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-canvas/50'}>
                             <td className="px-3 py-2.5 font-bold text-primary border-b border-line whitespace-nowrap">
-                              <Link href={`/brands/${brand.id}`} className="hover:text-accent-blue">{brand.name}</Link>
+                              <Link href={brandHref(brand.id)} className="hover:text-accent-blue">{brand.name}</Link>
                             </td>
                             <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">
                               <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-amber-400 text-amber-400" />{brand.rating}</span>

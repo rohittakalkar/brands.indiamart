@@ -250,23 +250,6 @@ export default function DiscoverView({ brands, products, categories, categoryFom
       </div>
 
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-9">
-        {/* One Primary CTA */}
-        <button
-          onClick={() => openBuyLeadForm({})}
-          className="w-full bg-primary hover:bg-secondary rounded-2xl p-4 md:p-5 text-white flex items-center justify-between gap-4 cursor-pointer shadow-sm transition"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-white/10 border border-white/20 rounded-lg flex items-center justify-center shrink-0">
-              <Send className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-heading font-bold text-xs md:text-sm tracking-tight">Get quotes from verified sellers</h3>
-              <p className="text-[9.5px] md:text-[11px] text-white/70 mt-0.5 font-medium leading-tight">Send your requirement, receive competitive quotes directly.</p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-white shrink-0" />
-        </button>
-
         {/* Browse Categories */}
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -288,6 +271,18 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             ))}
           </div>
         </section>
+
+        {/* One Primary CTA — compact chip, not a full banner */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => openBuyLeadForm({})}
+            className="inline-flex items-center gap-2 bg-primary hover:bg-secondary rounded-full pl-3 pr-3.5 py-2 text-white shadow-sm transition cursor-pointer"
+          >
+            <Send className="w-3 h-3 text-cta shrink-0" />
+            <span className="font-heading font-bold text-[10.5px] tracking-tight whitespace-nowrap">Get Quotes From Verified Sellers</span>
+            <ChevronRight className="w-3 h-3 text-white/70 shrink-0" />
+          </button>
+        </div>
 
         {/* Trending Categories */}
         <section>

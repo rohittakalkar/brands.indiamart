@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, X } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, X, Phone } from 'lucide-react';
 import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
@@ -331,6 +331,10 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                           <MapPin className="w-3 h-3 text-slate-400" />
                           {supp.location}
                         </span>
+                        <a href={`tel:${supp.contactPhone.replace(/\s+/g, '')}`} className="text-[9px] text-accent-blue font-bold flex items-center gap-1 mt-1">
+                          <Phone className="w-3 h-3" />
+                          {supp.contactPhone}
+                        </a>
                       </div>
                       <div className="flex flex-col gap-1 items-end shrink-0">
                         {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}

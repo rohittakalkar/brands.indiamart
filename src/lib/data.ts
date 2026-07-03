@@ -807,7 +807,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2015,
     responseTime: '1.6 hrs',
     deliveryTimeRange: '2-4 Days',
-    priceEstimate: '₹18,500 - ₹98,000'
+    priceEstimate: '₹18,500 - ₹98,000',
+    contactPhone: '+91 98221 34567'
   },
   {
     id: 'kirloskar-supp-2',
@@ -824,7 +825,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2010,
     responseTime: '2.1 hrs',
     deliveryTimeRange: '3-5 Days',
-    priceEstimate: '₹19,200 - ₹1,02,500'
+    priceEstimate: '₹19,200 - ₹1,02,500',
+    contactPhone: '+91 97402 88123'
   },
   {
     id: 'ksb-supp-1',
@@ -841,7 +843,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2012,
     responseTime: '2.4 hrs',
     deliveryTimeRange: '2-4 Days',
-    priceEstimate: '₹22,000 - ₹1,80,000'
+    priceEstimate: '₹22,000 - ₹1,80,000',
+    contactPhone: '+91 99870 45612'
   },
   {
     id: 'crompton-supp-1',
@@ -858,7 +861,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2014,
     responseTime: '2.8 hrs',
     deliveryTimeRange: '4-8 Days',
-    priceEstimate: '₹12,000 - ₹2,80,000'
+    priceEstimate: '₹12,000 - ₹2,80,000',
+    contactPhone: '+91 96193 77890'
   },
   {
     id: 'siemens-supp-1',
@@ -875,7 +879,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2016,
     responseTime: '3.2 hrs',
     deliveryTimeRange: '2-4 Days',
-    priceEstimate: '₹15,000 - ₹85,000'
+    priceEstimate: '₹15,000 - ₹85,000',
+    contactPhone: '+91 90040 23456'
   },
   {
     id: 'voltas-supp-1',
@@ -892,7 +897,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2011,
     responseTime: '1.8 hrs',
     deliveryTimeRange: '2-5 Days',
-    priceEstimate: '₹37,000 - ₹52,000'
+    priceEstimate: '₹37,000 - ₹52,000',
+    contactPhone: '+91 88799 61234'
   },
   {
     id: 'voltas-supp-2',
@@ -909,7 +915,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2017,
     responseTime: '2.6 hrs',
     deliveryTimeRange: '3-6 Days',
-    priceEstimate: '₹38,500 - ₹54,000'
+    priceEstimate: '₹38,500 - ₹54,000',
+    contactPhone: '+91 77389 90567'
   },
   {
     id: 'atlascopco-supp-1',
@@ -926,7 +933,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2018,
     responseTime: '3.5 hrs',
     deliveryTimeRange: '5-10 Days',
-    priceEstimate: '₹4,80,000 - ₹6,20,000'
+    priceEstimate: '₹4,80,000 - ₹6,20,000',
+    contactPhone: '+91 98501 12378'
   },
   {
     id: 'bosch-supp-1',
@@ -943,7 +951,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2019,
     responseTime: '2.9 hrs',
     deliveryTimeRange: '2-5 Days',
-    priceEstimate: '₹8,500 - ₹12,000'
+    priceEstimate: '₹8,500 - ₹12,000',
+    contactPhone: '+91 99164 55321'
   },
   {
     id: 'kirloskar-supp-3',
@@ -960,7 +969,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2013,
     responseTime: '1.9 hrs',
     deliveryTimeRange: '7-14 Days',
-    priceEstimate: '₹8,50,000 - ₹9,80,000'
+    priceEstimate: '₹8,50,000 - ₹9,80,000',
+    contactPhone: '+91 98220 76543'
   },
   {
     id: 'kirloskar-supp-4',
@@ -977,7 +987,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2016,
     responseTime: '2.3 hrs',
     deliveryTimeRange: '10-18 Days',
-    priceEstimate: '₹14,20,000 - ₹15,90,000'
+    priceEstimate: '₹14,20,000 - ₹15,90,000',
+    contactPhone: '+91 96993 21098'
   },
   {
     id: 'ksb-supp-2',
@@ -994,7 +1005,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2015,
     responseTime: '2.7 hrs',
     deliveryTimeRange: '4-8 Days',
-    priceEstimate: '₹35,000 - ₹2,10,000'
+    priceEstimate: '₹35,000 - ₹2,10,000',
+    contactPhone: '+91 94440 65789'
   },
   {
     id: 'crompton-supp-2',
@@ -1011,7 +1023,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2018,
     responseTime: '3.1 hrs',
     deliveryTimeRange: '3-6 Days',
-    priceEstimate: '₹8,500 - ₹45,000'
+    priceEstimate: '₹8,500 - ₹45,000',
+    contactPhone: '+91 97659 34210'
   },
   {
     id: 'havells-supp-1',
@@ -1028,7 +1041,8 @@ export const SUPPLIERS: Supplier[] = [
     authorizedSince: 2017,
     responseTime: '2.4 hrs',
     deliveryTimeRange: '5-9 Days',
-    priceEstimate: '₹45,000 - ₹1,85,000'
+    priceEstimate: '₹45,000 - ₹1,85,000',
+    contactPhone: '+91 99999 43201'
   },
   ...GENERATED_SUPPLIERS
 ];
@@ -1186,6 +1200,52 @@ export function getServiceCenters(filter?: { brandId?: string }): ServiceCenter[
 
 export function getMcats(): MCat[] {
   return MCATS;
+}
+
+export interface CategoryFomoSummary {
+  id: string;
+  name: string;
+  icon: string;
+  brandCount: number;
+  productCount: number;
+  topBrands: { id: string; name: string; logo: string }[];
+}
+
+// Real, computed brand/product density per category — not fabricated stats —
+// so the homepage can show buyers genuine "this category has N real brands"
+// social proof, and honestly distinguish branded categories from ones that
+// are standard-sourcing-only (brandCount === 0, no curated brand catalog yet).
+export function getCategoryFomoSummaries(): CategoryFomoSummary[] {
+  return MCATS.map(c => {
+    const catBrands = getBrands({ mcatId: c.id }).slice().sort((a, b) => b.rating - a.rating);
+    return {
+      id: c.id,
+      name: c.name,
+      icon: c.icon,
+      brandCount: catBrands.length,
+      productCount: PRODUCTS.filter(p => p.mcatId === c.id).length,
+      topBrands: catBrands.slice(0, 3).map(b => ({ id: b.id, name: b.name, logo: b.logo }))
+    };
+  }).sort((a, b) => b.brandCount - a.brandCount);
+}
+
+export interface CatalogStats {
+  totalCategories: number;
+  brandedCategoryCount: number;
+  standardCategoryCount: number;
+  totalBrands: number;
+  totalProducts: number;
+}
+
+export function getCatalogStats(): CatalogStats {
+  const brandedCategoryCount = MCATS.filter(c => getBrands({ mcatId: c.id }).length > 0).length;
+  return {
+    totalCategories: MCATS.length,
+    brandedCategoryCount,
+    standardCategoryCount: MCATS.length - brandedCategoryCount,
+    totalBrands: BRANDS.length,
+    totalProducts: PRODUCTS.length
+  };
 }
 
 export function getMcatById(id: string): MCat | undefined {

@@ -252,6 +252,14 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
                     {supp.deliveryTimeRange}
                   </div>
                 </div>
+
+                {/* Contact */}
+                <div className="text-center py-1 bg-slate-50 rounded-lg">
+                  <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-widest scale-90">Contact</span>
+                  <a href={`tel:${supp.contactPhone.replace(/\s+/g, '')}`} className="text-[9px] font-extrabold text-accent-blue mt-0.5 block truncate">
+                    {supp.contactPhone}
+                  </a>
+                </div>
               </div>
 
               {/* View Profile Action */}

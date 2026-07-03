@@ -102,7 +102,7 @@ Defined in `src/index.css` via Tailwind v4's `@theme` block; fonts are self-host
 This is a prototype demonstrating the information architecture and buyer experience — it is explicitly **not** a production system:
 
 - No authentication, no real user accounts — the "Buyer Profile" is static
-- No database — `BuyLead` (quote request) submissions live in an in-memory array and reset on server restart
-- Product catalogues (`Brand.catalogueUrl`) and service-center contact details are illustrative pseudo-data, not real files or real phone lines
+- No database — `BuyLead` (quote request) submissions live in an in-memory array (`src/lib/data.ts`'s `leadsStore`). On Vercel this is a **known-unreliable** limitation, not just "resets on restart": page routes and API routes are bundled as separate serverless functions with independent module instantiation, so a `POST /api/leads` and a later visit to `/leads` can land on different function instances that never shared memory — a submitted quote request may not appear in "My Quote Requests" even within the same browsing session. A real fix needs an external datastore (e.g. Supabase); deliberately not added yet.
+- Product catalogues (`Brand.catalogueUrl`) and dealer/service-center contact phone numbers are illustrative pseudo-data (deterministically generated, not real dialable numbers), not real files or real phone lines
 - The AI Assistant component (`src/components/AIAssistant.tsx`) exists and is functional but is not linked from any page
 - Search resolution (`src/lib/search.ts`) uses simple keyword matching, not a real search index

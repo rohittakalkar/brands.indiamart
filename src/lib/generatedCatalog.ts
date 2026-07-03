@@ -397,19 +397,40 @@ function toProduct(seed: Seed, imageIdx: number): Product {
 const CITIES = [
   'Pune, Maharashtra', 'Mumbai, Maharashtra', 'Bengaluru, Karnataka', 'Chennai, Tamil Nadu',
   'New Delhi, Delhi', 'Ahmedabad, Gujarat', 'Hyderabad, Telangana', 'Kolkata, West Bengal',
-  'Nagpur, Maharashtra', 'Coimbatore, Tamil Nadu'
+  'Nagpur, Maharashtra', 'Coimbatore, Tamil Nadu', 'Surat, Gujarat', 'Jaipur, Rajasthan',
+  'Lucknow, Uttar Pradesh', 'Indore, Madhya Pradesh', 'Vadodara, Gujarat', 'Visakhapatnam, Andhra Pradesh',
+  'Bhopal, Madhya Pradesh', 'Ludhiana, Punjab', 'Kanpur, Uttar Pradesh', 'Rajkot, Gujarat'
 ];
+
+// Business-type suffix cycles independently of city so two dealers that happen to land in the
+// same city (inevitable once a brand has more products than there are cities) still read as
+// two distinct businesses rather than an obvious clone with only the numbers changed.
+const DEALER_TYPES = [
+  'Authorized Dealer', 'Corporate Dealer', 'Regional Distributor', 'Authorized Channel Partner',
+  'Premium Distributor', 'Authorized Service & Sales Partner'
+];
+
+// Formats a realistic-looking (not real/dialable) Indian mobile number, deterministic per idx
+// so the same supplier always gets the same number rather than a fresh random one per build.
+function formatPhone(idx: number): string {
+  const prefixes = ['98', '97', '99', '96', '95', '90', '88', '77'];
+  const prefix = prefixes[idx % prefixes.length];
+  const rest = String(1000000 + ((idx * 7919) % 8999999)).padStart(8, '0');
+  return `+91 ${prefix}${rest.slice(0, 3)} ${rest.slice(3, 8)}`;
+}
 
 function toSupplier(seed: Seed, idx: number): Supplier {
   const city = CITIES[idx % CITIES.length];
+  const dealerType = DEALER_TYPES[Math.floor(idx / CITIES.length) % DEALER_TYPES.length];
   const experienceYears = 8 + (idx % 35);
   const rating = Math.round((4.1 + (idx % 8) * 0.09) * 10) / 10;
   const reviewsCount = 45 + ((idx * 13) % 320);
   const responseHrs = (1.2 + (idx % 9) * 0.35).toFixed(1);
+  const brandShort = BRAND_NAMES[seed.brandId].split(' ')[0];
 
   return {
     id: `${seed.id}-supp-1`,
-    name: `${BRAND_NAMES[seed.brandId].split(' ')[0]} Authorized Partners – ${city.split(',')[0]}`,
+    name: `${brandShort} ${city.split(',')[0]} ${dealerType}`,
     brandId: seed.brandId,
     brandName: BRAND_NAMES[seed.brandId],
     productId: seed.id,
@@ -422,7 +443,8 @@ function toSupplier(seed: Seed, idx: number): Supplier {
     authorizedSince: 2024 - experienceYears + 3,
     responseTime: `${responseHrs} hrs`,
     deliveryTimeRange: seed.deliveryTime,
-    priceEstimate: seed.priceRange
+    priceEstimate: seed.priceRange,
+    contactPhone: formatPhone(idx)
   };
 }
 

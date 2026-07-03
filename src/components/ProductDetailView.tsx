@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Share2, Heart, Send, GitCompare, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Share2, Heart, Send, GitCompare, ShoppingBag, Phone } from 'lucide-react';
 import { Product, Brand, Supplier, AlternativeProduct } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { useShortlist } from './ShortlistProvider';
@@ -32,6 +32,14 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
 
   const isSaved = shortlistedProducts.includes(product.id);
   const inBasket = basketItems.some(i => i.productId === product.id);
+
+  const handleCompareAlternative = (alt: AlternativeProduct) => {
+    openBuyLeadForm({
+      productName: `${product.name} (comparing against ${alt.brandName} ${alt.modelNumber})`,
+      brandName: product.brandName,
+      requirement: `Evaluating ${product.brandName} ${product.modelNumber} against ${alt.brandName} ${alt.modelNumber} (${alt.keySpecLabel}: ${alt.keySpecValue}, ${alt.priceRange}). Please share a competitive quote and help me understand how ${product.brandName}'s offering compares.`
+    });
+  };
 
   const handleSendLead = () => {
     openBuyLeadForm({
@@ -207,6 +215,10 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
                         <div className="min-w-0">
                           <h4 className="font-bold text-xs text-slate-900 leading-tight">{supp.name}</h4>
                           <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{supp.location}</span>
+                          <a href={`tel:${supp.contactPhone.replace(/\s+/g, '')}`} className="text-[9px] text-accent-blue font-bold flex items-center gap-1 mt-1">
+                            <Phone className="w-2.5 h-2.5" />
+                            {supp.contactPhone}
+                          </a>
                         </div>
                         <div className="flex flex-col gap-1 items-end shrink-0">
                           {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}
@@ -281,17 +293,22 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
                   Compare Alternatives from Other Brands
                 </h4>
                 <p className="text-[10px] text-slate-600 mt-1 leading-relaxed font-medium">
-                  Similar products from other manufacturers, for reference — not sellers of this exact item.
+                  Similar products from other manufacturers, for reference — not sellers of this exact item. Tap one to request a comparable quote from {product.brandName.split(' ')[0]}.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 {alternatives.map((alt) => (
-                  <div key={alt.id} className="bg-white border border-slate-200/80 rounded-xl p-2.5 space-y-1">
+                  <button
+                    key={alt.id}
+                    onClick={() => handleCompareAlternative(alt)}
+                    className="text-left bg-white border border-slate-200/80 hover:border-accent-blue/50 hover:shadow-sm rounded-xl p-2.5 space-y-1 transition cursor-pointer"
+                    title={`Request a comparable quote against ${alt.brandName} ${alt.modelNumber}`}
+                  >
                     <span className="text-[10px] font-extrabold text-slate-900 block truncate">{alt.brandName}</span>
                     <span className="text-[8.5px] text-slate-500 font-semibold block truncate">{alt.modelNumber}</span>
                     <span className="text-[8.5px] text-slate-400 block">{alt.keySpecLabel}: {alt.keySpecValue}</span>
                     <span className="text-[10px] font-black text-accent-blue block">{alt.priceRange}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
               <button

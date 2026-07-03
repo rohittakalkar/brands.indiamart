@@ -104,6 +104,7 @@ export interface Supplier {
   responseTime: string;
   deliveryTimeRange: string;
   priceEstimate: string;
+  contactPhone: string;
 }
 
 export interface AlternativeProduct {

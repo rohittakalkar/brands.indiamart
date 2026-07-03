@@ -37,14 +37,18 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${sora.variable} ${inter.variable} ${ibmPlexMono.variable}`}>
-      <body>
+      <body suppressHydrationWarning>
         <ShortlistProvider>
           <RecentlyViewedProvider>
             <QuoteBasketProvider>
               <BuyLeadModalProvider>
                 <AppShell>
                   <DesktopNav />
-                  <div className="flex-1 flex flex-col pb-14 md:pb-0">
+                  {/* pb-20 (80px), not pb-14 (56px, the nav's exact height) — each page's own
+                      view component typically owns an inner overflow-y-auto scroll region, so
+                      padding here must clear the fixed 56px BottomNav with real breathing room,
+                      not land flush against it. */}
+                  <div className="flex-1 flex flex-col pb-20 md:pb-0">
                     {children}
                   </div>
                   <BottomNav />

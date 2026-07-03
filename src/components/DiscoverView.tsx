@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Search, ChevronRight, Send, Clock, Package, BookOpen, TrendingUp, ShoppingBag } from 'lucide-react';
+import { Search, ChevronRight, Send, Clock, Package, BookOpen, TrendingUp, ShoppingBag, Layers, Award, Flame } from 'lucide-react';
 import { Brand, Product } from '../types';
 import { Category } from '../services/categories';
+import type { CategoryFomoSummary, CatalogStats } from '../lib/data';
 import { BrandLogo } from './BrandLogo';
 import { CategoryIcon } from './CategoryIcon';
 import { TrustBadge, TrustBadgeType } from './TrustBadge';
@@ -18,6 +19,8 @@ interface DiscoverViewProps {
   brands: Brand[];
   products: Product[];
   categories: Category[];
+  categoryFomo: CategoryFomoSummary[];
+  catalogStats: CatalogStats;
 }
 
 const RECENT_SEARCHES = [
@@ -35,7 +38,7 @@ const BUYING_GUIDES = [
   { title: 'Diesel Generator Sizing Checklist', tag: 'Guide' }
 ];
 
-export default function DiscoverView({ brands, products, categories }: DiscoverViewProps) {
+export default function DiscoverView({ brands, products, categories, categoryFomo, catalogStats }: DiscoverViewProps) {
   const router = useRouter();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { items: basketItems } = useQuoteBasket();
@@ -99,7 +102,7 @@ export default function DiscoverView({ brands, products, categories }: DiscoverV
       </div>
 
       {/* Hero Search */}
-      <div className="bg-gradient-to-b from-primary to-secondary px-4 md:px-8 py-8 md:py-14 relative">
+      <div className="bg-gradient-to-b from-primary to-secondary px-4 md:px-8 pt-8 md:pt-14 pb-6 md:pb-9 relative">
         <motion.div
           className="max-w-2xl mx-auto text-center"
           initial={{ opacity: 0, y: 12 }}
@@ -107,13 +110,32 @@ export default function DiscoverView({ brands, products, categories }: DiscoverV
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
           <h1 className="font-heading font-extrabold text-white text-xl md:text-3xl tracking-tight">
-            Discover the right branded product, with confidence
+            Shop by category, backed by trusted brands
           </h1>
           <p className="text-white/70 text-[11px] md:text-sm mt-2">
-            Compare brands, models and verified sellers before you request quotes
+            {catalogStats.brandedCategoryCount} branded categories with verified sellers, plus {catalogStats.standardCategoryCount} standard product categories — all in one place
           </p>
 
-          <form onSubmit={handleSearchSubmit} className="relative mt-5 md:mt-6">
+          {/* Real, computed catalog stats — not fabricated urgency counters */}
+          <div className="flex items-center justify-center gap-1.5 md:gap-2 mt-3.5 flex-wrap">
+            <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
+              <Layers className="w-3 h-3 text-cta shrink-0" />
+              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.brandedCategoryCount}</span>
+              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Branded Categories</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
+              <Award className="w-3 h-3 text-cta shrink-0" />
+              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.totalBrands}</span>
+              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Trusted Brands</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
+              <Package className="w-3 h-3 text-cta shrink-0" />
+              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.standardCategoryCount}</span>
+              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Standard Categories</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSearchSubmit} className="relative mt-4 md:mt-5">
             <motion.div
               className="flex items-center w-full rounded-xl overflow-hidden"
               animate={{
@@ -176,6 +198,54 @@ export default function DiscoverView({ brands, products, categories }: DiscoverV
               </div>
             )}
           </form>
+        </motion.div>
+
+        {/* Category × Brand FOMO rail — real brand density per category, and an
+            honest "Standard Catalog" tag for categories with no curated brands yet */}
+        <motion.div
+          className="max-w-5xl mx-auto mt-5 md:mt-6"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
+        >
+          <div className="flex items-center gap-1.5 px-0.5 mb-2">
+            <Flame className="w-3.5 h-3.5 text-cta shrink-0" />
+            <span className="text-white/80 text-[9.5px] md:text-[10px] font-black uppercase tracking-wider">
+              Categories buyers are exploring — with their trusted brands
+            </span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
+            {categoryFomo.map((cat) => (
+              <Link
+                key={cat.id}
+                href={`/categories/${cat.id}`}
+                className="shrink-0 w-[136px] bg-white rounded-xl p-2.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition"
+              >
+                <div className="flex items-center gap-1.5">
+                  <div className="w-6 h-6 bg-accent-blue/10 rounded-md flex items-center justify-center text-accent-blue shrink-0">
+                    <CategoryIcon icon={cat.icon} className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[9.5px] font-bold text-slate-800 leading-tight line-clamp-2">{cat.name}</span>
+                </div>
+                <div className="mt-2 pt-2 border-t border-line">
+                  {cat.brandCount > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex -space-x-2">
+                        {cat.topBrands.map((b) => (
+                          <div key={b.id} className="w-5 h-5 rounded-full bg-white ring-2 ring-white border border-line overflow-hidden flex items-center justify-center shrink-0">
+                            <BrandLogo logo={b.logo} name={b.name} className="w-full h-full object-contain p-0.5" />
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-[8.5px] font-black text-accent-green tabular-nums">{cat.brandCount} Brand{cat.brandCount !== 1 ? 's' : ''}</span>
+                    </div>
+                  ) : (
+                    <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wide">Standard Catalog</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </motion.div>
       </div>
 

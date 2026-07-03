@@ -8,6 +8,7 @@ import { Category } from '../services/categories';
 import { CategoryIcon } from './CategoryIcon';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
+import { buildRfqRequirement } from '../lib/rfq';
 
 interface CategorySearchViewProps {
   categories: Category[];
@@ -148,7 +149,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
                               openBuyLeadForm({
                                 productName: prod.name,
                                 brandName: prod.brandName,
-                                requirement: `Hi, I am interested in procuring ${prod.name} from standard manufacturers. Please share delivery timeline & price quote.`
+                                requirement: buildRfqRequirement(prod)
                               })
                             }
                             className="w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition"

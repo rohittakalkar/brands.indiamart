@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ArrowLeft, Check, Clock, Star, ThumbsUp, Send, X, Plus, Search, Sparkles, GitCompare } from 'lucide-react';
+import { ArrowLeft, Check, Clock, Star, ThumbsUp, Send, X, Plus, Search, Sparkles, GitCompare, Copy } from 'lucide-react';
 import { Supplier, Product } from '../types';
 import { Category } from '../services/categories';
 import { CategoryIcon } from './CategoryIcon';
 import { TrustBadge } from './TrustBadge';
+import { ConnectButton } from './ConnectButton';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 
 interface CompareViewProps {
@@ -36,6 +37,26 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
   // unrelated brands (e.g. a diesel generator dealer next to a power tools dealer).
   const comparisonCategory = activeCategory
     ?? (selectedSuppliers[0]?.productId ? productsById.get(selectedSuppliers[0].productId)?.mcatId : undefined);
+
+  // Keeps the URL a live, literal snapshot of the current comparison (category + exact
+  // sellers) so any customization the buyer makes — adding a seller, switching category —
+  // stays shareable, not just the original ?productId=/?brandId= scope from the entry link.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (comparisonCategory) params.set('category', comparisonCategory);
+    if (selectedSuppliers.length > 0) params.set('sellers', selectedSuppliers.map(s => s.id).join(','));
+    const qs = params.toString();
+    router.replace(qs ? `/compare?${qs}` : '/compare', { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSuppliers, comparisonCategory]);
+
+  const [linkCopied, setLinkCopied] = useState(false);
+  const handleCopyLink = () => {
+    navigator.clipboard?.writeText(window.location.href).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => {});
+  };
 
   const handleRemoveSupplier = (id: string) => {
     setSelectedSuppliers(prev => prev.filter(s => s.id !== id));
@@ -124,15 +145,27 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
           </div>
         </div>
 
-        {selectedSuppliers.length < 5 && comparisonCategory && (
-          <button
-            onClick={() => setIsAddOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-accent-blue/10 hover:bg-accent-blue/15 border border-accent-blue/20 text-accent-blue text-[10px] font-black uppercase tracking-wider rounded-lg transition"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Seller</span>
-          </button>
-        )}
+        <div className="flex items-center gap-1.5">
+          {selectedSuppliers.length > 0 && (
+            <button
+              onClick={handleCopyLink}
+              title="Copy a shareable link to this exact comparison"
+              className="flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-line text-slate-600 text-[10px] font-black uppercase tracking-wider rounded-lg transition"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>{linkCopied ? 'Copied!' : 'Share'}</span>
+            </button>
+          )}
+          {selectedSuppliers.length < 5 && comparisonCategory && (
+            <button
+              onClick={() => setIsAddOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1 bg-accent-blue/10 hover:bg-accent-blue/15 border border-accent-blue/20 text-accent-blue text-[10px] font-black uppercase tracking-wider rounded-lg transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Seller</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main body scrollable list */}
@@ -256,9 +289,7 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
                 {/* Contact */}
                 <div className="text-center py-1 bg-slate-50 rounded-lg">
                   <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-widest scale-90">Contact</span>
-                  <a href={`tel:${supp.contactPhone.replace(/\s+/g, '')}`} className="text-[9px] font-extrabold text-accent-blue mt-0.5 block truncate">
-                    {supp.contactPhone}
-                  </a>
+                  <ConnectButton supplierId={supp.id} brandName={supp.brandName} compact className="text-center" />
                 </div>
               </div>
 

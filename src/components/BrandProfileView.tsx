@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Sparkles, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Send, GitCompare, Download, FileText, Wrench, Phone, Clock, LayoutGrid } from 'lucide-react';
 import { Brand, Product, Supplier, Review, BrandMCat, ServiceCenter } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { TrustBadge } from './TrustBadge';
+import { ConnectButton } from './ConnectButton';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
@@ -25,7 +25,6 @@ interface BrandProfileViewProps {
 }
 
 export default function BrandProfileView({ brand, brandMCats, brandProducts, brandSuppliers, serviceCenters, reviews, contextCategory, contextProduct }: BrandProfileViewProps) {
-  const router = useRouter();
   const { shortlistedBrands, toggleShortlistBrand } = useShortlist();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { trackView } = useRecentlyViewed();
@@ -57,9 +56,11 @@ export default function BrandProfileView({ brand, brandMCats, brandProducts, bra
       {/* Brand Header */}
       <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between shrink-0 relative z-10">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-1.5 hover:bg-slate-100 rounded-full transition">
+          {/* Links to the brand directory, not router.back() — a cold landing (e.g. from a
+              search engine) has no in-app history for "back" to rely on. */}
+          <Link href="/brands" className="p-1.5 hover:bg-slate-100 rounded-full transition" title="Back to all brands">
             <ArrowLeft className="w-4 h-4 text-slate-800" />
-          </button>
+          </Link>
           <div>
             <h2 className="font-extrabold text-sm text-slate-900 tracking-tight">{brand.name}</h2>
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{brand.businessType}</span>
@@ -385,10 +386,7 @@ export default function BrandProfileView({ brand, brandMCats, brandProducts, bra
                             <MapPin className="w-3 h-3 text-slate-400" />
                             {supp.location}
                           </span>
-                          <a href={`tel:${supp.contactPhone.replace(/\s+/g, '')}`} className="text-[9px] text-accent-blue font-bold flex items-center gap-1 mt-1">
-                            <Phone className="w-3 h-3" />
-                            {supp.contactPhone}
-                          </a>
+                          <ConnectButton supplierId={supp.id} brandName={brand.name} />
                         </div>
                         <div className="flex flex-col gap-1 items-end shrink-0">
                           {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}

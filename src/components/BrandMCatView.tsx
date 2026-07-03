@@ -2,9 +2,10 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, X, Phone } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, X } from 'lucide-react';
 import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
 import { TrustBadge } from './TrustBadge';
+import { ConnectButton } from './ConnectButton';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useShortlist } from './ShortlistProvider';
 import { buildRfqRequirement } from '../lib/rfq';
@@ -216,6 +217,47 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
             )}
           </section>
 
+          {/* Model Comparison — the primary decision surface for a buyer weighing options within
+              this brand's range, so it sits directly after model selection, not buried below a
+              single-model spec detail buyers may not scroll past. */}
+          {products.length > 1 && (
+            <section>
+              <h2 className="font-heading font-bold text-sm text-primary mb-3">Compare Models in This Line</h2>
+              <div className="bg-surface border border-line rounded-2xl overflow-x-auto shadow-xs">
+                <table className="w-full text-left text-[11px] border-collapse min-w-[480px]">
+                  <thead>
+                    <tr className="bg-canvas">
+                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Model</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">{products[0].keySpecLabel}</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Price Range</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Delivery</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Warranty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((prod, idx) => (
+                      <tr
+                        key={prod.id}
+                        onClick={() => setSelectedModelId(prod.id)}
+                        className={`cursor-pointer transition ${
+                          selectedProduct?.id === prod.id ? 'bg-cta/10' : idx % 2 === 0 ? 'bg-white' : 'bg-canvas/50'
+                        }`}
+                      >
+                        <td className="px-3 py-2.5 font-mono text-primary font-bold border-b border-line whitespace-nowrap">
+                          {prod.modelNumber}
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.keySpecValue}</td>
+                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.priceRange}</td>
+                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.deliveryTime}</td>
+                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.warranty}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
           {/* Selected Model Detail — conversion centre: full spec + get-quotes context without leaving the page */}
           {selectedProduct && (
             <section>
@@ -252,45 +294,6 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                     <span className="text-[11px] font-bold text-slate-900">{selectedProduct.warranty}</span>
                   </div>
                 </div>
-              </div>
-            </section>
-          )}
-
-          {/* Model Comparison */}
-          {products.length > 1 && (
-            <section>
-              <h2 className="font-heading font-bold text-sm text-primary mb-3">Model Comparison</h2>
-              <div className="bg-surface border border-line rounded-2xl overflow-x-auto shadow-xs">
-                <table className="w-full text-left text-[11px] border-collapse min-w-[480px]">
-                  <thead>
-                    <tr className="bg-canvas">
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Model</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">{products[0].keySpecLabel}</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Price Range</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Delivery</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Warranty</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((prod, idx) => (
-                      <tr
-                        key={prod.id}
-                        onClick={() => setSelectedModelId(prod.id)}
-                        className={`cursor-pointer transition ${
-                          selectedProduct?.id === prod.id ? 'bg-cta/10' : idx % 2 === 0 ? 'bg-white' : 'bg-canvas/50'
-                        }`}
-                      >
-                        <td className="px-3 py-2.5 font-mono text-primary font-bold border-b border-line whitespace-nowrap">
-                          {prod.modelNumber}
-                        </td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.keySpecValue}</td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.priceRange}</td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.deliveryTime}</td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.warranty}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </section>
           )}
@@ -343,10 +346,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                           <MapPin className="w-3 h-3 text-slate-400" />
                           {supp.location}
                         </span>
-                        <a href={`tel:${supp.contactPhone.replace(/\s+/g, '')}`} className="text-[9px] text-accent-blue font-bold flex items-center gap-1 mt-1">
-                          <Phone className="w-3 h-3" />
-                          {supp.contactPhone}
-                        </a>
+                        <ConnectButton supplierId={supp.id} brandName={brand.name} />
                       </div>
                       <div className="flex flex-col gap-1 items-end shrink-0">
                         {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}

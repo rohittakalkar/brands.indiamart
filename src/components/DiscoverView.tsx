@@ -38,6 +38,21 @@ const BUYING_GUIDES = [
   { title: 'Diesel Generator Sizing Checklist', tag: 'Guide' }
 ];
 
+// Guided discovery for buyers who know their problem, not the product-category vocabulary
+// to search for it — maps a plain-language situation to the real category that solves it.
+const PROBLEM_SOLUTIONS: { problem: string; mcatId: string }[] = [
+  { problem: 'My factory floor gets too hot for workers or equipment', mcatId: 'water-coolers-chillers' },
+  { problem: 'I need backup power during outages', mcatId: 'diesel-generators' },
+  { problem: "My compressed air system isn't keeping up with demand", mcatId: 'air-compressors' },
+  { problem: 'I need to automate or control a production line', mcatId: 'plc-drives' },
+  { problem: 'I need to move water from a borewell or tank', mcatId: 'industrial-pumps' },
+  { problem: 'My electrical panel needs an upgrade or better protection', mcatId: 'switchgear' },
+  { problem: 'I need to control flow or pressure in a pipeline', mcatId: 'industrial-valves' },
+  { problem: 'My motors draw too much power or run hot', mcatId: 'induction-motors' },
+  { problem: 'I want to cut electricity costs with renewable power', mcatId: 'solar-equipment' },
+  { problem: 'I need precise on-site measurements', mcatId: 'measuring-instruments' }
+];
+
 export default function DiscoverView({ brands, products, categories, categoryFomo, catalogStats }: DiscoverViewProps) {
   const router = useRouter();
   const { open: openBuyLeadForm } = useBuyLeadModal();
@@ -75,6 +90,12 @@ export default function DiscoverView({ brands, products, categories, categoryFom
   const popularBrands = [...brands].sort((a, b) => b.rating - a.rating).slice(0, 6);
   const trendingCategories = categories.slice(0, 5);
   const featuredProducts = products.slice(0, 4);
+
+  // Resolve each problem statement against the real catalog, so a stale mapping never
+  // silently links to a category that doesn't exist.
+  const resolvedProblems = PROBLEM_SOLUTIONS
+    .map(p => ({ ...p, category: categories.find(c => c.id === p.mcatId) }))
+    .filter((p): p is typeof p & { category: Category } => !!p.category);
 
   return (
     <div className="flex-1 bg-canvas overflow-y-auto select-none font-sans text-slate-800 relative">
@@ -250,6 +271,29 @@ export default function DiscoverView({ brands, products, categories, categoryFom
       </div>
 
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-9">
+        {/* Not Sure What You Need — guided discovery for buyers who know their problem,
+            not the product-category vocabulary to search for it */}
+        {resolvedProblems.length > 0 && (
+          <section>
+            <h2 className="font-heading font-bold text-sm text-primary mb-3">Not Sure What You Need?</h2>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
+              {resolvedProblems.map((p) => (
+                <Link
+                  key={p.mcatId}
+                  href={`/categories/${p.mcatId}`}
+                  className="shrink-0 w-[176px] bg-surface border border-line rounded-xl p-3 flex flex-col gap-2 hover:border-accent-blue/40 transition"
+                >
+                  <p className="text-[10px] font-semibold text-slate-700 leading-snug line-clamp-3">&ldquo;{p.problem}&rdquo;</p>
+                  <span className="text-[9px] font-black text-accent-blue uppercase tracking-wide flex items-center gap-1 mt-auto">
+                    <CategoryIcon icon={p.category.icon} className="w-3 h-3" />
+                    {p.category.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Browse Categories */}
         <section>
           <div className="flex items-center justify-between mb-3">

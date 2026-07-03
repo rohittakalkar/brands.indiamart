@@ -10,6 +10,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { TrustBadge } from './TrustBadge';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
+import { buildRfqRequirement } from '../lib/rfq';
 
 interface InlineSectionSearchProps {
   value: string;
@@ -234,7 +235,7 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
                               openBuyLeadForm({
                                 productName: prod.name,
                                 brandName: prod.brandName,
-                                requirement: `Hello, we would like to procure ${prod.name} with standard industrial requirements. Please provide FOB price quote and delivery lead-time details.`
+                                requirement: buildRfqRequirement(prod)
                               })
                             }
                             className="flex-1 py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9.5px] font-bold flex items-center justify-center gap-1 transition"

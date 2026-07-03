@@ -32,8 +32,28 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
   const [selectedBrandIds, setSelectedBrandIds] = useState<Set<string>>(new Set());
   const [selectedSpecValue, setSelectedSpecValue] = useState<string | null>(null);
   const [selectedPriceBucket, setSelectedPriceBucket] = useState<number | null>(null); // bucket index
+  const [selectedCertification, setSelectedCertification] = useState<string | null>(null);
 
-  const sortedByRating = [...brands].sort((a, b) => b.rating - a.rating);
+  // Certifications genuinely vary by category/brand rather than following one universal
+  // framework — surface whichever certifications the brands actually competing in this
+  // category actually hold, not a fixed/invented list.
+  const availableCertifications = useMemo(() => {
+    const set = new Set<string>();
+    brands.forEach(b => b.certifications.forEach(c => set.add(c)));
+    return [...set].sort();
+  }, [brands]);
+
+  const certifiedBrandIds = useMemo(() => {
+    if (!selectedCertification) return null;
+    return new Set(brands.filter(b => b.certifications.includes(selectedCertification)).map(b => b.id));
+  }, [brands, selectedCertification]);
+
+  const displayedBrands = useMemo(() => {
+    if (!certifiedBrandIds) return brands;
+    return brands.filter(b => certifiedBrandIds.has(b.id));
+  }, [brands, certifiedBrandIds]);
+
+  const sortedByRating = [...displayedBrands].sort((a, b) => b.rating - a.rating);
 
   // Seller availability per brand, scoped to this MCat's products only
   const sellerCountByBrand = useMemo(() => {
@@ -80,6 +100,7 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
     return products.filter(p => {
       if (selectedBrandIds.size > 0 && !selectedBrandIds.has(p.brandId)) return false;
       if (selectedSpecValue && p.keySpecValue !== selectedSpecValue) return false;
+      if (certifiedBrandIds && !certifiedBrandIds.has(p.brandId)) return false;
       if (selectedPriceBucket !== null) {
         const bucket = priceBuckets[selectedPriceBucket];
         const price = leadingPrice(p.priceRange);
@@ -87,7 +108,7 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
       }
       return true;
     });
-  }, [products, selectedBrandIds, selectedSpecValue, selectedPriceBucket, priceBuckets]);
+  }, [products, selectedBrandIds, selectedSpecValue, selectedPriceBucket, priceBuckets, certifiedBrandIds]);
 
   // One representative (highest-priced / most capable) model per brand
   const topModelPerBrand = useMemo(() => {
@@ -113,9 +134,10 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
     setSelectedBrandIds(new Set());
     setSelectedSpecValue(null);
     setSelectedPriceBucket(null);
+    setSelectedCertification(null);
   };
 
-  const hasActiveFilters = selectedBrandIds.size > 0 || !!selectedSpecValue || selectedPriceBucket !== null;
+  const hasActiveFilters = selectedBrandIds.size > 0 || !!selectedSpecValue || selectedPriceBucket !== null || !!selectedCertification;
 
   // Carries "the buyer was just looking at Air Compressors, 15 HP" forward as URL
   // params so the Brand Hub can surface that context instead of losing it on navigation.
@@ -210,7 +232,7 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-heading font-bold text-sm text-primary flex items-center gap-1.5">
                     <SlidersHorizontal className="w-3.5 h-3.5 text-accent-blue" />
-                    Filter by Brand &amp; Price
+                    Filter by Brand, Price &amp; Certification
                   </h2>
                   {hasActiveFilters && (
                     <button onClick={clearFilters} className="flex items-center gap-1 text-[10px] font-bold text-accent-blue hover:underline">
@@ -257,14 +279,42 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
                       </div>
                     </div>
                   )}
+                  {availableCertifications.length > 0 && (
+                    <div>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Certification</span>
+                      <div className="flex flex-wrap gap-2">
+                        {availableCertifications.map((cert) => (
+                          <button
+                            key={cert}
+                            onClick={() => setSelectedCertification(prev => prev === cert ? null : cert)}
+                            className={`rounded-full px-3 py-1.5 text-[11px] font-semibold border transition ${
+                              selectedCertification === cert
+                                ? 'bg-primary text-white border-primary'
+                                : 'bg-canvas border-line text-slate-700 hover:border-accent-blue/40'
+                            }`}
+                          >
+                            {cert}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </section>
 
               {/* Brand Cards */}
               <section>
-                <h2 className="font-heading font-bold text-sm text-primary mb-3">Brands in {category.name}</h2>
+                <h2 className="font-heading font-bold text-sm text-primary mb-3">
+                  Brands in {category.name}{selectedCertification ? ` — ${selectedCertification}` : ''}
+                </h2>
+                {displayedBrands.length === 0 ? (
+                  <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 text-xs">
+                    No brands in {category.name} hold {selectedCertification} yet.{' '}
+                    <button onClick={() => setSelectedCertification(null)} className="text-accent-blue font-bold hover:underline">Clear this filter</button> to see all brands.
+                  </div>
+                ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {brands.map((brand) => (
+                  {displayedBrands.map((brand) => (
                     <Link
                       key={brand.id}
                       href={brandHref(brand.id)}
@@ -290,10 +340,11 @@ export default function CategoryBrandsView({ category, industryName, brands, pro
                     </Link>
                   ))}
                 </div>
+                )}
               </section>
 
               {/* Brand Comparison */}
-              {brands.length > 1 && (
+              {displayedBrands.length > 1 && (
                 <section>
                   <h2 className="font-heading font-bold text-sm text-primary mb-3">Brand Comparison</h2>
                   <div className="bg-surface border border-line rounded-2xl overflow-x-auto shadow-xs">

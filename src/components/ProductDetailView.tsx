@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Share2, Heart, Send, GitCompare, ShoppingBag, Phone } from 'lucide-react';
+import { ArrowLeft, Share2, Heart, Send, GitCompare, ShoppingBag } from 'lucide-react';
 import { Product, Brand, Supplier, AlternativeProduct } from '../types';
 import { TrustBadge } from './TrustBadge';
+import { ConnectButton } from './ConnectButton';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
@@ -63,7 +65,7 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
     openBuyLeadForm({
       productName: product.name,
       brandName: product.brandName,
-      requirement: `Requesting a quote for ${product.name} (Model ${product.modelNumber}) from ${supplier.name}.`
+      requirement: `${buildRfqRequirement(product)} Requesting this specifically from ${supplier.name}.`
     });
   };
 
@@ -72,12 +74,17 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
       {/* Product Header */}
       <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-1.5 hover:bg-slate-100 rounded-full transition">
+          {/* Links to the brand, not router.back() — a cold landing (e.g. from a search
+              engine) has no in-app history for "back" to rely on, but every product has a
+              real, logical parent: the brand that makes it. */}
+          <Link href={`/brands/${brand.id}`} className="p-1.5 hover:bg-slate-100 rounded-full transition" title={`Back to ${brand.name}`}>
             <ArrowLeft className="w-4 h-4 text-slate-800" />
-          </button>
+          </Link>
           <div>
             <h2 className="font-extrabold text-sm text-slate-900 tracking-tight line-clamp-1">{product.name}</h2>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{product.brandName}</span>
+            <Link href={`/brands/${brand.id}`} className="text-[10px] text-slate-400 font-bold uppercase tracking-wider hover:text-accent-blue transition">
+              {product.brandName}
+            </Link>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -118,7 +125,9 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
         {/* Product core info */}
         <div className="bg-white px-5 py-4 space-y-3 shadow-xs">
           <div>
-            <span className="text-[10px] text-accent-blue font-bold tracking-widest uppercase">{product.brandName}</span>
+            <Link href={`/brands/${brand.id}`} className="text-[10px] text-accent-blue font-bold tracking-widest uppercase hover:underline">
+              {product.brandName}
+            </Link>
             <h1 className="text-base font-extrabold text-slate-950 tracking-tight leading-snug mt-0.5">
               {product.name}
             </h1>
@@ -216,10 +225,7 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
                         <div className="min-w-0">
                           <h4 className="font-bold text-xs text-slate-900 leading-tight">{supp.name}</h4>
                           <span className="text-[9px] text-slate-400 font-semibold block mt-0.5">{supp.location}</span>
-                          <a href={`tel:${supp.contactPhone.replace(/\s+/g, '')}`} className="text-[9px] text-accent-blue font-bold flex items-center gap-1 mt-1">
-                            <Phone className="w-2.5 h-2.5" />
-                            {supp.contactPhone}
-                          </a>
+                          <ConnectButton supplierId={supp.id} brandName={brand.name} />
                         </div>
                         <div className="flex flex-col gap-1 items-end shrink-0">
                           {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}

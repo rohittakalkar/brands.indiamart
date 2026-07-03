@@ -1,11 +1,17 @@
 import { Metadata } from 'next';
 import CompareView from '@/components/CompareView';
 import { getSuppliers, getBrandById, getProductById, getMcats, getProducts } from '@/lib/data';
+import type { Supplier } from '@/types';
 
 interface CompareSearchParams {
   productId?: string;
   brandId?: string;
   category?: string;
+  // A literal, shareable snapshot of an in-progress comparison (which sellers, which
+  // category) — written back to the URL by CompareView itself whenever the buyer adds/
+  // removes a seller or switches category, so any customized comparison stays a durable,
+  // shareable link rather than resetting to just the original ?productId=/?brandId= scope.
+  sellers?: string;
 }
 
 type PageProps = { searchParams: Promise<CompareSearchParams> };
@@ -20,17 +26,30 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  const { productId, brandId, category } = await searchParams;
+  const { productId, brandId, category, sellers } = await searchParams;
 
   const products = getProducts();
   const productsById = new Map(products.map(p => [p.id, p]));
+  const allSuppliers = getSuppliers();
 
-  let suppliers = getSuppliers();
+  let suppliers = allSuppliers;
   let label = 'Compare Sellers';
   let scopeKey = 'none';
   let resolvedCategory: string | undefined;
 
-  if (productId) {
+  const sharedSupplierIds = sellers ? sellers.split(',').filter(Boolean) : [];
+  const sharedSuppliers: Supplier[] = sharedSupplierIds
+    .map(id => allSuppliers.find(s => s.id === id))
+    .filter((s): s is Supplier => !!s);
+
+  if (sharedSuppliers.length > 0) {
+    // A shared/customized comparison link takes priority over the shorthand scope params —
+    // it's the most literal statement of what the buyer actually wants to compare.
+    suppliers = sharedSuppliers;
+    scopeKey = `sellers-${sellers}`;
+    resolvedCategory = category || (sharedSuppliers[0].productId ? productsById.get(sharedSuppliers[0].productId)?.mcatId : undefined);
+    label = (resolvedCategory && getMcats().find(c => c.id === resolvedCategory)?.name) || 'Shared Comparison';
+  } else if (productId) {
     const product = getProductById(productId);
     suppliers = getSuppliers({ productId });
     label = product?.name || 'Product';
@@ -51,7 +70,7 @@ export default async function Page({ searchParams }: PageProps) {
     }
   } else if (category) {
     const catObj = getMcats().find(c => c.id === category);
-    suppliers = getSuppliers().filter(s => s.productId && productsById.get(s.productId)?.mcatId === category);
+    suppliers = allSuppliers.filter(s => s.productId && productsById.get(s.productId)?.mcatId === category);
     label = catObj?.name || category;
     scopeKey = `category-${category}`;
     resolvedCategory = category;
@@ -66,7 +85,7 @@ export default async function Page({ searchParams }: PageProps) {
     <CompareView
       key={scopeKey}
       suppliers={suppliers}
-      allSuppliers={getSuppliers()}
+      allSuppliers={allSuppliers}
       products={products}
       categories={getMcats()}
       initialCategory={resolvedCategory}

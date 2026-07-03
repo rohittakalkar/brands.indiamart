@@ -14,10 +14,12 @@ interface ShortlistContextValue {
 const ShortlistContext = createContext<ShortlistContextValue | null>(null);
 
 export function ShortlistProvider({ children }: { children: React.ReactNode }) {
-  // Prefilled with 1 item of each type to make the UI look rich and functional initially
-  const [shortlistedBrands, setShortlistedBrands] = useState<string[]>(['kirloskar']);
-  const [shortlistedProducts, setShortlistedProducts] = useState<string[]>(['voltas-water-cooler']);
-  const [shortlistedCategories, setShortlistedCategories] = useState<string[]>(['machinery']);
+  // Starts genuinely empty — a buyer returning after a session boundary (this state is
+  // client-memory-only, not persisted) should see an honest empty state, not plausible-
+  // looking data that isn't actually theirs.
+  const [shortlistedBrands, setShortlistedBrands] = useState<string[]>([]);
+  const [shortlistedProducts, setShortlistedProducts] = useState<string[]>([]);
+  const [shortlistedCategories, setShortlistedCategories] = useState<string[]>([]);
 
   const toggleShortlistBrand = (id: string) => {
     setShortlistedBrands(prev =>

@@ -134,10 +134,10 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
       <div className="bg-white border-b border-slate-100 p-4 shrink-0">
         <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
           <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
-          <span>My B2B Shortlist</span>
+          <span>My Shortlist</span>
         </h2>
         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">
-          Manage saved brands, categories, and products to submit bulk inquiries
+          Everything you've saved — request quotes for all of it in one go
         </span>
       </div>
 

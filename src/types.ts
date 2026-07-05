@@ -52,6 +52,15 @@ export interface Brand {
   catalogueUrl?: string;
   catalogueSizeMb?: number;
   catalogueUpdated?: string;
+  // Quantified service breakdown (distinct from the single blended `rating`) — answers
+  // three separate buyer questions: does the seller reply, is the product as described,
+  // does delivery happen on time. Aggregated at brand level since per-review breakdowns
+  // aren't tracked in this catalog.
+  serviceMetrics: {
+    responseRate: number; // % of enquiries that receive a reply
+    qualityRate: number;  // % of buyers satisfied with product quality
+    deliveryRate: number; // % of orders delivered on time
+  };
 }
 
 export interface ServiceCenter {
@@ -102,6 +111,9 @@ export interface Supplier {
   isAuthorizedDealer: boolean;
   authorizedSince?: number;
   responseTime: string;
+  // Distinct from responseTime: answers "does this seller reply at all", not just "how
+  // fast" — a seller can be fast when they do respond but still reply rarely.
+  responseRate: number;
   deliveryTimeRange: string;
   priceEstimate: string;
   contactPhone: string;

@@ -2,36 +2,31 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, Layers, ChevronRight, Heart, Send } from 'lucide-react';
-import { Brand, Product } from '../types';
+import { Search, Layers, ChevronRight, Heart } from 'lucide-react';
 import { Category } from '../services/categories';
+import type { CategoryFomoSummary } from '../lib/data';
 import { CategoryIcon } from './CategoryIcon';
+import { BrandLogo } from './BrandLogo';
 import { useShortlist } from './ShortlistProvider';
-import { useBuyLeadModal } from './BuyLeadModalProvider';
-import { buildRfqRequirement } from '../lib/rfq';
 
 interface CategorySearchViewProps {
   categories: Category[];
-  brands: Brand[];
-  products: Product[];
+  categoryFomo: CategoryFomoSummary[];
 }
 
-export default function CategorySearchView({ categories, brands, products }: CategorySearchViewProps) {
+export default function CategorySearchView({ categories, categoryFomo }: CategorySearchViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const { shortlistedCategories, toggleShortlistCategory } = useShortlist();
-  const { open: openBuyLeadForm } = useBuyLeadModal();
 
   const filteredCategories = categories.filter(cat =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getBrandCount = (catId: string) => {
-    return brands.filter(b => b.mcatId === catId).length;
-  };
-
-  const getProductsForCategory = (catId: string) => {
-    return products.filter(p => p.mcatId === catId).slice(0, 2);
-  };
+  // Real, BRAND_MCATS-joined counts (a brand like Havells or Siemens serves several
+  // categories, so filtering on a brand's single "primary" mcatId undercounts every
+  // category it doesn't happen to be the primary listing for) — same source of truth
+  // the homepage FOMO rail and the category page itself already use.
+  const fomoById = new Map(categoryFomo.map(f => [f.id, f]));
 
   return (
     <div className="flex-1 bg-canvas flex flex-col overflow-hidden select-none font-sans text-slate-800">
@@ -42,10 +37,10 @@ export default function CategorySearchView({ categories, brands, products }: Cat
           <div>
             <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
               <Layers className="w-4 h-4 text-accent-blue" />
-              <span>Category Search Hub</span>
+              <span>Browse Categories</span>
             </h2>
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">
-              Browse by industry directory or query specific OEM manufacturers
+              Find the right category, then compare verified brands inside it
             </span>
           </div>
         </div>
@@ -56,7 +51,7 @@ export default function CategorySearchView({ categories, brands, products }: Cat
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search all B2B categories & industry divisions..."
+            placeholder="Search categories..."
             className="w-full bg-slate-50 border border-slate-300 focus:border-accent-blue focus:bg-white rounded-xl pl-9 pr-4 py-2.5 text-xs outline-none transition font-semibold"
           />
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -72,37 +67,45 @@ export default function CategorySearchView({ categories, brands, products }: Cat
         ) : (
           filteredCategories.map((cat) => {
             const isShortlisted = shortlistedCategories.includes(cat.id);
-            const brandCount = getBrandCount(cat.id);
-            const categoryProducts = getProductsForCategory(cat.id);
+            const fomo = fomoById.get(cat.id);
+            const brandCount = fomo?.brandCount ?? 0;
+            const productCount = fomo?.productCount ?? 0;
+            const topBrands = fomo?.topBrands ?? [];
 
             return (
-              <div
+              <Link
                 key={cat.id}
-                className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-accent-blue/40 transition duration-200"
+                href={`/categories/${cat.id}`}
+                className="block bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-accent-blue/40 transition duration-200"
               >
-                {/* Category Main Bar */}
+                {/* Category Main Bar — this is a category picker, not a product feed, so the
+                    whole row is one tap target and nothing inside competes with it for
+                    attention. Real per-category counts (brands, models) are the credibility
+                    signal here, not individual product prices and buy buttons. */}
                 <div className="p-3.5 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-                  <Link
-                    href={`/categories/${cat.id}`}
-                    className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
-                  >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-9 h-9 bg-accent-blue/10 border border-accent-blue/20 rounded-xl flex items-center justify-center text-accent-blue shrink-0 shadow-xs">
                       <CategoryIcon icon={cat.icon} className="w-4.5 h-4.5" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-extrabold text-[12px] text-slate-900 leading-tight truncate hover:text-accent-blue transition">
+                      <h3 className="font-extrabold text-[12px] text-slate-900 leading-tight truncate">
                         {cat.name}
                       </h3>
                       <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block mt-0.5">
-                        {brandCount > 0 ? `${brandCount} Verified OEMs` : 'Direct Factory Catalogs'}
+                        {brandCount > 0
+                          ? `${brandCount} Verified OEMs · ${productCount} Models`
+                          : 'Direct Factory Catalogs'}
                       </span>
                     </div>
-                  </Link>
+                  </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {/* Shortlist Category Button */}
                     <button
-                      onClick={() => toggleShortlistCategory(cat.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleShortlistCategory(cat.id);
+                      }}
                       className={`p-2 rounded-lg border transition ${
                         isShortlisted
                           ? 'bg-rose-50 border-rose-200 text-rose-500'
@@ -112,57 +115,30 @@ export default function CategorySearchView({ categories, brands, products }: Cat
                     >
                       <Heart className={`w-3.5 h-3.5 ${isShortlisted ? 'fill-rose-500 text-rose-500' : ''}`} />
                     </button>
-
-                    {/* View All Button */}
-                    <Link
-                      href={`/categories/${cat.id}`}
-                      className="p-2 bg-white border border-slate-200 hover:border-accent-blue hover:text-accent-blue text-slate-500 rounded-lg transition"
-                    >
+                    <div className="p-2 bg-white border border-slate-200 text-slate-400 rounded-lg">
                       <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
+                    </div>
                   </div>
                 </div>
 
-                {/* Sub-featured Products inside Category Card for Premium Sourcing */}
-                {categoryProducts.length > 0 && (
-                  <div className="p-3.5 space-y-3 bg-white">
-                    <span className="text-[8.5px] font-extrabold uppercase tracking-wider text-accent-blue bg-accent-blue/10 px-1.5 py-0.5 rounded border border-accent-blue/20">
-                      Top Verified Products
-                    </span>
-                    <div className="grid grid-cols-2 gap-3">
-                      {categoryProducts.map((prod) => (
-                        <div
-                          key={prod.id}
-                          className="bg-slate-50 border border-slate-200/50 rounded-xl p-2.5 flex flex-col justify-between space-y-2 relative"
-                        >
-                          <div className="space-y-1">
-                            <h4 className="font-bold text-[10px] text-slate-800 leading-snug line-clamp-2">
-                              {prod.name}
-                            </h4>
-                            <span className="text-[8.5px] text-accent-blue font-black block">
-                              {prod.priceRange.split(' - ')[0]}
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() =>
-                              openBuyLeadForm({
-                                productName: prod.name,
-                                brandName: prod.brandName,
-                                requirement: buildRfqRequirement(prod)
-                              })
-                            }
-                            className="w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition"
-                          >
-                            <Send className="w-2.5 h-2.5" />
-                            Get Quote
-                          </button>
+                {/* Top Brands — a compact credibility strip (who's actually in here), not a
+                    product wall. Reinforces "real brands, not a generic catalog" at a glance. */}
+                {topBrands.length > 0 && (
+                  <div className="px-3.5 py-2.5 bg-white flex items-center gap-2">
+                    <div className="flex -space-x-2 shrink-0">
+                      {topBrands.map((b) => (
+                        <div key={b.id} className="w-6 h-6 rounded-full bg-white ring-2 ring-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                          <BrandLogo logo={b.logo} name={b.name} className="w-full h-full object-contain p-0.5" />
                         </div>
                       ))}
                     </div>
+                    <span className="text-[9.5px] font-semibold text-slate-500 truncate">
+                      {topBrands.map(b => b.name.split(' ')[0]).join(', ')}
+                      {brandCount > topBrands.length && ` +${brandCount - topBrands.length} more`}
+                    </span>
                   </div>
                 )}
-              </div>
+              </Link>
             );
           })
         )}

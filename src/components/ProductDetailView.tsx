@@ -3,29 +3,35 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Share2, Heart, Send, GitCompare, ShoppingBag } from 'lucide-react';
-import { Product, Brand, Supplier, AlternativeProduct } from '../types';
+import { Share2, Heart, Send, GitCompare, ShoppingBag, Phone, MessageCircle } from 'lucide-react';
+import { Product, Brand, Supplier, AlternativeProduct, MCat } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { ConnectButton } from './ConnectButton';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
+import { useScrollChrome } from './ScrollChromeProvider';
 import { buildRfqRequirement } from '../lib/rfq';
+import { BackButton } from './BackButton';
+import { getMaskedConnectNumber } from '../lib/connect';
+import { Breadcrumb } from './Breadcrumb';
 
 interface ProductDetailViewProps {
   product: Product;
   brand: Brand;
+  category?: MCat;
   suppliers: Supplier[];
   alternatives: AlternativeProduct[];
 }
 
-export default function ProductDetailView({ product, brand, suppliers, alternatives }: ProductDetailViewProps) {
+export default function ProductDetailView({ product, brand, category, suppliers, alternatives }: ProductDetailViewProps) {
   const router = useRouter();
   const { shortlistedProducts, toggleShortlistProduct } = useShortlist();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { trackView } = useRecentlyViewed();
   const { items: basketItems, addToBasket } = useQuoteBasket();
+  const { navVisible } = useScrollChrome();
   const [activeTab, setActiveTab] = useState<'specs' | 'sellers' | 'highlights'>('specs');
 
   useEffect(() => {
@@ -61,6 +67,15 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
     });
   };
 
+  // Product-level Call/WhatsApp routing — masked to the product itself (not one specific
+  // seller) since a buyer tapping these from the sticky bar hasn't picked a seller yet;
+  // same masked-number infrastructure as the per-seller ConnectButton, never a real number.
+  const productMaskedNumber = getMaskedConnectNumber(product.id);
+  const productTelHref = `tel:${productMaskedNumber.replace(/\s+/g, '')}`;
+  const productWaHref = `https://wa.me/${productMaskedNumber.replace(/[^\d]/g, '')}?text=${encodeURIComponent(
+    `Hi, I'm interested in ${product.name} (${product.modelNumber}). Please share pricing and availability.`
+  )}`;
+
   const handleSellerQuote = (supplier: Supplier) => {
     openBuyLeadForm({
       productName: product.name,
@@ -74,12 +89,10 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
       {/* Product Header */}
       <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shrink-0">
         <div className="flex items-center gap-3">
-          {/* Links to the brand, not router.back() — a cold landing (e.g. from a search
-              engine) has no in-app history for "back" to rely on, but every product has a
-              real, logical parent: the brand that makes it. */}
-          <Link href={`/brands/${brand.id}`} className="p-1.5 hover:bg-slate-100 rounded-full transition" title={`Back to ${brand.name}`}>
-            <ArrowLeft className="w-4 h-4 text-slate-800" />
-          </Link>
+          {/* router.back() when the buyer has real in-app history (preserves native scroll
+              restoration); falls back to the brand — every product's real, logical parent —
+              on a cold landing (e.g. from a search engine), where there's nothing to go back to. */}
+          <BackButton fallbackHref={`/brands/${brand.id}`} title={`Back to ${brand.name}`} />
           <div>
             <h2 className="font-extrabold text-sm text-slate-900 tracking-tight line-clamp-1">{product.name}</h2>
             <Link href={`/brands/${brand.id}`} className="text-[10px] text-slate-400 font-bold uppercase tracking-wider hover:text-accent-blue transition">
@@ -88,6 +101,14 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleAddToBasket}
+            disabled={inBasket}
+            className="p-2 hover:bg-primary/5 disabled:opacity-40 disabled:cursor-not-allowed rounded-full transition text-primary"
+            title={inBasket ? 'Already in your quote basket' : 'Add to quote basket'}
+          >
+            <ShoppingBag className="w-4.5 h-4.5" />
+          </button>
           <button
             onClick={() => toggleShortlistProduct(product.id)}
             className="p-2 hover:bg-rose-50 rounded-full transition text-rose-500"
@@ -101,8 +122,22 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
         </div>
       </div>
 
-      {/* Main product scroll area */}
-      <div className="flex-1 overflow-y-auto pb-6">
+      {/* Main product scroll area — extra bottom clearance (pb-32) accounts for the fixed
+          CTA bar below, which itself shifts to stack above the mobile BottomNav
+          (worst case ~120px combined) when both are visible on scroll-up. */}
+      <div className="flex-1 overflow-y-auto pb-32 md:pb-6">
+        {/* Breadcrumb — states Home ▸ Category ▸ Brand ▸ Model so a cold-landed buyer
+            (search engine, shared link) has an immediate sense of where this page sits. */}
+        <div className="bg-white px-5 pt-3 pb-1">
+          <Breadcrumb
+            segments={[
+              ...(category ? [{ label: category.name, href: `/categories/${category.id}` }] : []),
+              { label: brand.name, href: `/brands/${brand.id}` },
+              { label: product.name }
+            ]}
+          />
+        </div>
+
         {/* Product Image Panel */}
         <div className="relative bg-white border-b border-slate-100 p-6 flex flex-col items-center">
           <img
@@ -177,6 +212,19 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
           </button>
         </div>
 
+        {/* Feature teaser — "Compare Alternatives" renders further down regardless of which
+            tab is active, so without this it's invisible until a buyer scrolls past whatever
+            tab they're currently reading. */}
+        {alternatives.length > 0 && (
+          <a
+            href="#compare-alternatives"
+            className="mx-5 mt-3 flex items-center gap-2 bg-accent-blue/10 border border-accent-blue/25 rounded-xl px-3 py-2 text-[10.5px] font-bold text-accent-blue hover:bg-accent-blue/15 transition"
+          >
+            <GitCompare className="w-3.5 h-3.5 shrink-0" />
+            {alternatives.length} Alternative{alternatives.length !== 1 ? 's' : ''} from Other Brands — Compare ↓
+          </a>
+        )}
+
         {/* Tab content panel */}
         <div className="px-5 py-4">
           {activeTab === 'specs' && (
@@ -241,6 +289,7 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
                         <div className="border-x border-slate-100">
                           <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Resp. Time</span>
                           <span className="font-bold text-slate-900 block mt-0.5">{supp.responseTime}</span>
+                          <span className="text-[7.5px] text-accent-green font-bold block mt-0.5">{supp.responseRate}% reply rate</span>
                         </div>
                         <div>
                           <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Delivery</span>
@@ -293,7 +342,7 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
 
           {/* Compare Alternatives — similar products from OTHER brands, kept separate from this product's own sellers */}
           {alternatives.length > 0 && (
-            <div className="mt-4 bg-accent-blue/10 border border-accent-blue/25 rounded-2xl p-4 space-y-3 shadow-xs">
+            <div id="compare-alternatives" className="mt-4 bg-accent-blue/10 border border-accent-blue/25 rounded-2xl p-4 space-y-3 shadow-xs scroll-mt-16">
               <div>
                 <h4 className="font-extrabold text-slate-900 text-xs flex items-center gap-1.5">
                   <GitCompare className="w-3.5 h-3.5 text-accent-blue" />
@@ -329,22 +378,45 @@ export default function ProductDetailView({ product, brand, suppliers, alternati
         </div>
       </div>
 
-      {/* Persistent lead generation footer */}
-      <div className="border-t border-slate-100 p-4 bg-white flex gap-2.5 shrink-0">
-        <button
-          onClick={handleAddToBasket}
-          disabled={inBasket}
-          className="px-4 bg-white border border-primary text-primary hover:bg-primary/5 disabled:border-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shrink-0"
-          title={inBasket ? 'Already in your quote basket' : 'Add to quote basket'}
+      {/* No separate floating WhatsApp launcher here — unlike Brand Hub / Brand-Category
+          pages (which have no other persistent WhatsApp entry point), the fixed footer
+          below already carries its own WhatsApp button reaching the exact same contact.
+          A second floating one duplicated that action and, at typical scroll positions,
+          visually collided with the Specifications/Sellers/Highlights tab bar above it. */}
+
+      {/* Persistent lead generation footer — fixed on mobile so it survives scroll like a
+          real app CTA bar, not just normal page flow. Sits directly above the BottomNav
+          (bottom-14) while it's visible on scroll-up; drops to bottom-0, taking the
+          BottomNav's own spot, once scroll-down hides it — so exactly one of the two is
+          ever competing for that bottom-most slot, never both stacked at bottom-0. Reverts
+          to the original static in-flow footer on desktop, where there's no BottomNav. */}
+      <div
+        className={`md:static md:bottom-auto fixed left-0 right-0 z-30 border-t border-slate-100 bg-white p-3 flex gap-2 shadow-[0_-4px_16px_rgba(0,0,0,0.08)] md:shadow-none transition-[bottom] duration-200 ${
+          navVisible ? 'bottom-14' : 'bottom-0'
+        }`}
+      >
+        <a
+          href={productTelHref}
+          className="px-3.5 border border-cta text-cta hover:bg-accent-blue/10 py-3 rounded-xl font-bold text-[10.5px] transition flex flex-col items-center justify-center gap-0.5 shrink-0"
         >
-          <ShoppingBag className="w-4 h-4" />
-        </button>
+          <Phone className="w-4 h-4" />
+          Call Now
+        </a>
+        <a
+          href={productWaHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3.5 bg-[#25D366] hover:bg-[#1fb959] text-white py-3 rounded-xl font-bold text-[10.5px] transition flex flex-col items-center justify-center gap-0.5 shrink-0"
+        >
+          <MessageCircle className="w-4 h-4" />
+          WhatsApp
+        </a>
         <button
           onClick={handleSendLead}
-          className="flex-1 bg-cta hover:bg-cta-hover text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
+          className="flex-1 bg-cta hover:bg-cta-hover text-white py-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
         >
           <Send className="w-4 h-4" />
-          <span>Get Quotes From Sellers</span>
+          <span>Get Quotes</span>
         </button>
       </div>
     </div>

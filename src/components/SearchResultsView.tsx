@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Search, Package, Building2, Layers, ChevronRight } from 'lucide-react';
@@ -91,7 +93,7 @@ export default function SearchResultsView({ query, products, brands, categories,
                   <h2 className="font-heading font-bold text-xs text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5" /> Brands
                   </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-2.5">
                     {brands.map((brand) => (
                       <Link
                         key={brand.id}
@@ -113,7 +115,7 @@ export default function SearchResultsView({ query, products, brands, categories,
                   <h2 className="font-heading font-bold text-xs text-slate-500 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5" /> Categories
                   </h2>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                  <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-2.5">
                     {categories.map((cat) => (
                       <Link
                         key={cat.id}

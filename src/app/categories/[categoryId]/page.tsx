@@ -3,7 +3,17 @@ import { notFound } from 'next/navigation';
 import CategoryBrandsView from '@/components/CategoryBrandsView';
 import { getMcatById, getPMcatById, getBrands, getProducts, getSuppliers, getBrandMCats } from '@/lib/data';
 
-type PageProps = { params: Promise<{ categoryId: string }> };
+interface CategorySearchParams {
+  // Written back to the URL by CategoryBrandsView itself whenever the buyer changes a
+  // filter, so an in-progress filtered view stays a durable, shareable link — same
+  // pattern as Compare's ?sellers=/?category= sync.
+  brands?: string;
+  spec?: string;
+  price?: string;
+  cert?: string;
+}
+
+type PageProps = { params: Promise<{ categoryId: string }>; searchParams: Promise<CategorySearchParams> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { categoryId } = await params;
@@ -16,8 +26,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { categoryId } = await params;
+  const { brands, spec, price, cert } = await searchParams;
 
   const category = getMcatById(categoryId);
   if (!category) notFound();
@@ -34,6 +45,10 @@ export default async function Page({ params }: PageProps) {
       products={products}
       suppliers={getSuppliers().filter(s => s.productId && productIds.has(s.productId))}
       brandMCats={getBrandMCats({ mcatId: category.id })}
+      initialSelectedBrandIds={brands ? brands.split(',').filter(Boolean) : undefined}
+      initialSpecValue={spec}
+      initialPriceBucket={price !== undefined ? parseInt(price, 10) : undefined}
+      initialCertification={cert}
     />
   );
 }

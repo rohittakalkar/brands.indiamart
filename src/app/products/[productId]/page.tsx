@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ProductDetailView from '@/components/ProductDetailView';
-import { getProductById, getBrandById, getSuppliers, getAlternativeProducts } from '@/lib/data';
+import { getProductById, getBrandById, getSuppliers, getAlternativeProducts, getMcatById } from '@/lib/data';
 
 type PageProps = { params: Promise<{ productId: string }> };
 
@@ -23,10 +23,13 @@ export default async function Page({ params }: PageProps) {
   const brand = getBrandById(product.brandId);
   if (!brand) notFound();
 
+  const category = getMcatById(product.mcatId);
+
   return (
     <ProductDetailView
       product={product}
       brand={brand}
+      category={category}
       suppliers={getSuppliers({ productId: product.id })}
       alternatives={getAlternativeProducts(product.id)}
     />

@@ -4,13 +4,16 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ArrowLeft, Check, Clock, Star, ThumbsUp, Send, X, Plus, Search, Sparkles, GitCompare, Copy } from 'lucide-react';
+import { Check, Clock, Star, ThumbsUp, Send, X, Plus, Search, Sparkles, GitCompare, Copy } from 'lucide-react';
 import { Supplier, Product } from '../types';
 import { Category } from '../services/categories';
 import { CategoryIcon } from './CategoryIcon';
 import { TrustBadge } from './TrustBadge';
 import { ConnectButton } from './ConnectButton';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
+import { useScrollChrome } from './ScrollChromeProvider';
+import { BackButton } from './BackButton';
+import { Breadcrumb } from './Breadcrumb';
 
 interface CompareViewProps {
   suppliers: Supplier[];
@@ -24,11 +27,19 @@ interface CompareViewProps {
 export default function CompareView({ suppliers, allSuppliers, products, categories, initialCategory, brandName = 'Compare Sellers' }: CompareViewProps) {
   const router = useRouter();
   const { open: openBuyLeadForm } = useBuyLeadModal();
+  const { setFrozen } = useScrollChrome();
   // Use state for compared suppliers, initialized with preset suppliers
   const [selectedSuppliers, setSelectedSuppliers] = useState<Supplier[]>(suppliers);
   const [activeCategory, setActiveCategory] = useState<string | undefined>(initialCategory);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // The Add-Seller sheet has the buyer's attention — freeze the host page's scroll-driven
+  // chrome while it's open, same as the RFQ modal.
+  useEffect(() => {
+    setFrozen(isAddOpen);
+    return () => setFrozen(false);
+  }, [isAddOpen, setFrozen]);
 
   const productsById = new Map(products.map(p => [p.id, p]));
 
@@ -85,6 +96,16 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
     });
   };
 
+  // Scoped to one seller — lets a buyer quote just the seller they've decided on, without
+  // first removing every other seller from the comparison.
+  const handleSingleSupplierQuote = (supp: Supplier) => {
+    openBuyLeadForm({
+      productName: 'OEM Supply Contract - Direct Quote Request',
+      brandName: supp.brandName,
+      requirement: `Please provide a competitive quotation with catalog and pricing sheet from ${supp.name} (${supp.brandName}).`
+    });
+  };
+
   // Dynamic statistics for comparison summary
   const getComparisonStats = () => {
     if (selectedSuppliers.length === 0) return null;
@@ -133,15 +154,22 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
     <div className="flex-1 bg-slate-50 flex flex-col overflow-hidden relative">
       {/* Header bar */}
       <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between sticky top-0 z-10 shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-1.5 hover:bg-slate-100 rounded-full transition">
-            <ArrowLeft className="w-4 h-4 text-slate-800" />
-          </button>
-          <div>
+        <div className="flex items-center gap-3 min-w-0">
+          {/* router.back() when real in-app history exists; falls back to the resolved
+              category (or the category picker) on a cold landing — Compare has no single
+              fixed parent route the way Product/Brand pages do. */}
+          <BackButton
+            fallbackHref={comparisonCategory ? `/categories/${comparisonCategory}` : '/categories'}
+            title={comparisonCategory ? 'Back to category' : 'Back to all categories'}
+            className="p-1.5 hover:bg-slate-100 rounded-full transition shrink-0"
+          />
+          <div className="min-w-0">
+            {brandName !== 'Compare Sellers' && (
+              <Breadcrumb segments={[{ label: brandName }, { label: 'Compare' }]} className="mb-0.5" />
+            )}
             <h2 className="font-extrabold text-sm text-slate-900 tracking-tight">
               Compare Suppliers ({selectedSuppliers.length})
             </h2>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{brandName}</span>
           </div>
         </div>
 
@@ -276,6 +304,7 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
                     <Clock className="w-2.5 h-2.5 text-slate-500" />
                     <span>{supp.responseTime}</span>
                   </div>
+                  <div className="text-[8px] text-accent-green font-bold mt-0.5">{supp.responseRate}% reply</div>
                 </div>
 
                 {/* Delivery Time */}
@@ -294,10 +323,18 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
               </div>
 
               {/* View Profile Action */}
-              <div className="pt-2 border-t border-slate-100 mt-2.5 text-center">
+              <div className="pt-2 border-t border-slate-100 mt-2.5 space-y-1.5 text-center">
+                <button
+                  type="button"
+                  onClick={() => handleSingleSupplierQuote(supp)}
+                  className="w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9px] font-bold flex items-center justify-center gap-1 transition"
+                >
+                  <Send className="w-3 h-3" />
+                  Get Quote
+                </button>
                 <Link
                   href={`/brands/${supp.brandId}`}
-                  className="text-[9px] font-extrabold text-accent-blue hover:underline cursor-pointer"
+                  className="block text-[9px] font-extrabold text-accent-blue hover:underline cursor-pointer"
                 >
                   View Profile
                 </Link>

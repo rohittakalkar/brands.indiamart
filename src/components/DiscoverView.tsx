@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Search, ChevronRight, Send, Clock, Package, BookOpen, TrendingUp, ShoppingBag, Layers, Award, Flame } from 'lucide-react';
+import { Search, ChevronRight, Send, Clock, Package, BookOpen, TrendingUp, ShoppingBag, Layers, Award, Flame, ShieldCheck } from 'lucide-react';
 import { Brand, Product } from '../types';
 import { Category } from '../services/categories';
 import type { CategoryFomoSummary, CatalogStats } from '../lib/data';
@@ -14,6 +14,7 @@ import { TrustBadge, TrustBadgeType } from './TrustBadge';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
+import { buildRfqRequirement } from '../lib/rfq';
 
 interface DiscoverViewProps {
   brands: Brand[];
@@ -134,15 +135,17 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             Shop by category, backed by trusted brands
           </h1>
           <p className="text-white/70 text-[11px] md:text-sm mt-2">
-            {catalogStats.brandedCategoryCount} branded categories with verified sellers, plus {catalogStats.standardCategoryCount} standard product categories — all in one place
+            {catalogStats.totalCategories} product categories, every one backed by verified, authorized brands — all in one place
           </p>
 
-          {/* Real, computed catalog stats — not fabricated urgency counters */}
+          {/* Real, computed catalog stats — not fabricated urgency counters. Every category now
+              carries a full verified-brand catalog (the old branded-vs-standard split is gone),
+              so the third stat leads with scale — total models — rather than a permanent zero. */}
           <div className="flex items-center justify-center gap-1.5 md:gap-2 mt-3.5 flex-wrap">
             <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
               <Layers className="w-3 h-3 text-cta shrink-0" />
-              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.brandedCategoryCount}</span>
-              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Branded Categories</span>
+              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.totalCategories}</span>
+              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Categories</span>
             </div>
             <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
               <Award className="w-3 h-3 text-cta shrink-0" />
@@ -151,14 +154,14 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             </div>
             <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
               <Package className="w-3 h-3 text-cta shrink-0" />
-              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.standardCategoryCount}</span>
-              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Standard Categories</span>
+              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.totalProducts}</span>
+              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Models Listed</span>
             </div>
           </div>
 
           <form onSubmit={handleSearchSubmit} className="relative mt-4 md:mt-5">
             <motion.div
-              className="flex items-center w-full rounded-xl overflow-hidden"
+              className="flex flex-col sm:flex-row items-stretch sm:items-center w-full rounded-xl overflow-hidden"
               animate={{
                 boxShadow: [
                   '0 0 0 0 rgba(255,106,26,0.35), 0 8px 24px rgba(0,0,0,0.15)',
@@ -193,7 +196,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                 type="submit"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
-                className="bg-cta hover:bg-cta-hover text-white px-5 py-3.5 flex items-center justify-center transition-colors font-bold text-xs md:text-sm shrink-0"
+                className="bg-cta hover:bg-cta-hover text-white px-5 py-3.5 flex items-center justify-center transition-colors font-bold text-xs md:text-sm shrink-0 sm:min-w-[112px]"
               >
                 Search
               </motion.button>
@@ -271,6 +274,53 @@ export default function DiscoverView({ brands, products, categories, categoryFom
       </div>
 
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-9">
+        {/* Credibility strip — the detailed "Why Trust Brands" section further down explains
+            each badge, but a first-time buyer sizing up whether this marketplace is legitimate
+            decides that in the first few seconds, not after scrolling past categories, brands,
+            and featured models. A one-line reinforcement belongs at the top, not buried. */}
+        <div className="flex items-center justify-center gap-x-3 gap-y-1 flex-wrap text-[9.5px] font-bold text-slate-500 -mt-1">
+          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent-green" />Verified Suppliers</span>
+          <span className="text-slate-300">•</span>
+          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent-green" />OEM-Certified Brands</span>
+          <span className="text-slate-300">•</span>
+          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent-green" />Authorized Dealers Only</span>
+        </div>
+
+        {/* Recently Viewed — surfaced first, directly under the search bar, so a buyer who
+            searched a specific product, opened its PDP, then bounced back to Home doesn't
+            have to scroll past four other sections to pick up where they left off. Omitted
+            entirely (not even an empty-state placeholder) for first-time visitors with
+            nothing to resume — there's nothing useful to say to them at the very top of
+            the page before they've started browsing. */}
+        {recentItems.length > 0 && (
+          <section>
+            <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-slate-400" />
+              Recently Viewed
+            </h2>
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-2.5">
+              {recentItems.map((item, idx) => (
+                <Link
+                  key={idx}
+                  href={item.href}
+                  className="bg-surface border border-line rounded-xl p-2.5 flex items-center gap-2 hover:border-accent-blue/40 transition"
+                >
+                  <div className="w-8 h-8 rounded-md bg-canvas border border-line overflow-hidden flex items-center justify-center shrink-0 p-1">
+                    {'logo' in item && item.logo ? (
+                      <BrandLogo logo={item.logo} name={item.name} />
+                    ) : 'image' in item && item.image ? (
+                      <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
+                    ) : (
+                      <Package className="w-3.5 h-3.5 text-slate-300" />
+                    )}
+                  </div>
+                  <span className="text-[9.5px] font-bold text-slate-700 truncate leading-tight">{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Not Sure What You Need — guided discovery for buyers who know their problem,
             not the product-category vocabulary to search for it */}
         {resolvedProblems.length > 0 && (
@@ -300,7 +350,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             <h2 className="font-heading font-bold text-sm text-primary">Browse Categories</h2>
             <Link href="/categories" className="text-[10px] font-bold text-accent-blue hover:text-primary transition">View All</Link>
           </div>
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-2.5">
+          <div className="grid grid-cols-2 min-[420px]:grid-cols-3 md:grid-cols-5 gap-2.5">
             {categories.slice(0, 9).map((cat) => (
               <Link
                 key={cat.id}
@@ -377,15 +427,38 @@ export default function DiscoverView({ brands, products, categories, categoryFom
               <Link
                 key={prod.id}
                 href={`/products/${prod.id}`}
-                className="bg-surface border border-line rounded-2xl flex overflow-hidden hover:border-accent-blue/40 transition shadow-xs"
+                className="bg-surface border border-line rounded-2xl flex flex-col min-[420px]:flex-row overflow-hidden hover:border-accent-blue/40 transition shadow-xs"
               >
-                <div className="w-24 bg-canvas border-r border-line flex items-center justify-center p-2 shrink-0">
+                <div className="h-28 min-[420px]:h-auto min-[420px]:w-24 bg-canvas border-b min-[420px]:border-b-0 min-[420px]:border-r border-line flex items-center justify-center p-2 shrink-0">
                   <img src={prod.image} alt={prod.name} className="max-h-16 max-w-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
                 </div>
-                <div className="flex-1 p-3 min-w-0">
+                <div className="flex-1 p-3 min-w-0 flex flex-col">
                   <p className="text-[9px] text-slate-400 font-bold uppercase truncate">{prod.brandName.split(' ')[0]}</p>
                   <p className="text-[11px] font-bold text-slate-900 line-clamp-2 leading-snug mt-0.5">{prod.name}</p>
-                  <p className="text-[11px] font-black text-primary mt-1.5">{prod.priceRange.split(' - ')[0]}</p>
+                  <p className="text-[11px] font-black text-primary mt-1.5">
+                    {prod.priceRange.split(' - ')[0]}
+                    {prod.priceRange.includes(' - ') && <span className="text-[9px] font-semibold text-slate-400"> onwards</span>}
+                  </p>
+                  {/* One clear action here — full contact options (call, WhatsApp) live on the
+                      PDP itself, once the buyer has actually seen specs and seller trust signals.
+                      Offering three competing CTAs on a browse-stage card fights the single tap
+                      we actually want: open the product. */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openBuyLeadForm({
+                        productName: `${prod.name} (${prod.modelNumber})`,
+                        brandName: prod.brandName,
+                        requirement: buildRfqRequirement(prod)
+                      });
+                    }}
+                    className="mt-2.5 w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9.5px] font-bold flex items-center justify-center gap-1 transition"
+                  >
+                    <Send className="w-3 h-3" />
+                    Get Best Price
+                  </button>
                 </div>
               </Link>
             ))}
@@ -403,41 +476,6 @@ export default function DiscoverView({ brands, products, categories, categoryFom
               </div>
             ))}
           </div>
-        </section>
-
-        {/* Recently Viewed */}
-        <section>
-          <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-slate-400" />
-            Recently Viewed
-          </h2>
-          {recentItems.length === 0 ? (
-            <div className="bg-surface border border-line rounded-2xl p-5 text-center text-slate-400 text-[11px]">
-              Nothing viewed yet.{' '}
-              <Link href="/categories" className="text-accent-blue font-bold hover:underline">Start browsing</Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-              {recentItems.map((item, idx) => (
-                <Link
-                  key={idx}
-                  href={item.href}
-                  className="bg-surface border border-line rounded-xl p-2.5 flex items-center gap-2 hover:border-accent-blue/40 transition"
-                >
-                  <div className="w-8 h-8 rounded-md bg-canvas border border-line overflow-hidden flex items-center justify-center shrink-0 p-1">
-                    {'logo' in item && item.logo ? (
-                      <BrandLogo logo={item.logo} name={item.name} />
-                    ) : 'image' in item && item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
-                    ) : (
-                      <Package className="w-3.5 h-3.5 text-slate-300" />
-                    )}
-                  </div>
-                  <span className="text-[9.5px] font-bold text-slate-700 truncate leading-tight">{item.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
         </section>
 
         {/* Buying Guides */}

@@ -2,13 +2,15 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, X } from 'lucide-react';
+import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText } from 'lucide-react';
 import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { ConnectButton } from './ConnectButton';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useShortlist } from './ShortlistProvider';
 import { buildRfqRequirement } from '../lib/rfq';
+import { BackButton } from './BackButton';
+import { WhatsAppFloatingButton } from './WhatsAppFloatingButton';
 
 interface BrandMCatViewProps {
   brandMCat: BrandMCat;
@@ -93,9 +95,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
       {/* Header */}
       <div className="bg-surface border-b border-line px-4 md:px-8 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href={`/brands/${brand.id}`} className="p-1.5 hover:bg-slate-100 rounded-full transition shrink-0">
-            <ArrowLeft className="w-4 h-4 text-slate-800" />
-          </Link>
+          <BackButton fallbackHref={`/brands/${brand.id}`} title={`Back to ${brand.name}`} className="p-1.5 hover:bg-slate-100 rounded-full transition shrink-0" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">
               <Link href={`/categories/${brandMCat.mcatId}`} className="hover:text-accent-blue">{categoryName}</Link>
@@ -143,6 +143,23 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
         </div>
 
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-8">
+          {/* Feature teaser — Compare Models and Verified Dealers both exist further down
+              the page but aren't visible until scrolled to; advertise + jump to them now. */}
+          {(products.length > 1 || suppliers.length > 0) && (
+            <div className="flex gap-2">
+              {products.length > 1 && (
+                <a href="#compare-models" className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
+                  ⇄ Compare {products.length} Models
+                </a>
+              )}
+              {suppliers.length > 0 && (
+                <a href="#verified-dealers" className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
+                  Dealers ({suppliers.length}) ↓
+                </a>
+              )}
+            </div>
+          )}
+
           {/* Applications */}
           <section>
             <h2 className="font-heading font-bold text-sm text-primary mb-3">Popular Applications</h2>
@@ -171,10 +188,13 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                   const isSaved = shortlistedProducts.includes(prod.id);
                   const isSelected = selectedProduct?.id === prod.id;
                   return (
-                    <button
+                    <div
                       key={prod.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => setSelectedModelId(prod.id)}
-                      className={`text-left bg-surface border rounded-2xl overflow-hidden shadow-xs transition flex ${
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedModelId(prod.id); } }}
+                      className={`text-left bg-surface border rounded-2xl overflow-hidden shadow-xs transition flex cursor-pointer ${
                         isSelected ? 'border-cta ring-2 ring-cta/20' : 'border-line hover:border-accent-blue/40'
                       }`}
                     >
@@ -209,8 +229,26 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                             View Full Details →
                           </Link>
                         </div>
+                        {/* One action here — this card's job is picking a model to compare,
+                            not closing a sale; call/WhatsApp live with the verified dealers
+                            further down once the buyer has actually chosen a model. */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openBuyLeadForm({
+                              productName: `${prod.name} (${prod.modelNumber})`,
+                              brandName: brand.name,
+                              requirement: buildRfqRequirement(prod)
+                            });
+                          }}
+                          className="mt-2 w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9.5px] font-bold flex items-center justify-center gap-1 transition"
+                        >
+                          <Send className="w-3 h-3" />
+                          Get Best Price
+                        </button>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -221,7 +259,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               this brand's range, so it sits directly after model selection, not buried below a
               single-model spec detail buyers may not scroll past. */}
           {products.length > 1 && (
-            <section>
+            <section id="compare-models" className="scroll-mt-16">
               <h2 className="font-heading font-bold text-sm text-primary mb-3">Compare Models in This Line</h2>
               <div className="bg-surface border border-line rounded-2xl overflow-x-auto shadow-xs">
                 <table className="w-full text-left text-[11px] border-collapse min-w-[480px]">
@@ -299,26 +337,32 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           )}
 
           {/* Verified Dealers */}
-          <section>
+          <section id="verified-dealers" className="scroll-mt-16">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <h2 className="font-heading font-bold text-sm text-primary">
                 Verified Dealers{!showAllModelsDealers && selectedProduct ? ` — ${selectedProduct.modelNumber}` : ''}
               </h2>
               {dealerLocations.length > 1 && (
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <select
-                    value={selectedLocation || ''}
-                    onChange={(e) => setSelectedLocation(e.target.value || null)}
-                    className="text-[10px] font-bold text-slate-700 bg-surface border border-line rounded-lg px-2 py-1 outline-none"
+                  <button
+                    onClick={() => setSelectedLocation(null)}
+                    className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${
+                      !selectedLocation ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 hover:border-accent-blue/40'
+                    }`}
                   >
-                    <option value="">All Locations</option>
-                    {dealerLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-                  </select>
-                  {selectedLocation && (
-                    <button onClick={() => setSelectedLocation(null)} className="text-slate-400 hover:text-slate-600">
-                      <X className="w-3.5 h-3.5" />
+                    All Locations
+                  </button>
+                  {dealerLocations.map(loc => (
+                    <button
+                      key={loc}
+                      onClick={() => setSelectedLocation(prev => prev === loc ? null : loc)}
+                      className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${
+                        selectedLocation === loc ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 hover:border-accent-blue/40'
+                      }`}
+                    >
+                      {loc}
                     </button>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
@@ -361,6 +405,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                       <div className="border-x border-line">
                         <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Response</span>
                         <span className="font-bold text-slate-900 block mt-0.5">{supp.responseTime}</span>
+                        <span className="text-[7.5px] text-accent-green font-bold block mt-0.5">{supp.responseRate}% reply rate</span>
                       </div>
                       <div>
                         <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Experience</span>
@@ -376,6 +421,26 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                 Show only {selectedProduct?.modelNumber} dealers
               </button>
             )}
+            {/* Secondary CTA — a second, softer nudge right after the dealer list, visually
+                distinct from the sticky footer bar, naming the selected model for continuity. */}
+            <div className="mt-3 bg-accent-green/5 border border-accent-green/20 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-9 h-9 bg-accent-green/10 rounded-full flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4.5 h-4.5 text-accent-green" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11.5px] font-extrabold text-slate-900">
+                  {selectedProduct ? `Ready to order the ${selectedProduct.modelNumber}?` : 'Ready to order?'}
+                </p>
+                <p className="text-[9.5px] text-slate-500 mt-0.5">Get quotes from every authorized dealer above in one request.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleGetQuotes}
+                className="shrink-0 px-3.5 py-2 bg-accent-green hover:bg-accent-green/90 text-white rounded-lg text-[10px] font-bold transition"
+              >
+                Get Quotes
+              </button>
+            </div>
           </section>
 
           {/* Downloadable Catalogue */}
@@ -396,6 +461,17 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               </a>
             </section>
           )}
+
+          {/* Mid-scroll breadcrumb repetition — a buyer this far down a long page may have
+              lost track of navigational context; the header trail above has long scrolled
+              out of view (it lives in the non-sticky top bar, not a fixed chrome element). */}
+          <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+            <Link href={`/categories/${brandMCat.mcatId}`} className="hover:text-accent-blue">{categoryName}</Link>
+            <ChevronRight className="w-2.5 h-2.5 shrink-0" />
+            <Link href={`/brands/${brand.id}`} className="hover:text-accent-blue">{brand.name}</Link>
+            <ChevronRight className="w-2.5 h-2.5 shrink-0" />
+            <span className="text-slate-600 normal-case truncate">{brandMCat.name}</span>
+          </div>
 
           {/* Ratings & Reviews */}
           {reviews.length > 0 && (
@@ -461,6 +537,21 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           </section>
         </div>
       </div>
+
+      {/* Floating WhatsApp launcher — persists regardless of scroll position, scoped to
+          whichever model is currently selected (falls back to the brand line itself if
+          none is). The sticky footer below isn't fixed, so it doesn't stack with this for
+          most of the scroll — but it's the last element on the page, so at true-bottom
+          scroll it ends up directly above the BottomNav; clearance accounts for both. */}
+      <WhatsAppFloatingButton
+        contactId={selectedProduct?.id || brand.id}
+        message={
+          selectedProduct
+            ? `Hi, I'm interested in ${selectedProduct.name} (${selectedProduct.modelNumber}). Please share pricing and availability.`
+            : `Hi, I'm interested in ${brandMCat.name} by ${brand.name}. Please share available models and pricing.`
+        }
+        className="bottom-36 md:bottom-6"
+      />
 
       {/* Sticky Get Quotes CTA — scoped to whichever model is currently selected */}
       <div className="border-t border-line p-4 bg-surface shrink-0">

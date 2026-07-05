@@ -29,10 +29,12 @@ export default async function Page({ params, searchParams }: PageProps) {
   // instead of losing what the buyer was just looking at.
   const contextCategory = fromCategory ? getMcatById(fromCategory) : undefined;
   const contextProduct = contextCategory && spec ? findProductBySpec(brand.id, contextCategory.id, spec) : undefined;
+  const primaryCategory = getMcatById(brand.mcatId);
 
   return (
     <BrandProfileView
       brand={brand}
+      primaryCategory={primaryCategory}
       brandMCats={getBrandMCats({ brandId: brand.id })}
       brandProducts={getProducts({ brandId: brand.id })}
       brandSuppliers={getSuppliers({ brandId: brand.id })}

@@ -117,6 +117,9 @@ function assert(cond, msg) {
 
   await record('CF-03', 'Brand filter narrows the model list', async () => {
     await page.goto(BASE_URL + '/categories/industrial-pumps');
+    // Refine Results is now a bottom sheet triggered by the header's filter icon (moved
+    // there so search + filter sit inline with the breadcrumb, not as inline page content).
+    await page.locator('button[aria-label="Filters"]').click();
     await page.waitForSelector('text=Filter by Brand', { timeout: 10000 });
     const before = await page.locator('text=Top Model From Each Brand').locator('xpath=following::a[contains(@href,"/products/")]').count();
     await page.locator('button:has-text("Kirloskar")').first().click();
@@ -127,16 +130,22 @@ function assert(cond, msg) {
 
   await record('CF-06', 'Clearing filters restores the full list', async () => {
     await page.goto(BASE_URL + '/categories/industrial-pumps');
+    await page.locator('button[aria-label="Filters"]').click();
+    await page.waitForSelector('text=Filter by Brand', { timeout: 10000 });
     await page.locator('button:has-text("Kirloskar")').first().click();
     await page.waitForTimeout(300);
-    await page.locator('text=Clear Filters').click();
+    // "Clear" sits in the sheet's footer action row, next to "Show N Brands".
+    await page.locator('button:has-text("Clear")').click();
     await page.waitForTimeout(300);
-    assert(await page.locator('text=Clear Filters').count() === 0, 'Clear Filters still shown after clearing');
+    assert(await page.locator('button:has-text("Clear")').count() === 0, 'Clear button still shown after clearing');
   });
 
   await record('CF-08', 'Primary CTA is Compare Brands, linking into scoped Compare', async () => {
     await page.goto(BASE_URL + '/categories/diesel-generators');
-    const link = page.locator('a:has-text("Compare Brands")');
+    // Exact-text match — a "⇄ Compare Brands" feature-teaser chip (anchor-jumps to the
+    // in-page comparison table) also contains this substring, distinct from the sticky
+    // footer's actual navigation CTA this test targets.
+    const link = page.getByRole('link', { name: 'Compare Brands', exact: true });
     assert(await link.count() > 0, 'Compare Brands CTA not found');
     const href = await link.getAttribute('href');
     assert(href.includes('category=diesel-generators'), `unexpected href: ${href}`);
@@ -150,10 +159,13 @@ function assert(cond, msg) {
     await page.waitForURL(/\/brands\/kirloskar(\?|$)/, { timeout: 10000 });
   });
 
-  await record('CF-10', 'Category with zero brands shows an empty state, not a broken page', async () => {
-    const resp = await page.goto(BASE_URL + '/categories/construction');
-    assert(resp.status() === 200, `expected 200, got ${resp.status()}`);
-    await page.waitForSelector('text=No branded catalog', { timeout: 10000 });
+  await record('CF-10', 'Unknown category ID renders a clean 404, not a broken page', async () => {
+    // Every real category now carries a full 10-brand/150-product catalog (construction,
+    // pipes, and chemicals were the last three to be filled in), so there is no longer a
+    // real zero-brand category to point this at — the meaningful edge case left is an
+    // ID that isn't in MCATS at all.
+    const resp = await page.goto(BASE_URL + '/categories/nonexistent-category-xyz');
+    assert(resp.status() === 404, `expected 404, got ${resp.status()}`);
   });
 
   // ---------- 3. Brand-first journey ----------
@@ -163,17 +175,20 @@ function assert(cond, msg) {
     await page.waitForSelector('text=Kirloskar Brothers Limited', { timeout: 10000 });
   });
 
-  await record('BF-02', 'Explore Products by Category switches tab without navigation', async () => {
+  await record('BF-02', 'Products sub-tab switches tab without navigation', async () => {
     await page.goto(BASE_URL + '/brands/kirloskar');
     const before = page.url();
-    await page.locator('text=Explore Products by Category').click();
+    // "Explore Products by Category" (a navigation-flavored sticky CTA) was replaced with
+    // Get Quotes + Compare Sellers, both real conversion actions — the Products sub-tab
+    // itself (always present in the tab bar) is the direct way to reach this content now.
+    await page.locator('button:has-text("Products (")').click();
     await page.waitForSelector('text=Product Lines', { timeout: 5000 });
     assert(page.url() === before, 'unexpected navigation on tab switch');
   });
 
   await record('BF-03', 'All product lines listed under Products tab', async () => {
     await page.goto(BASE_URL + '/brands/kirloskar');
-    await page.locator('text=Explore Products by Category').click();
+    await page.locator('button:has-text("Products (")').click();
     await page.waitForSelector('text=Kirloskar Diesel Generators', { timeout: 5000 });
     assert(await page.locator('text=Kirloskar Pumps').count() > 0, 'Kirloskar Pumps line missing');
     assert(await page.locator('text=Kirloskar Valves').count() > 0, 'Kirloskar Valves line missing');
@@ -212,7 +227,9 @@ function assert(cond, msg) {
     await page.goto(BASE_URL + '/brands/kirloskar/diesel-generators');
     await page.waitForSelector('text=Select a Model', { timeout: 10000 });
     const initialHeading = await page.locator('h2:has-text("Specifications —")').textContent();
-    const modelCards = page.locator('button:has(img)').filter({ hasText: 'kVA' });
+    // Model cards are a clickable div[role=button] (not a <button>) so a real per-card
+    // "Get Quote" <button> can nest inside without invalid button-in-button HTML.
+    const modelCards = page.locator('button:has(img), [role="button"]:has(img)').filter({ hasText: 'kVA' });
     const count = await modelCards.count();
     assert(count > 1, 'expected multiple model cards to test selection');
     await modelCards.nth(1).click();

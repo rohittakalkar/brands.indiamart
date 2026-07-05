@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Send, AlertCircle, Sparkles } from 'lucide-react';
 import { BuyLead } from '../types';
+import { useScrollChrome } from './ScrollChromeProvider';
 
 interface BuyLeadFormModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
   const [location, setLocation] = useState('Pune, Maharashtra');
   const [requirement, setRequirement] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { setFrozen } = useScrollChrome();
 
   // Sync with initialData changes (e.g. from product page or AI auto-fills!)
   useEffect(() => {
@@ -29,6 +31,13 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
       setRequirement(initialData.requirement || '');
     }
   }, [initialData, isOpen]);
+
+  // A modal has the buyer's full attention — the host page's scroll-driven chrome
+  // changes (Bottom Nav hide/reveal, search expand/collapse) must not animate underneath.
+  useEffect(() => {
+    setFrozen(isOpen);
+    return () => setFrozen(false);
+  }, [isOpen, setFrozen]);
 
   if (!isOpen) return null;
 

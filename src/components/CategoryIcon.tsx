@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Cpu, Home, Network, Pipette, Wrench, FlaskConical, Sun, Zap, Layers, Droplet, Wind, Snowflake, Cable } from 'lucide-react';
+import { Settings, Cpu, Home, Network, Pipette, Wrench, FlaskConical, Sun, Zap, Layers, Droplet, Wind, Snowflake, Cable, Laptop, Smartphone } from 'lucide-react';
 
 const ICONS: Record<string, React.ElementType> = {
   Settings,
@@ -14,7 +14,9 @@ const ICONS: Record<string, React.ElementType> = {
   Droplet,
   Wind,
   Snowflake,
-  Cable
+  Cable,
+  Laptop,
+  Smartphone
 };
 
 interface CategoryIconProps {

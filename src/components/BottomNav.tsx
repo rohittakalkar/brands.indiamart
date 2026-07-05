@@ -6,11 +6,13 @@ import { usePathname } from 'next/navigation';
 import { Home, Layers, GitCompare, Heart, FileText, Building2 } from 'lucide-react';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
+import { useScrollChrome } from './ScrollChromeProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { shortlistedBrands, shortlistedProducts, shortlistedCategories } = useShortlist();
   const { leadsCount } = useBuyLeadModal();
+  const { navVisible } = useScrollChrome();
 
   const shortlistedTotalCount = shortlistedBrands.length + shortlistedProducts.length + shortlistedCategories.length;
 
@@ -19,7 +21,12 @@ export default function BottomNav() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[56px] bg-surface border-t border-line grid grid-cols-6 select-none shrink-0 z-30">
+    <nav
+      className={`md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-line grid grid-cols-6 select-none shrink-0 z-30 ${
+        navVisible ? 'translate-y-0 chrome-reveal' : 'translate-y-full chrome-hide'
+      }`}
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)', minHeight: 'calc(56px + env(safe-area-inset-bottom))' }}
+    >
       {/* 1. Home */}
       <Link
         href="/"

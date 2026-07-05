@@ -24,7 +24,14 @@ interface CategoryIconProps {
   className?: string;
 }
 
+// A gentle continuous "breathe" (scale + opacity) — subtle on purpose, since this renders
+// in dense grids (a whole page of category tiles) where anything stronger than a soft
+// pulse would read as visual noise rather than a polished, alive detail.
 export const CategoryIcon: React.FC<CategoryIconProps> = ({ icon, className = "w-3.5 h-3.5" }) => {
   const Icon = ICONS[icon] || Layers;
-  return <Icon className={className} />;
+  return (
+    <span className="inline-flex icon-anim-breathe">
+      <Icon className={className} />
+    </span>
+  );
 };

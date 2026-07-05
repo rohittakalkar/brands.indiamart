@@ -2,10 +2,13 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText } from 'lucide-react';
+import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, GitCompare } from 'lucide-react';
 import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { ConnectButton } from './ConnectButton';
+import { NearbyOptionsEngine } from './NearbyOptionsEngine';
+import { AnimatedIcon } from './AnimatedIcon';
+import { useScrollChrome } from './ScrollChromeProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useShortlist } from './ShortlistProvider';
 import { buildRfqRequirement } from '../lib/rfq';
@@ -43,6 +46,7 @@ const FAQ_TEMPLATE = (mcatName: string, brandName: string) => [
 export default function BrandMCatView({ brandMCat, brand, categoryName, products, suppliers, reviews, initialModelId }: BrandMCatViewProps) {
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { shortlistedProducts, toggleShortlistProduct } = useShortlist();
+  const { navVisible } = useScrollChrome();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   // Prefer the buyer's carried-forward model selection; fall back to the first product
   // only when there's no prior context (e.g. a cold visit via search or direct link).
@@ -90,6 +94,14 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
     });
   };
 
+  const handleRequestQuoteForProduct = (prod: Product) => {
+    openBuyLeadForm({
+      productName: `${prod.name} (${prod.modelNumber})`,
+      brandName: brand.name,
+      requirement: buildRfqRequirement(prod)
+    });
+  };
+
   return (
     <div className="flex-1 bg-canvas flex flex-col overflow-hidden">
       {/* Header */}
@@ -109,7 +121,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      {/* pb-24 clears the now-truly-fixed footer below (previously just a flow sibling that
+          happened to land near the fold on short pages — on a line with many models, it sat
+          thousands of pixels down, unreachable without a full scroll; real position:fixed
+          fixes that, so this padding is now required to avoid covering the last content). */}
+      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
         {/* Category Hero */}
         <div className="bg-gradient-to-r from-primary to-secondary px-4 md:px-8 py-7 md:py-10 text-white">
           <div className="max-w-5xl mx-auto">
@@ -226,27 +242,14 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-line">
                           <span className="text-[11px] font-black text-primary">{prod.priceRange.split(' - ')[0]}</span>
                           <Link href={`/products/${prod.id}`} onClick={(e) => e.stopPropagation()} className="text-[9px] font-bold text-accent-blue hover:underline">
-                            View Full Details →
+                            Details →
                           </Link>
                         </div>
-                        {/* One action here — this card's job is picking a model to compare,
-                            not closing a sale; call/WhatsApp live with the verified dealers
-                            further down once the buyer has actually chosen a model. */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openBuyLeadForm({
-                              productName: `${prod.name} (${prod.modelNumber})`,
-                              brandName: brand.name,
-                              requirement: buildRfqRequirement(prod)
-                            });
-                          }}
-                          className="mt-2 w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9.5px] font-bold flex items-center justify-center gap-1 transition"
-                        >
-                          <Send className="w-3 h-3" />
-                          Get Best Price
-                        </button>
+                        {/* No per-card Quote action here on purpose — this card's job is
+                            picking a model to compare, not closing a sale. Tapping the card
+                            already IS the "compare" action (selects it into the Specifications
+                            panel and highlights its row in the table below); Quote lives once,
+                            in the page's sticky footer, scoped to whichever model is selected. */}
                       </div>
                     </div>
                   );
@@ -334,6 +337,18 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                 </div>
               </div>
             </section>
+          )}
+
+          {/* Nearby Options — the immediate higher/lower-capacity sibling within this same
+              line, right after the buyer has settled on one model, so weighing "do I need
+              slightly more/less" never requires leaving the page or re-reading the full
+              comparison table above. */}
+          {selectedProduct && products.length > 1 && (
+            <NearbyOptionsEngine
+              currentProduct={selectedProduct}
+              siblings={products}
+              onRequestQuote={handleRequestQuoteForProduct}
+            />
           )}
 
           {/* Verified Dealers */}
@@ -477,7 +492,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           {reviews.length > 0 && (
             <section>
               <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-accent-green" />
+                <AnimatedIcon icon={ShieldCheck} variant="pulse" className="w-4 h-4 text-accent-green" />
                 Buyer Ratings &amp; Reviews
               </h2>
               <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs space-y-4">
@@ -515,7 +530,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           {/* FAQs */}
           <section>
             <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
-              <HelpCircle className="w-4 h-4 text-accent-blue" />
+              <AnimatedIcon icon={HelpCircle} variant="pulse" className="w-4 h-4 text-accent-blue" />
               Frequently Asked Questions
             </h2>
             <div className="space-y-2">
@@ -553,16 +568,43 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
         className="bottom-36 md:bottom-6"
       />
 
-      {/* Sticky Get Quotes CTA — scoped to whichever model is currently selected */}
-      <div className="border-t border-line p-4 bg-surface shrink-0">
+      {/* Sticky CTA — Compare (primary) is this page's actual job: helping a buyer weigh
+          models against each other. Quote (secondary) stays reachable for a buyer who's
+          already decided, scoped to whichever model is currently selected, without
+          demanding a bare "Call/Chat" before they've committed to one. Genuinely fixed to
+          the viewport (not just a flex-flow sibling that happened to sit near the fold on
+          short pages) — on a 15-model line this bar previously sat ~5000px down the
+          document, unreachable without scrolling all the way through every model. */}
+      <div
+        className={`md:static md:bottom-auto fixed left-0 right-0 z-30 border-t border-line bg-surface p-4 transition-[bottom] duration-200 ${
+          navVisible ? 'bottom-14' : 'bottom-0'
+        }`}
+      >
         <div className="max-w-5xl mx-auto">
-          <button
-            onClick={handleGetQuotes}
-            className="w-full md:w-auto md:px-10 bg-cta hover:bg-cta-hover text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md"
-          >
-            <Send className="w-4 h-4" />
-            {selectedProduct ? `Get Quotes for ${selectedProduct.modelNumber}` : `Get Quotes for ${brandMCat.name}`}
-          </button>
+          {/* A condensed one-line context above the buttons — the buttons themselves stay
+              short ("Compare"/"Quote") per the two-word CTA rule, but a buyer scrolled deep
+              into a long model list shouldn't lose track of which model "Quote" refers to. */}
+          {selectedProduct && (
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1.5 truncate">
+              Quoting <span className="text-slate-700">{selectedProduct.modelNumber}</span> · {selectedProduct.priceRange.split(' - ')[0]} onwards
+            </p>
+          )}
+          <div className="flex items-center gap-2.5">
+            <a
+              href={products.length > 1 ? '#compare-models' : `/compare?productId=${selectedProduct?.id ?? ''}`}
+              className="flex-1 md:flex-none md:px-10 bg-cta hover:bg-cta-hover text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md"
+            >
+              <GitCompare className="w-4 h-4" />
+              Compare
+            </a>
+            <button
+              onClick={handleGetQuotes}
+              className="shrink-0 px-4 py-3.5 bg-canvas hover:bg-line border border-line text-slate-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              <span>Quote</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

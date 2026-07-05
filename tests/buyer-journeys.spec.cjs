@@ -238,11 +238,20 @@ function assert(cond, msg) {
     assert(updatedHeading !== initialHeading, `spec heading did not change: ${updatedHeading}`);
   });
 
-  await record('BM-03', 'Get Quotes CTA names the selected model number', async () => {
+  await record('BM-03', 'Sticky footer names the selected model number', async () => {
+    // The "Quote" CTA button itself is deliberately short (two-word CTA rule) — the
+    // selected model's context now lives in a caption line above the buttons instead of
+    // inside the button label itself, so a buyer scrolled deep into a long model list
+    // still sees what they're about to quote without a cramped, oversized button.
     await page.goto(BASE_URL + '/brands/kirloskar/diesel-generators');
     await page.waitForSelector('text=Select a Model', { timeout: 10000 });
-    const cta = await page.locator('button:has-text("Get Quotes for")').textContent();
-    assert(/Get Quotes for [A-Z0-9.-]+/.test(cta), `unexpected CTA text: ${cta}`);
+    const caption = await page.locator('text=/Quoting /').textContent();
+    assert(/Quoting [A-Z0-9.-]+/.test(caption), `unexpected sticky footer caption: ${caption}`);
+    // Several other "Get Quote(s)" buttons exist elsewhere on this content-rich page
+    // (NearbyOptionsEngine cards, the dealer-list nudge) — target the sticky footer's
+    // exact-match "Quote" button specifically, not any button containing that substring.
+    const quoteButton = await page.getByRole('button', { name: 'Quote', exact: true }).textContent();
+    assert(quoteButton.trim() === 'Quote', `expected a short "Quote" CTA, got: ${quoteButton}`);
   });
 
   await record('BM-05', 'Dealers are scoped to the selected model by default', async () => {

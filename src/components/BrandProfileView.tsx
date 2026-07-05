@@ -1,17 +1,16 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Send, GitCompare, Download, FileText, Wrench, Phone, Clock, Gauge } from 'lucide-react';
+import { ArrowRight, Sparkles, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Compass, GitCompare, Download, FileText, Wrench, Phone, Clock, Gauge } from 'lucide-react';
 import { Brand, Product, Supplier, Review, BrandMCat, ServiceCenter, MCat } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { TrustBadge } from './TrustBadge';
-import { ConnectButton } from './ConnectButton';
+import { AnimatedIcon } from './AnimatedIcon';
 import { useShortlist } from './ShortlistProvider';
-import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
+import { useScrollChrome } from './ScrollChromeProvider';
 import { BackButton } from './BackButton';
-import { WhatsAppFloatingButton } from './WhatsAppFloatingButton';
 import { Breadcrumb } from './Breadcrumb';
 
 interface BrandProfileViewProps {
@@ -30,8 +29,9 @@ interface BrandProfileViewProps {
 
 export default function BrandProfileView({ brand, primaryCategory, brandMCats, brandProducts, brandSuppliers, serviceCenters, reviews, contextCategory, contextProduct }: BrandProfileViewProps) {
   const { shortlistedBrands, toggleShortlistBrand } = useShortlist();
-  const { open: openBuyLeadForm } = useBuyLeadModal();
   const { trackView } = useRecentlyViewed();
+  const { navVisible } = useScrollChrome();
+  const scrollRef = useRef<HTMLDivElement>(null);
   // Arriving with category context means the buyer already has purchase intent for a
   // specific product line — open straight to Products instead of making them find the tab.
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'products' | 'suppliers' | 'trust'>(contextCategory ? 'products' : 'overview');
@@ -47,12 +47,13 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brand.id]);
 
-  const handleInquireAll = () => {
-    openBuyLeadForm({
-      brandName: brand.name,
-      productName: brand.topProducts[0] || 'Industrial Spec Machinery',
-      requirement: `Requesting standard quotes for ${brand.name} solutions. Please share product catalogs, pricing guidelines, and nearest dealership locations.`
-    });
+  // Brand Hub's job is helping a buyer decide WHICH product line fits, not converting them
+  // yet — the buyer hasn't chosen a model, so there's nothing concrete for a seller to
+  // quote against. "Explore" jumps straight to the Products tab and resets scroll, since
+  // switching tabs alone can otherwise leave the buyer mid-scroll into unrelated content.
+  const handleExplore = () => {
+    setActiveSubTab('products');
+    scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const isBrandSaved = shortlistedBrands.includes(brand.id);
@@ -107,8 +108,8 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
         </div>
       </div>
 
-      {/* Main brand scroll area */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Main brand scroll area — pb-24 clears the truly-fixed footer below */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 md:pb-0">
         {/* Breadcrumb — states Home ▸ Category ▸ Brand so a cold-landed buyer has an
             immediate sense of hierarchy; the hero below no longer repeats the brand name,
             so the header's h1 and this trail are the only two places it appears. */}
@@ -298,7 +299,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
               {/* Business Authenticity Data */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs space-y-3">
                 <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <AnimatedIcon icon={ShieldCheck} variant="pulse" className="w-4 h-4 text-emerald-600" />
                   <span>Business Authenticity Proof</span>
                 </h3>
                 <div className="divide-y divide-slate-100 text-[11px] font-medium text-slate-600">
@@ -477,7 +478,11 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                               <MapPin className="w-3 h-3 text-slate-400" />
                               {supp.location}
                             </span>
-                            <ConnectButton supplierId={supp.id} brandName={brand.name} />
+                            {/* No direct contact action here on purpose — the buyer hasn't
+                                picked a model yet, so there's nothing specific to quote.
+                                "Compare Sellers" above is the one path onward from this tab;
+                                per-seller Call/Chat only appears once a model is selected,
+                                on the Brand-MCat page or the product page itself. */}
                           </div>
                           <div className="flex flex-col gap-1 items-end shrink-0">
                             {supp.verified && <TrustBadge type="verified-supplier" who="IndiaMART" />}
@@ -602,34 +607,33 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
         </div>
       </div>
 
-      {/* Floating WhatsApp launcher — persists regardless of scroll position. The sticky
-          footer below isn't fixed, so it doesn't stack with this for most of the scroll —
-          but it's the last element in the page, so at true-bottom scroll it ends up
-          directly above the BottomNav; clearance accounts for both stacked together. */}
-      <WhatsAppFloatingButton
-        contactId={brand.id}
-        message={`Hi, I'm interested in ${brand.name}'s products. Please share available models and pricing.`}
-        className="bottom-36 md:bottom-6"
-      />
+      {/* No floating WhatsApp/Call launcher on this page — Brand Hub's job is helping a
+          buyer decide which product line fits, not converting them before they've picked
+          a model. Contact-seller actions (Quote/Call/Chat) only appear once a buyer has
+          committed to a specific model, on Brand-MCat or the product page. */}
 
-      {/* Sticky CTA — both actions are real conversion/comparison moves, not navigation
-          dressed up as one. "Explore Products by Category" used to sit here, but browsing
-          is already one tap away via the Products tab; a buyer who's read this far either
-          wants a quote or wants to compare sellers side-by-side. */}
-      <div className="border-t border-slate-100 p-4 bg-white shrink-0 flex items-center gap-2.5">
+      {/* Sticky CTA — Explore (primary) moves the buyer toward picking a product line;
+          Compare (secondary) is a real decision-support move for a buyer still validating
+          the brand itself. Neither is a contact-seller action. Genuinely fixed to the
+          viewport rather than a flex-flow sibling that only looked pinned on short pages. */}
+      <div
+        className={`md:static md:bottom-auto fixed left-0 right-0 z-30 border-t border-slate-100 bg-white p-4 flex items-center gap-2.5 transition-[bottom] duration-200 ${
+          navVisible ? 'bottom-14' : 'bottom-0'
+        }`}
+      >
         <button
-          onClick={handleInquireAll}
+          onClick={handleExplore}
           className="flex-1 bg-cta hover:bg-cta-hover text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer"
         >
-          <Send className="w-4 h-4" />
-          <span>Get Quotes</span>
+          <Compass className="w-4 h-4" />
+          <span>Explore</span>
         </button>
         <Link
           href={`/compare?brandId=${brand.id}`}
           className="shrink-0 px-4 py-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
         >
           <GitCompare className="w-4 h-4" />
-          <span>Compare Sellers</span>
+          <span>Compare</span>
         </Link>
       </div>
     </div>

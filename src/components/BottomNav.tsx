@@ -16,7 +16,10 @@ export default function BottomNav() {
 
   const shortlistedTotalCount = shortlistedBrands.length + shortlistedProducts.length + shortlistedCategories.length;
 
-  if (pathname === '/leads/success') return null;
+  // The Product page has its own persistent, more specific action bar (Call/WhatsApp/Get
+  // Quotes) fixed to the same bottom edge — running both at once meant two competing
+  // fixed bars stacked on top of each other for no real navigational benefit there.
+  if (pathname === '/leads/success' || pathname.startsWith('/products/')) return null;
 
   const isActive = (path: string) => pathname === path;
 

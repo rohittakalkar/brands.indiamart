@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ProductDetailView from '@/components/ProductDetailView';
-import { getProductById, getBrandById, getSuppliers, getAlternativeProducts, getMcatById } from '@/lib/data';
+import { getProductById, getBrandById, getSuppliers, getAlternativeProducts, getMcatById, getBrandMCatById, getProducts } from '@/lib/data';
 
 type PageProps = { params: Promise<{ productId: string }> };
 
@@ -24,14 +24,25 @@ export default async function Page({ params }: PageProps) {
   if (!brand) notFound();
 
   const category = getMcatById(product.mcatId);
+  // Powers the "Brand MCat" (model-line) rung in the PDP breadcrumb — Home > Category >
+  // Brand > Brand MCat > this product — so the full path is always present and clickable
+  // no matter how the buyer actually arrived here (search, deep link, shared link).
+  const brandMCat = product.brandMCatId ? getBrandMCatById(product.brandMCatId) : undefined;
+
+  // Sibling models in the same Brand-MCat line — powers the Nearby Options engine
+  // (adjacent higher/lower-capacity model within this line), distinct from
+  // getAlternativeProducts() which is cross-brand.
+  const lineSiblings = product.brandMCatId ? getProducts({ brandMCatId: product.brandMCatId }) : [];
 
   return (
     <ProductDetailView
       product={product}
       brand={brand}
       category={category}
+      brandMCat={brandMCat}
       suppliers={getSuppliers({ productId: product.id })}
       alternatives={getAlternativeProducts(product.id)}
+      lineSiblings={lineSiblings}
     />
   );
 }

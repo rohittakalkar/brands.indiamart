@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { useScrollChrome } from './ScrollChromeProvider';
+import { useSearchHistory } from './SearchHistoryProvider';
 
 // Closes a real gap: before this, search only existed on the Home page — every other
 // mobile page had no way to search without navigating back. Collapsed to an icon by
@@ -14,19 +15,31 @@ export default function MobileSearchBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { searchExpanded } = useScrollChrome();
+  const { trackSearch } = useSearchHistory();
   const [query, setQuery] = useState('');
   const [focused, setFocused] = useState(false);
 
   // Home already has its own full hero search; the success screen hides all chrome.
-  // Category pages now carry their own inline search in the header row (next to the
-  // breadcrumb), so the floating pill would just duplicate it.
-  if (pathname === '/' || pathname === '/leads/success' || pathname.startsWith('/categories/')) return null;
+  // Category pages carry their own inline search in the header row (next to the
+  // breadcrumb), so the floating pill would just duplicate it. The dedicated search
+  // screen (/search) has its own full-width input right there — a second floating
+  // search icon on top of it is pure redundancy. The Product page's own header is
+  // already full (back, basket, shortlist, share) and this floating pill visually
+  // collided with those icons rather than sitting cleanly beside them.
+  if (
+    pathname === '/' ||
+    pathname === '/leads/success' ||
+    pathname === '/search' ||
+    pathname.startsWith('/categories/') ||
+    pathname.startsWith('/products/')
+  ) return null;
 
   const expanded = searchExpanded || focused || query.length > 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
+      trackSearch(query);
       router.push(`/search?q=${encodeURIComponent(query)}`);
       setQuery('');
       setFocused(false);

@@ -2,18 +2,25 @@
 
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, monospace;
 
-  --color-primary: #0B1F3A;
-  --color-secondary: #12305C;
-  --color-cta: #FF6A1A;
-  --color-cta-hover: #E85F13;
+  /* Shifted toward the new blue-led CTA identity below rather than kept as a separate
+     navy brand color — structural dark-chrome sections (hero gradients) stay dark for
+     contrast, but now read as "deep blue" instead of "unrelated navy" alongside the new
+     primary CTA color. */
+  --color-primary: #0A2A6B;
+  --color-secondary: #123B8F;
+  --color-cta: #2E6BFF;
+  --color-cta-hover: #2557D6;
   --color-canvas: #F8F9FB;
   --color-surface: #FFFFFF;
-  --color-accent-green: #1B8A5C;
+  --color-accent-green: #1BA94C;
   --color-accent-purple: #6D5EF4;
-  --color-accent-blue: #2E6BE0;
+  --color-accent-blue: #2E6BFF;
+  --color-accent-orange: #FF8E26;
+  --color-warning: #FFB020;
+  --color-error: #E53935;
   --color-line: #E8EDF4;
 
   --radius-brand: 16px;
@@ -46,5 +53,46 @@ h1, h2, h3, h4, h5, h6 {
 @media (prefers-reduced-motion: reduce) {
   .chrome-hide, .chrome-reveal, .search-expand, .search-collapse {
     transition-duration: 0ms !important;
+  }
+}
+
+/* Small, continuously-animated icon variants (AnimatedIcon.tsx) — a self-contained
+   substitute for GIF icons, semantic motion picked per icon meaning rather than one
+   generic effect reused everywhere. */
+@keyframes icon-flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  25% { transform: scale(1.08) rotate(-3deg); opacity: 0.85; }
+  50% { transform: scale(0.96) rotate(2deg); opacity: 1; }
+  75% { transform: scale(1.05) rotate(-2deg); opacity: 0.9; }
+}
+@keyframes icon-tick {
+  0%, 85%, 100% { transform: rotate(0deg); }
+  92% { transform: rotate(14deg); }
+}
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes icon-flip {
+  0%, 40%, 100% { transform: rotateY(0deg); }
+  20% { transform: rotateY(180deg); }
+}
+@keyframes icon-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+@keyframes icon-breathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.82; }
+}
+.icon-anim-flicker { animation: icon-flicker 2.2s ease-in-out infinite; transform-origin: center; }
+.icon-anim-tick { animation: icon-tick 2.6s ease-in-out infinite; transform-origin: 50% 15%; }
+.icon-anim-bounce { animation: icon-bounce 1.6s ease-in-out infinite; }
+.icon-anim-flip { animation: icon-flip 3.6s ease-in-out infinite; transform-style: preserve-3d; }
+.icon-anim-pulse { animation: icon-pulse 1.8s ease-in-out infinite; }
+.icon-anim-breathe { animation: icon-breathe 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .icon-anim-flicker, .icon-anim-tick, .icon-anim-bounce, .icon-anim-flip, .icon-anim-pulse, .icon-anim-breathe {
+    animation: none !important;
   }
 }

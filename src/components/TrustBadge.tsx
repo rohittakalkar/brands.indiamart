@@ -59,7 +59,7 @@ export function TrustBadge({ type, who, since, detail = false, className = '' }:
   if (detail) {
     return (
       <div className={`flex items-start gap-2 ${className}`} title={title}>
-        <span className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border ${def.colorClasses}`}>
+        <span className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 border icon-anim-pulse ${def.colorClasses}`}>
           <Icon className={`w-3.5 h-3.5 ${def.iconClasses}`} />
         </span>
         <div className="min-w-0">
@@ -78,7 +78,9 @@ export function TrustBadge({ type, who, since, detail = false, className = '' }:
       title={title}
       className={`inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 border rounded-full ${def.colorClasses} ${className}`}
     >
-      <Icon className={`w-3.5 h-3.5 ${def.iconClasses}`} />
+      <span className="inline-flex icon-anim-pulse">
+        <Icon className={`w-3.5 h-3.5 ${def.iconClasses}`} />
+      </span>
       {def.label}
     </span>
   );

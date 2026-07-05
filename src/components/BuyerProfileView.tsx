@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Heart, FileText, ShoppingBag, Clock, ChevronRight, MapPin } from 'lucide-react';
 import { Brand, Product } from '../types';
 import { BrandLogo } from './BrandLogo';
+import { AnimatedIcon } from './AnimatedIcon';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
@@ -76,7 +77,7 @@ export default function BuyerProfileView({ brands, products }: BuyerProfileViewP
           <section>
             <div className="flex items-center justify-between mb-2.5">
               <h2 className="font-heading font-bold text-sm text-primary flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-slate-400" />
+                <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400" />
                 Recently Viewed
               </h2>
             </div>

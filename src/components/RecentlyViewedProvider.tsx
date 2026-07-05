@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState } from 'react';
 
 export interface RecentlyViewedEntry {
-  type: 'product' | 'brand';
+  type: 'product' | 'brand' | 'category';
   id: string;
   viewedAt: number;
 }

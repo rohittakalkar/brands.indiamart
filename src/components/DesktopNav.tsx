@@ -7,6 +7,7 @@ import { Search, Layers, Building2, GitCompare, Heart, FileText, Send, ShoppingB
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
+import { useSearchHistory } from './SearchHistoryProvider';
 
 const NAV_LINKS = [
   { href: '/categories', label: 'Categories', icon: Layers },
@@ -20,6 +21,7 @@ export default function DesktopNav() {
   const { shortlistedBrands, shortlistedProducts, shortlistedCategories } = useShortlist();
   const { leadsCount, open: openBuyLeadForm } = useBuyLeadModal();
   const { items: basketItems } = useQuoteBasket();
+  const { trackSearch } = useSearchHistory();
   const [query, setQuery] = useState('');
 
   const shortlistedTotalCount = shortlistedBrands.length + shortlistedProducts.length + shortlistedCategories.length;
@@ -30,7 +32,10 @@ export default function DesktopNav() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) router.push(`/search?q=${encodeURIComponent(query)}`);
+    if (query.trim()) {
+      trackSearch(query);
+      router.push(`/search?q=${encodeURIComponent(query)}`);
+    }
   };
 
   return (

@@ -7,8 +7,11 @@ import { Star, Send, BookOpen, HelpCircle, GitCompare, SlidersHorizontal, X, Shi
 import { MCat, Brand, Product, Supplier, BrandMCat } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { TrustBadge } from './TrustBadge';
+import { AnimatedIcon } from './AnimatedIcon';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useScrollChrome } from './ScrollChromeProvider';
+import { useRecentlyViewed } from './RecentlyViewedProvider';
+import { useSearchHistory } from './SearchHistoryProvider';
 import { BackButton } from './BackButton';
 import { Breadcrumb } from './Breadcrumb';
 import { buildRfqRequirement } from '../lib/rfq';
@@ -44,6 +47,16 @@ export default function CategoryBrandsView({
   const router = useRouter();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { setFrozen } = useScrollChrome();
+  const { trackView } = useRecentlyViewed();
+  const { trackSearch } = useSearchHistory();
+
+  // A category page is very often exactly where an ambiguous, category-shaped search
+  // resolves to (e.g. "diesel generator", "pumps") — without this, that whole class of
+  // search never registers in Recently Viewed, only the narrower exact-product/brand case did.
+  useEffect(() => {
+    trackView('category', category.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category.id]);
   const [selectedBrandIds, setSelectedBrandIds] = useState<Set<string>>(new Set(initialSelectedBrandIds));
   const [selectedSpecValue, setSelectedSpecValue] = useState<string | null>(initialSpecValue ?? null);
   const [selectedPriceBucket, setSelectedPriceBucket] = useState<number | null>(
@@ -227,6 +240,7 @@ export default function CategoryBrandsView({
   const handleHeaderSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (headerSearchQuery.trim()) {
+      trackSearch(headerSearchQuery);
       router.push(`/search?q=${encodeURIComponent(headerSearchQuery)}`);
     }
   };
@@ -507,7 +521,7 @@ export default function CategoryBrandsView({
           {/* Buying Guide */}
           <section>
             <h2 className="font-heading font-bold text-sm text-primary mb-2.5 flex items-center gap-1.5">
-              <BookOpen className="w-4 h-4 text-accent-purple" />
+              <AnimatedIcon icon={BookOpen} variant="flip" className="w-4 h-4 text-accent-purple" />
               Buying Guide
             </h2>
             <div className="bg-surface border border-line rounded-2xl p-4 space-y-2.5 text-[11px] text-slate-600 leading-relaxed">
@@ -521,7 +535,7 @@ export default function CategoryBrandsView({
           {/* FAQs */}
           <section>
             <h2 className="font-heading font-bold text-sm text-primary mb-2.5 flex items-center gap-1.5">
-              <HelpCircle className="w-4 h-4 text-accent-blue" />
+              <AnimatedIcon icon={HelpCircle} variant="pulse" className="w-4 h-4 text-accent-blue" />
               Frequently Asked Questions
             </h2>
             <div className="bg-surface border border-line rounded-2xl divide-y divide-line">

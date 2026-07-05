@@ -4,17 +4,20 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Search, ChevronRight, Send, Clock, Package, BookOpen, TrendingUp, ShoppingBag, Layers, Award, Flame, ShieldCheck } from 'lucide-react';
+import { Search, ChevronRight, ChevronDown, Send, Phone, Clock, Package, BookOpen, TrendingUp, ShoppingBag, Layers, Award, Flame, ShieldCheck } from 'lucide-react';
 import { Brand, Product } from '../types';
 import { Category } from '../services/categories';
 import type { CategoryFomoSummary, CatalogStats } from '../lib/data';
 import { BrandLogo } from './BrandLogo';
 import { CategoryIcon } from './CategoryIcon';
 import { TrustBadge, TrustBadgeType } from './TrustBadge';
+import { AnimatedIcon } from './AnimatedIcon';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
+import { useSearchHistory } from './SearchHistoryProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
 import { buildRfqRequirement } from '../lib/rfq';
+import { getMaskedConnectNumber } from '../lib/connect';
 
 interface DiscoverViewProps {
   brands: Brand[];
@@ -23,13 +26,6 @@ interface DiscoverViewProps {
   categoryFomo: CategoryFomoSummary[];
   catalogStats: CatalogStats;
 }
-
-const RECENT_SEARCHES = [
-  { name: 'Kirloskar 62.5 kVA Diesel Generator', search: 'Kirloskar 62.5 kVA' },
-  { name: 'Voltas Water Cooler 40/80 PSS', search: 'Voltas Water Cooler' },
-  { name: 'Atlas Copco Compressors GA 30 VSD', search: 'Atlas Copco Air Compressors' },
-  { name: 'Siemens SIMATIC S7-1200 PLC', search: 'Siemens PLC' }
-];
 
 const BADGE_TYPES: TrustBadgeType[] = ['verified-supplier', 'authorized-dealer', 'manufacturer-oem', 'certified-product'];
 
@@ -60,21 +56,46 @@ export default function DiscoverView({ brands, products, categories, categoryFom
   const { items: basketItems } = useQuoteBasket();
   const basketCount = basketItems.length;
   const { recentlyViewed } = useRecentlyViewed();
+  const { searchHistory } = useSearchHistory();
 
-  const [localSearch, setLocalSearch] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  // Tapping the search bar opens the dedicated search screen (recently-viewed +
+  // recommendations, live suggestions as you type) rather than expanding a dropdown in
+  // place — matching a "search is its own place" pattern instead of an inline overlay.
+  const goToSearch = () => router.push('/search');
 
-  const runSearch = (query: string) => {
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query)}`);
-      setIsSearchFocused(false);
-    }
-  };
+  const [trustBrandsOpen, setTrustBrandsOpen] = useState(false);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    runSearch(localSearch);
-  };
+  const heroBrands = [...brands].sort((a, b) => b.rating - a.rating).slice(0, 10);
+
+  // Data for the hero's combined stats+trust marquee — kept as plain data so the chip
+  // row can be rendered twice back-to-back (an identical second copy is what makes a
+  // leftward-scrolling loop read as seamless instead of snapping at the end).
+  const heroStatChips: { icon: React.ElementType; value: number; label: string }[] = [
+    { icon: Layers, value: catalogStats.totalCategories, label: 'Categories' },
+    { icon: Award, value: catalogStats.totalBrands, label: 'Brands' },
+    { icon: Package, value: catalogStats.totalProducts, label: 'Models' }
+  ];
+  const heroTrustLabels = ['Verified Suppliers', 'OEM-Certified', 'Authorized Dealers'];
+
+  const renderHeroChips = (keyPrefix: string) => (
+    <React.Fragment key={keyPrefix}>
+      {heroStatChips.map((chip) => (
+        <div key={`${keyPrefix}-${chip.label}`} className="flex items-center gap-1 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1 shrink-0">
+          <chip.icon className="w-3 h-3 text-cta shrink-0" />
+          <span className="font-mono font-bold text-white text-[11px] tabular-nums">{chip.value}</span>
+          <span className="text-white/60 text-[8px] font-bold uppercase tracking-wide">{chip.label}</span>
+        </div>
+      ))}
+      <span key={`${keyPrefix}-divider`} className="w-px h-3.5 bg-white/20 shrink-0" />
+      {heroTrustLabels.map((label) => (
+        <div key={`${keyPrefix}-${label}`} className="flex items-center gap-1 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1 shrink-0">
+          <ShieldCheck className="w-3 h-3 text-accent-green shrink-0" />
+          <span className="text-white/80 text-[8px] font-bold uppercase tracking-wide">{label}</span>
+        </div>
+      ))}
+      <span key={`${keyPrefix}-gap`} className="w-3 shrink-0" />
+    </React.Fragment>
+  );
 
   const recentItems = recentlyViewed
     .slice(0, 4)
@@ -83,20 +104,37 @@ export default function DiscoverView({ brands, products, categories, categoryFom
         const product = products.find(p => p.id === entry.id);
         return product ? { href: `/products/${product.id}`, name: product.name, sub: product.brandName, image: product.image } : null;
       }
-      const brand = brands.find(b => b.id === entry.id);
-      return brand ? { href: `/brands/${brand.id}`, name: brand.name, sub: brand.businessType, logo: brand.logo } : null;
+      if (entry.type === 'brand') {
+        const brand = brands.find(b => b.id === entry.id);
+        return brand ? { href: `/brands/${brand.id}`, name: brand.name, sub: brand.businessType, logo: brand.logo } : null;
+      }
+      const cat = categories.find(c => c.id === entry.id);
+      return cat ? { href: `/categories/${cat.id}`, name: cat.name, sub: 'Category', icon: cat.icon } : null;
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);
 
   const popularBrands = [...brands].sort((a, b) => b.rating - a.rating).slice(0, 6);
   const trendingCategories = categories.slice(0, 5);
-  const featuredProducts = products.slice(0, 4);
+  const featuredProducts = products.slice(0, 8);
 
   // Resolve each problem statement against the real catalog, so a stale mapping never
   // silently links to a category that doesn't exist.
   const resolvedProblems = PROBLEM_SOLUTIONS
     .map(p => ({ ...p, category: categories.find(c => c.id === p.mcatId) }))
     .filter((p): p is typeof p & { category: Category } => !!p.category);
+
+  // Reorders (never filters — every card stays reachable) guided-discovery cards toward
+  // whatever the buyer has actually searched for, using real search-query tokens rather
+  // than an invented ranking. Ties keep the original curated order (Array.sort is stable),
+  // so a buyer with no search history yet sees exactly today's order, unchanged.
+  const searchTokens = searchHistory.flatMap(q => q.toLowerCase().split(/\s+/)).filter(t => t.length > 2);
+  const scoredProblems = searchTokens.length === 0
+    ? resolvedProblems
+    : [...resolvedProblems].sort((a, b) => {
+        const text = (p: typeof a) => `${p.problem} ${p.category.name}`.toLowerCase();
+        const score = (p: typeof a) => searchTokens.filter(t => text(p).includes(t)).length;
+        return score(b) - score(a);
+      });
 
   return (
     <div className="flex-1 bg-canvas overflow-y-auto select-none font-sans text-slate-800 relative">
@@ -123,127 +161,151 @@ export default function DiscoverView({ brands, products, categories, categoryFom
         </div>
       </div>
 
-      {/* Hero Search */}
-      <div className="bg-gradient-to-b from-primary to-secondary px-4 md:px-8 pt-8 md:pt-14 pb-6 md:pb-9 relative">
+      {/* Hero — deliberately compact (roughly half the fold on mobile): headline, one
+          inline stats+trust row, one inline search bar, one scrollable row of brand logos,
+          and a collapsed trust-detail accordion. Category exploration and browsing now
+          live in the normal-density body below instead of inside the tinted hero band. */}
+      <div className="bg-gradient-to-b from-primary to-secondary px-4 md:px-8 pt-6 md:pt-10 pb-4 md:pb-6 relative">
         <motion.div
           className="max-w-2xl mx-auto text-center"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
-          <h1 className="font-heading font-extrabold text-white text-xl md:text-3xl tracking-tight">
-            Shop by category, backed by trusted brands
+          <h1 className="font-heading font-extrabold text-white text-lg md:text-2xl tracking-tight">
+            Verified brands. One search.
           </h1>
-          <p className="text-white/70 text-[11px] md:text-sm mt-2">
-            {catalogStats.totalCategories} product categories, every one backed by verified, authorized brands — all in one place
-          </p>
 
-          {/* Real, computed catalog stats — not fabricated urgency counters. Every category now
-              carries a full verified-brand catalog (the old branded-vs-standard split is gone),
-              so the third stat leads with scale — total models — rather than a permanent zero. */}
-          <div className="flex items-center justify-center gap-1.5 md:gap-2 mt-3.5 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
-              <Layers className="w-3 h-3 text-cta shrink-0" />
-              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.totalCategories}</span>
-              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Categories</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
-              <Award className="w-3 h-3 text-cta shrink-0" />
-              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.totalBrands}</span>
-              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Trusted Brands</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-white/10 border border-white/15 rounded-full pl-2 pr-2.5 py-1">
-              <Package className="w-3 h-3 text-cta shrink-0" />
-              <span className="font-mono font-bold text-white text-[11px] tabular-nums">{catalogStats.totalProducts}</span>
-              <span className="text-white/60 text-[8.5px] font-bold uppercase tracking-wide">Models Listed</span>
-            </div>
+          {/* Catalog scale + trust signals combined into one inline row — real computed
+              numbers sitting directly beside the trust claims they back, rather than two
+              separate rows competing for hero height. Auto-scrolls continuously to the
+              left (a looping marquee, not a manual-swipe rail) so every chip is seen
+              without requiring a swipe; the track is the chip set rendered twice
+              back-to-back, animated exactly -50% so the loop point is invisible. */}
+          <div className="mt-3 overflow-hidden -mx-4 md:mx-0">
+            <motion.div
+              className="flex items-center gap-1.5 w-fit"
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+            >
+              {renderHeroChips('a')}
+              {renderHeroChips('b')}
+            </motion.div>
           </div>
 
-          <form onSubmit={handleSearchSubmit} className="relative mt-4 md:mt-5">
-            <motion.div
-              className="flex flex-col sm:flex-row items-stretch sm:items-center w-full rounded-xl overflow-hidden"
-              animate={{
-                boxShadow: [
-                  '0 0 0 0 rgba(255,106,26,0.35), 0 8px 24px rgba(0,0,0,0.15)',
-                  '0 0 0 6px rgba(255,106,26,0), 0 8px 24px rgba(0,0,0,0.15)',
-                  '0 0 0 0 rgba(255,106,26,0.35), 0 8px 24px rgba(0,0,0,0.15)'
-                ]
-              }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={localSearch}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 150)}
-                  onChange={(e) => setLocalSearch(e.target.value)}
-                  placeholder="Search by product, brand, model or specification"
-                  className="w-full bg-white text-slate-800 pl-10 pr-7 py-3.5 text-xs md:text-sm outline-none placeholder-slate-400 font-semibold"
-                />
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                {localSearch && (
-                  <button
-                    type="button"
-                    onClick={() => setLocalSearch('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 font-extrabold text-xs"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                className="bg-cta hover:bg-cta-hover text-white px-5 py-3.5 flex items-center justify-center transition-colors font-bold text-xs md:text-sm shrink-0 sm:min-w-[112px]"
-              >
-                Search
-              </motion.button>
-            </motion.div>
+          {/* Tapping this opens the dedicated search screen — no local dropdown, no
+              separate submit button; the whole element is the one tap target. */}
+          <motion.button
+            type="button"
+            onClick={goToSearch}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            className="relative mt-3.5 w-full flex items-center bg-white text-left rounded-xl overflow-hidden pl-10 pr-4 py-3"
+            animate={{
+              boxShadow: [
+                '0 0 0 0 rgba(255,106,26,0.35), 0 8px 24px rgba(0,0,0,0.15)',
+                '0 0 0 6px rgba(255,106,26,0), 0 8px 24px rgba(0,0,0,0.15)',
+                '0 0 0 0 rgba(255,106,26,0.35), 0 8px 24px rgba(0,0,0,0.15)'
+              ]
+            }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <span className="text-slate-400 text-xs md:text-sm font-semibold truncate">Search by product, brand, model or specification</span>
+          </motion.button>
 
-            {isSearchFocused && (
-              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-line rounded-xl shadow-xl z-40 overflow-hidden text-left">
-                <div className="px-3 py-2 border-b border-line">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Recent Sourcing Searches</span>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {RECENT_SEARCHES.map((item, idx) => (
-                    <button
-                      key={idx}
-                      onMouseDown={() => runSearch(item.search)}
-                      className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-canvas transition text-left border-b border-line last:border-b-0"
+          {/* Trusted brand logos — staggered fade-in on load, then a continuous "chase"
+              highlight sweeps through them one at a time, on loop, so the row keeps reading
+              as alive rather than settling into a static row after the initial entrance. */}
+          <motion.div
+            className="flex items-center gap-2 mt-3.5 overflow-x-auto scrollbar-none pb-0.5 justify-start md:justify-center"
+            initial="hidden"
+            animate="show"
+            variants={{ show: { transition: { staggerChildren: 0.05 } } }}
+          >
+            {heroBrands.map((brand, idx) => {
+              const cycle = 3.2;
+              const pulseDuration = 0.9;
+              return (
+                <motion.div
+                  key={brand.id}
+                  className="shrink-0"
+                  variants={{ hidden: { opacity: 0, y: 6, scale: 0.9 }, show: { opacity: 1, y: 0, scale: 1 } }}
+                >
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.16, 1],
+                      boxShadow: [
+                        '0 0 0 0 rgba(255,106,26,0)',
+                        '0 0 0 5px rgba(255,106,26,0.45)',
+                        '0 0 0 0 rgba(255,106,26,0)'
+                      ]
+                    }}
+                    transition={{
+                      duration: pulseDuration,
+                      delay: 0.6 + idx * (cycle / heroBrands.length),
+                      repeat: Infinity,
+                      repeatDelay: cycle - pulseDuration,
+                      ease: 'easeInOut'
+                    }}
+                    className="rounded-lg"
+                  >
+                    <Link
+                      href={`/brands/${brand.id}`}
+                      title={brand.name}
+                      className="w-9 h-9 bg-white rounded-lg flex items-center justify-center overflow-hidden p-1.5 shadow-sm hover:scale-105 transition"
                     >
-                      <span className="text-[11px] font-semibold text-slate-700 truncate">{item.name}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    </button>
+                      <BrandLogo logo={brand.logo} name={brand.name} />
+                    </Link>
+                  </motion.div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+
+          {/* Why Trust Brands — lives in the hero now, directly below the brand logos;
+              collapsed by default so it costs nothing toward hero height until opened. */}
+          <div className="mt-3.5 text-left">
+            <button
+              type="button"
+              onClick={() => setTrustBrandsOpen(prev => !prev)}
+              className="w-full flex items-center justify-between bg-white/10 border border-white/15 rounded-xl px-3 py-2"
+              aria-expanded={trustBrandsOpen}
+            >
+              <span className="text-white text-[11px] font-bold">Why Trust Brands</span>
+              <ChevronDown className={`w-3.5 h-3.5 text-white/70 transition-transform ${trustBrandsOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {trustBrandsOpen && (
+              <div className="mt-2 bg-white rounded-xl p-3 space-y-2.5">
+                <p className="text-[10px] text-slate-500">Every listing shows exactly what's been verified — who verified it, and when.</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {BADGE_TYPES.map((type) => (
+                    <div key={type} className="bg-canvas border border-line rounded-lg p-2.5">
+                      <TrustBadge type={type} who="IndiaMART" detail />
+                    </div>
                   ))}
                 </div>
               </div>
             )}
-          </form>
+          </div>
         </motion.div>
+      </div>
 
-        {/* Category × Brand FOMO rail — real brand density per category, and an
-            honest "Standard Catalog" tag for categories with no curated brands yet */}
-        <motion.div
-          className="max-w-5xl mx-auto mt-5 md:mt-6"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1, ease: 'easeOut' }}
-        >
-          <div className="flex items-center gap-1.5 px-0.5 mb-2">
-            <Flame className="w-3.5 h-3.5 text-cta shrink-0" />
-            <span className="text-white/80 text-[9.5px] md:text-[10px] font-black uppercase tracking-wider">
-              Categories buyers are exploring — with their trusted brands
-            </span>
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 space-y-5">
+        {/* Category × Brand rail — real brand density per category, moved out of the hero
+            band into normal body flow (shorter label, no longer competing for hero height);
+            an honest "Standard Catalog" tag covers categories with no curated brands yet. */}
+        <section>
+          <div className="flex items-center gap-1.5 mb-2.5">
+            <AnimatedIcon icon={Flame} variant="flicker" className="w-3.5 h-3.5 text-cta shrink-0" />
+            <h2 className="font-heading font-bold text-sm text-primary">Buyers Are Exploring</h2>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
             {categoryFomo.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/categories/${cat.id}`}
-                className="shrink-0 w-[136px] bg-white rounded-xl p-2.5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition"
+                className="shrink-0 w-[136px] bg-surface border border-line rounded-xl p-2.5 hover:border-accent-blue/40 transition"
               >
                 <div className="flex items-center gap-1.5">
                   <div className="w-6 h-6 bg-accent-blue/10 rounded-md flex items-center justify-center text-accent-blue shrink-0">
@@ -270,21 +332,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
               </Link>
             ))}
           </div>
-        </motion.div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-9">
-        {/* Credibility strip — the detailed "Why Trust Brands" section further down explains
-            each badge, but a first-time buyer sizing up whether this marketplace is legitimate
-            decides that in the first few seconds, not after scrolling past categories, brands,
-            and featured models. A one-line reinforcement belongs at the top, not buried. */}
-        <div className="flex items-center justify-center gap-x-3 gap-y-1 flex-wrap text-[9.5px] font-bold text-slate-500 -mt-1">
-          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent-green" />Verified Suppliers</span>
-          <span className="text-slate-300">•</span>
-          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent-green" />OEM-Certified Brands</span>
-          <span className="text-slate-300">•</span>
-          <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-accent-green" />Authorized Dealers Only</span>
-        </div>
+        </section>
 
         {/* Recently Viewed — surfaced first, directly under the search bar, so a buyer who
             searched a specific product, opened its PDP, then bounced back to Home doesn't
@@ -294,8 +342,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             the page before they've started browsing. */}
         {recentItems.length > 0 && (
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-slate-400" />
+            <h2 className="font-heading font-bold text-sm text-primary mb-2 flex items-center gap-1.5">
+              <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400" />
               Recently Viewed
             </h2>
             <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-2.5">
@@ -310,6 +358,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                       <BrandLogo logo={item.logo} name={item.name} />
                     ) : 'image' in item && item.image ? (
                       <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
+                    ) : 'icon' in item && item.icon ? (
+                      <CategoryIcon icon={item.icon} className="w-4 h-4 text-accent-blue" />
                     ) : (
                       <Package className="w-3.5 h-3.5 text-slate-300" />
                     )}
@@ -323,11 +373,11 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Not Sure What You Need — guided discovery for buyers who know their problem,
             not the product-category vocabulary to search for it */}
-        {resolvedProblems.length > 0 && (
+        {scoredProblems.length > 0 && (
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-3">Not Sure What You Need?</h2>
+            <h2 className="font-heading font-bold text-sm text-primary mb-2">Not Sure What You Need?</h2>
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
-              {resolvedProblems.map((p) => (
+              {scoredProblems.map((p) => (
                 <Link
                   key={p.mcatId}
                   href={`/categories/${p.mcatId}`}
@@ -346,7 +396,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Browse Categories */}
         <section>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="font-heading font-bold text-sm text-primary">Browse Categories</h2>
             <Link href="/categories" className="text-[10px] font-bold text-accent-blue hover:text-primary transition">View All</Link>
           </div>
@@ -380,8 +430,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Trending Categories */}
         <section>
-          <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
-            <TrendingUp className="w-4 h-4 text-accent-green" />
+          <h2 className="font-heading font-bold text-sm text-primary mb-2 flex items-center gap-1.5">
+            <AnimatedIcon icon={TrendingUp} variant="bounce" className="w-4 h-4 text-accent-green" />
             Trending Categories
           </h2>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -399,7 +449,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Popular Brands */}
         <section>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="font-heading font-bold text-sm text-primary">Popular Brands</h2>
             <Link href="/brands" className="text-[10px] font-bold text-accent-blue hover:text-primary transition">View All</Link>
           </div>
@@ -419,69 +469,79 @@ export default function DiscoverView({ brands, products, categories, categoryFom
           </div>
         </section>
 
-        {/* Featured Models */}
+        {/* Featured Models — a horizontally-scrolling 2-row grid (grid-auto-flow: column)
+            rather than a vertically-stacked list; card width is tuned so ~1.5 columns show
+            by default, an explicit hint that more is reachable with a swipe. */}
         <section>
-          <h2 className="font-heading font-bold text-sm text-primary mb-3">Featured Models</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {featuredProducts.map((prod) => (
-              <Link
-                key={prod.id}
-                href={`/products/${prod.id}`}
-                className="bg-surface border border-line rounded-2xl flex flex-col min-[420px]:flex-row overflow-hidden hover:border-accent-blue/40 transition shadow-xs"
-              >
-                <div className="h-28 min-[420px]:h-auto min-[420px]:w-24 bg-canvas border-b min-[420px]:border-b-0 min-[420px]:border-r border-line flex items-center justify-center p-2 shrink-0">
-                  <img src={prod.image} alt={prod.name} className="max-h-16 max-w-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
-                </div>
-                <div className="flex-1 p-3 min-w-0 flex flex-col">
-                  <p className="text-[9px] text-slate-400 font-bold uppercase truncate">{prod.brandName.split(' ')[0]}</p>
-                  <p className="text-[11px] font-bold text-slate-900 line-clamp-2 leading-snug mt-0.5">{prod.name}</p>
-                  <p className="text-[11px] font-black text-primary mt-1.5">
-                    {prod.priceRange.split(' - ')[0]}
-                    {prod.priceRange.includes(' - ') && <span className="text-[9px] font-semibold text-slate-400"> onwards</span>}
-                  </p>
-                  {/* One clear action here — full contact options (call, WhatsApp) live on the
-                      PDP itself, once the buyer has actually seen specs and seller trust signals.
-                      Offering three competing CTAs on a browse-stage card fights the single tap
-                      we actually want: open the product. */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      openBuyLeadForm({
-                        productName: `${prod.name} (${prod.modelNumber})`,
-                        brandName: prod.brandName,
-                        requirement: buildRfqRequirement(prod)
-                      });
-                    }}
-                    className="mt-2.5 w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9.5px] font-bold flex items-center justify-center gap-1 transition"
-                  >
-                    <Send className="w-3 h-3" />
-                    Get Best Price
-                  </button>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Why Trust Brands */}
-        <section>
-          <h2 className="font-heading font-bold text-sm text-primary mb-1">Why Trust Brands</h2>
-          <p className="text-[11px] text-slate-500 mb-3">Every listing shows exactly what's been verified — who verified it, and when.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-            {BADGE_TYPES.map((type) => (
-              <div key={type} className="bg-surface border border-line rounded-xl p-3">
-                <TrustBadge type={type} who="IndiaMART" detail />
-              </div>
-            ))}
+          <h2 className="font-heading font-bold text-sm text-primary mb-2">Featured Models</h2>
+          <div
+            className="grid grid-flow-col grid-rows-2 gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0"
+            style={{ gridAutoColumns: 'minmax(200px, 66%)' }}
+          >
+            {featuredProducts.map((prod) => {
+              const maskedNumber = getMaskedConnectNumber(prod.id);
+              const telHref = `tel:${maskedNumber.replace(/\s+/g, '')}`;
+              return (
+                <Link
+                  key={prod.id}
+                  href={`/products/${prod.id}`}
+                  className="bg-surface border border-line rounded-2xl flex flex-col overflow-hidden hover:border-accent-blue/40 transition shadow-xs"
+                >
+                  <div className="h-28 bg-canvas border-b border-line shrink-0">
+                    <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                  </div>
+                  <div className="flex-1 p-3 min-w-0 flex flex-col">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase truncate">{prod.brandName.split(' ')[0]}</p>
+                    <p className="text-[11px] font-bold text-slate-900 line-clamp-2 leading-snug mt-0.5">{prod.name}</p>
+                    <p className="text-[11px] font-black text-primary mt-1.5">
+                      {prod.priceRange.split(' - ')[0]}
+                      {prod.priceRange.includes(' - ') && <span className="text-[9px] font-semibold text-slate-400"> onwards</span>}
+                    </p>
+                    <div className="mt-2.5 flex gap-1.5">
+                      {/* A <button>, not a nested <a> — an anchor can't validly contain
+                          another anchor, which caused a hydration mismatch when this was
+                          `<a href={telHref}>`; navigating via location.href on click reaches
+                          the same tel: link without the invalid nesting. */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          window.location.href = telHref;
+                        }}
+                        className="px-2.5 py-1.5 border border-cta text-cta hover:bg-accent-blue/10 rounded-lg text-[9.5px] font-bold flex items-center justify-center gap-1 transition shrink-0"
+                      >
+                        <Phone className="w-3 h-3" />
+                        Call
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openBuyLeadForm({
+                            productName: `${prod.name} (${prod.modelNumber})`,
+                            brandName: prod.brandName,
+                            requirement: buildRfqRequirement(prod)
+                          });
+                        }}
+                        className="flex-1 min-w-0 py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[9.5px] font-bold flex items-center justify-center gap-1 transition"
+                      >
+                        <Send className="w-3 h-3" />
+                        Get Best Price
+                      </button>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
         {/* Buying Guides */}
         <section className="pb-4">
-          <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
-            <BookOpen className="w-4 h-4 text-accent-purple" />
+          <h2 className="font-heading font-bold text-sm text-primary mb-2 flex items-center gap-1.5">
+            <AnimatedIcon icon={BookOpen} variant="flip" className="w-4 h-4 text-accent-purple" />
             Buying Guides
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">

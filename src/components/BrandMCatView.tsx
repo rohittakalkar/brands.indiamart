@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, GitCompare, Search } from 'lucide-react';
+import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, GitCompare, Search, Layers, Package, ListChecks, ArrowUpDown } from 'lucide-react';
 import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { ConnectButton } from './ConnectButton';
@@ -14,6 +14,7 @@ import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useShortlist } from './ShortlistProvider';
 import { useSearchHistory } from './SearchHistoryProvider';
 import { buildRfqRequirement } from '../lib/rfq';
+import { scrollToSection } from '../lib/anchorScroll';
 import { BackButton } from './BackButton';
 import { WhatsAppFloatingButton } from './WhatsAppFloatingButton';
 
@@ -64,16 +65,168 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
   );
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [showAllModelsDealers, setShowAllModelsDealers] = useState(false);
+  const [specFilterIdx, setSpecFilterIdx] = useState<number | null>(null);
+  const [priceFilterIdx, setPriceFilterIdx] = useState<number | null>(null);
+  const [showAllCompareModels, setShowAllCompareModels] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>('select-model');
 
   const faqs = FAQ_TEMPLATE(brandMCat.name, brand.name);
 
   const prices = products.map(p => parseInt(p.priceRange.replace(/[^0-9]/g, ''), 10)).filter(n => !isNaN(n));
   const minPrice = prices.length ? Math.min(...prices) : null;
 
+  // Leading numeric token out of a spec/price string — "7.5 HP (5.5 kW)" -> 7.5,
+  // "₹18,500 - ₹1,25,000" -> 18500 (first number in the string; a range's low end is a
+  // reasonable sort/bucket key, distinct from parsing every number out of it).
+  const parseLeadingNumber = (str: string): number | null => {
+    const match = str.match(/[\d,]*\.?\d+/);
+    if (!match) return null;
+    const n = parseFloat(match[0].replace(/,/g, ''));
+    return isNaN(n) ? null : n;
+  };
+
+  // Splits products into evenly-sized Low/Mid/High buckets by a numeric key, labeled with
+  // the real values at each bucket's edges (not invented round numbers) — works for whatever
+  // unit this line happens to use (HP, kVA, DN, m³/hr) without hardcoding any of them. Only
+  // offered when there's enough data to make filtering meaningful: every product in the line
+  // must parse to a number, and there must be at least 3 distinct values (otherwise "Low"
+  // and "High" would be arbitrary slices of an undifferentiated list).
+  const makeBuckets = (key: (p: Product) => string, unit: string) => {
+    if (products.length < 6) return null;
+    const parsed = products.map(p => ({ p, n: parseLeadingNumber(key(p)) }));
+    if (parsed.some(x => x.n === null)) return null;
+    const distinct = new Set(parsed.map(x => x.n));
+    if (distinct.size < 3) return null;
+    const sorted = [...parsed].sort((a, b) => (a.n as number) - (b.n as number));
+    const chunkSize = Math.ceil(sorted.length / 3);
+    const chunks = [sorted.slice(0, chunkSize), sorted.slice(chunkSize, chunkSize * 2), sorted.slice(chunkSize * 2)].filter(c => c.length > 0);
+    const fmt = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(1)}${unit}`;
+    return chunks.map((chunk, idx) => {
+      const lo = chunk[0].n as number;
+      const hi = chunk[chunk.length - 1].n as number;
+      const label = idx === 0 ? `Up to ${fmt(hi)}` : idx === chunks.length - 1 ? `${fmt(lo)}+` : `${fmt(lo)} – ${fmt(hi)}`;
+      const ids = new Set(chunk.map(x => x.p.id));
+      return { label, ids };
+    });
+  };
+
+  // Unit suffix for the spec buckets comes from whatever follows the number in the first
+  // product's own keySpecValue ("7.5 HP (5.5 kW)" -> " HP") — self-adapting per line instead
+  // of hardcoding "HP" for a filter that's also used on generator/valve/compressor lines.
+  const specUnit = products[0]?.keySpecValue.match(/[\d.]+\s*([A-Za-z]+)/)?.[1];
+  const specBuckets = useMemo(
+    () => (specUnit ? makeBuckets(p => p.keySpecValue, ` ${specUnit}`) : null),
+    [products, specUnit]
+  );
+  const priceBuckets = useMemo(
+    () => makeBuckets(p => p.priceRange, ''),
+    [products]
+  );
+  // Price bucket labels read oddly with the raw parsed number (no currency symbol) — rebuild
+  // them with ₹ + Indian digit grouping instead of reusing makeBuckets' generic formatter.
+  const priceBucketsFormatted = useMemo(() => {
+    if (!priceBuckets) return null;
+    return priceBuckets.map((b, idx) => {
+      const nums = [...b.ids].map(id => {
+        const p = products.find(pr => pr.id === id);
+        return p ? parseLeadingNumber(p.priceRange) : null;
+      }).filter((n): n is number => n !== null);
+      const lo = Math.min(...nums);
+      const hi = Math.max(...nums);
+      const fmt = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+      const label = idx === 0 ? `Under ${fmt(hi)}` : idx === priceBuckets.length - 1 ? `${fmt(lo)}+` : `${fmt(lo)} – ${fmt(hi)}`;
+      return { label, ids: b.ids };
+    });
+  }, [priceBuckets, products]);
+
+  const filteredProducts = useMemo(() => {
+    let result = products;
+    if (specFilterIdx !== null && specBuckets?.[specFilterIdx]) {
+      result = result.filter(p => specBuckets[specFilterIdx].ids.has(p.id));
+    }
+    if (priceFilterIdx !== null && priceBucketsFormatted?.[priceFilterIdx]) {
+      result = result.filter(p => priceBucketsFormatted[priceFilterIdx].ids.has(p.id));
+    }
+    return result;
+  }, [products, specFilterIdx, priceFilterIdx, specBuckets, priceBucketsFormatted]);
+
   const selectedProduct = useMemo(
     () => products.find(p => p.id === selectedModelId) || products[0],
     [products, selectedModelId]
   );
+
+  // If an active filter drops the currently-selected model out of view, fall back to the
+  // first model still visible rather than leaving Specifications showing a filtered-out
+  // model the buyer can no longer see or tap on above.
+  useEffect(() => {
+    if (filteredProducts.length === 0) return;
+    if (!filteredProducts.some(p => p.id === selectedModelId)) {
+      setSelectedModelId(filteredProducts[0].id);
+    }
+  }, [filteredProducts, selectedModelId]);
+
+  // Selecting a model (from the picker or the comparison list) is the buyer committing to
+  // one option — jump them straight to its full specs rather than leaving them to scroll and
+  // find the panel themselves, matching the section's new position right below the picker.
+  const handleSelectModel = (id: string) => {
+    setSelectedModelId(id);
+    document.getElementById('specifications')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Page map for the fixed jump-nav below the header — one entry per section that actually
+  // renders on this line (mirrors each section's own conditional further down), so a buyer
+  // gets an honest at-a-glance list of what's on the page instead of dead links to sections
+  // that got skipped for having no data. Order matches the page's actual visual order —
+  // Specs sits right after Models (where the buyer lands after selecting one), Compare after
+  // that — so pill order reads the same top-to-bottom as the page itself.
+  const pageSections = [
+    { id: 'applications', label: 'Applications', icon: Layers, show: brandMCat.applications.length > 0 },
+    { id: 'select-model', label: 'Models', icon: Package, show: true },
+    { id: 'specifications', label: 'Specs', icon: ListChecks, show: !!selectedProduct },
+    { id: 'compare-models', label: 'Compare', icon: GitCompare, show: filteredProducts.length > 1 },
+    { id: 'nearby-options', label: 'Nearby', icon: ArrowUpDown, show: !!selectedProduct && products.length > 1 },
+    { id: 'verified-dealers', label: 'Dealers', icon: MapPin, show: true },
+    { id: 'reviews', label: 'Reviews', icon: Star, show: reviews.length > 0 },
+    { id: 'faq', label: 'FAQ', icon: HelpCircle, show: true },
+  ].filter(s => s.show);
+
+  // Scroll-spy — highlights whichever pill matches the section currently under the fixed
+  // header+nav chrome, and keeps that pill scrolled into view within the horizontally
+  // scrolling pill row, so the nav reflects (and can be steered by) where the buyer actually
+  // is on a long page, not just where they started. This page scrolls at the document level
+  // (see the fixed-chrome comment below), so a plain window scroll listener is the natural
+  // fit — no nested-container scroll-tracking needed.
+  useEffect(() => {
+    const ids = pageSections.map(s => s.id);
+    let ticking = false;
+    const computeActive = () => {
+      const triggerLine = 130; // just past the fixed header+nav height
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top - triggerLine <= 0) {
+          current = id;
+        }
+      }
+      setActiveSection(current);
+      ticking = false;
+    };
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(computeActive);
+      }
+    };
+    computeActive();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageSections.map(s => s.id).join(',')]);
+
+  useEffect(() => {
+    const pill = document.querySelector(`[data-pill="${activeSection}"]`);
+    pill?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [activeSection]);
 
   // Dealer availability by location — buyer can narrow the exact model's sellers to their region
   const dealerLocations = useMemo(() => {
@@ -120,9 +273,30 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
 
   return (
     <div className="flex-1 bg-canvas flex flex-col overflow-hidden">
+      {/* Header + page-map nav, pinned together as real fixed chrome on mobile (this page's
+          layout scrolls at the document level, not inside a clipped flex/overflow-y-auto
+          region — confirmed via computed styles — so `position: sticky` here would have no
+          scrolling ancestor to stick against and silently do nothing). Desktop reverts to
+          the original static-in-flow behavior via md:static since DesktopNav already owns
+          persistent top chrome there and this page's own header never needed to float on
+          top of it. The scroll content below carries matching pt-[112px] to clear this pair
+          once it's taken out of flow, and every jump-nav target's scroll-mt is sized to the
+          same height so an anchor jump doesn't land underneath the fixed bar. */}
+      <div className="fixed top-0 inset-x-0 z-30 md:static md:z-auto">
       {/* Header */}
       <div className="bg-surface border-b border-line px-4 md:px-8 py-3 flex items-center justify-between shrink-0 gap-1.5">
-        <BackButton fallbackHref={`/brands/${brand.id}`} title={`Back to ${brand.name}`} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" />
+        {/* alwaysCanonical — see CategoryBrandsView's BackButton for why every level of
+            this chain needs it, not just the product page. Carries this line's own
+            category forward as ?fromCategory= so Brand Hub's *own* back button can keep
+            climbing to the real category instead of falling back to the flat /brands
+            listing — without this, going back from here would silently drop the exact
+            context the buyer arrived with. */}
+        <BackButton
+          fallbackHref={`/brands/${brand.id}?fromCategory=${brandMCat.mcatId}`}
+          title={`Back to ${brand.name}`}
+          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0"
+          alwaysCanonical
+        />
         {headerSearchOpen ? (
           <form onSubmit={handleHeaderSearchSubmit} className="flex-1 flex items-center gap-2 min-w-0">
             <div className="relative flex-1 min-w-0">
@@ -168,11 +342,41 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
         )}
       </div>
 
-      {/* pb-24 clears the now-truly-fixed footer below (previously just a flow sibling that
+      {/* Page-map jump nav — pinned directly beneath the header (part of the same fixed
+          chrome pair above) so the whole page's structure is visible at a glance the instant
+          this page loads, and stays reachable at every scroll depth, not just the first
+          fold. Replaces the old 2-link "Compare/Dealers" teaser with a full map of every
+          section that's actually rendering on this line; each pill jumps straight to its
+          section. */}
+      <div className="bg-surface border-b border-line">
+        <nav className="max-w-5xl mx-auto px-4 md:px-8 flex gap-2 overflow-x-auto scrollbar-none py-2.5">
+          {pageSections.map(({ id, label, icon: Icon }) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              onClick={(e) => scrollToSection(e, id)}
+              data-pill={id}
+              className={`shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10.5px] font-bold transition whitespace-nowrap border ${
+                activeSection === id
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-canvas border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40 hover:text-accent-blue'
+              }`}
+            >
+              <Icon className="w-3 h-3" />
+              {label}
+            </a>
+          ))}
+        </nav>
+      </div>
+      </div>
+
+      {/* pt-[112px] clears the fixed header+nav pair above (58.5px + 50.75px measured,
+          rounded up); md:pt-0 since that pair reverts to normal flow on desktop. pb-24
+          clears the now-truly-fixed footer below (previously just a flow sibling that
           happened to land near the fold on short pages — on a line with many models, it sat
           thousands of pixels down, unreachable without a full scroll; real position:fixed
           fixes that, so this padding is now required to avoid covering the last content). */}
-      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
+      <div className="flex-1 overflow-y-auto pt-[112px] md:pt-0 pb-24 md:pb-0 scroll-smooth">
         {/* Category Hero */}
         <div className="bg-gradient-to-r from-primary to-secondary px-4 md:px-8 py-7 md:py-10 text-white">
           <div className="max-w-5xl mx-auto">
@@ -206,25 +410,8 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
         </div>
 
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-8">
-          {/* Feature teaser — Compare Models and Verified Dealers both exist further down
-              the page but aren't visible until scrolled to; advertise + jump to them now. */}
-          {(products.length > 1 || suppliers.length > 0) && (
-            <div className="flex gap-2">
-              {products.length > 1 && (
-                <a href="#compare-models" className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
-                  ⇄ Compare {products.length} Models
-                </a>
-              )}
-              {suppliers.length > 0 && (
-                <a href="#verified-dealers" className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
-                  Dealers ({suppliers.length}) ↓
-                </a>
-              )}
-            </div>
-          )}
-
           {/* Applications */}
-          <section>
+          <section id="applications" className="scroll-mt-[120px]">
             <h2 className="font-heading font-bold text-sm text-heading mb-3">Popular Applications</h2>
             <div className="flex flex-wrap gap-2">
               {brandMCat.applications.map((app, idx) => (
@@ -236,18 +423,73 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           </section>
 
           {/* Model Picker */}
-          <section>
+          <section id="select-model" className="scroll-mt-[120px]">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-heading font-bold text-sm text-heading">Select a Model</h2>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{products.length} in this line</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{filteredProducts.length} of {products.length}</span>
             </div>
+            {/* Filter chips — only rendered when there's enough spread in this line's data to
+                make filtering meaningful (see makeBuckets); a 3-model line just shows all 3,
+                no filter UI needed. Both filters compose (spec AND price) and share the same
+                filteredProducts feeding both this grid and the comparison list below it. */}
+            {(specBuckets || priceBucketsFormatted) && (
+              <div className="space-y-2 mb-3">
+                {specBuckets && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide shrink-0">{products[0].keySpecLabel}:</span>
+                    <button
+                      onClick={() => setSpecFilterIdx(null)}
+                      className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${specFilterIdx === null ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'}`}
+                    >
+                      All
+                    </button>
+                    {specBuckets.map((bucket, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSpecFilterIdx(prev => prev === idx ? null : idx)}
+                        className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${specFilterIdx === idx ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'}`}
+                      >
+                        {bucket.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {priceBucketsFormatted && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide shrink-0">Price:</span>
+                    <button
+                      onClick={() => setPriceFilterIdx(null)}
+                      className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${priceFilterIdx === null ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'}`}
+                    >
+                      All
+                    </button>
+                    {priceBucketsFormatted.map((bucket, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setPriceFilterIdx(prev => prev === idx ? null : idx)}
+                        className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${priceFilterIdx === idx ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'}`}
+                      >
+                        {bucket.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {products.length === 0 ? (
               <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
                 No models currently listed in this line. Send a requirement and we'll match you with {brand.name}.
               </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs space-y-2">
+                <p>No models match these filters.</p>
+                <button onClick={() => { setSpecFilterIdx(null); setPriceFilterIdx(null); }} className="text-accent-blue font-bold hover:underline">
+                  Clear filters
+                </button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {products.map((prod) => {
+                {filteredProducts.map((prod) => {
                   const isSaved = shortlistedProducts.includes(prod.id);
                   const isSelected = selectedProduct?.id === prod.id;
                   return (
@@ -255,8 +497,8 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                       key={prod.id}
                       role="button"
                       tabIndex={0}
-                      onClick={() => setSelectedModelId(prod.id)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedModelId(prod.id); } }}
+                      onClick={() => handleSelectModel(prod.id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelectModel(prod.id); } }}
                       className={`text-left bg-surface border rounded-2xl overflow-hidden shadow-xs transition flex cursor-pointer ${
                         isSelected ? 'border-cta ring-2 ring-cta/20' : 'border-line hover:border-accent-blue/40'
                       }`}
@@ -294,9 +536,9 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                         </div>
                         {/* No per-card Quote action here on purpose — this card's job is
                             picking a model to compare, not closing a sale. Tapping the card
-                            already IS the "compare" action (selects it into the Specifications
-                            panel and highlights its row in the table below); Quote lives once,
-                            in the page's sticky footer, scoped to whichever model is selected. */}
+                            already IS the "compare" action (jumps straight to the
+                            Specifications panel below); Quote lives once, in the page's
+                            sticky footer, scoped to whichever model is selected. */}
                       </div>
                     </div>
                   );
@@ -305,50 +547,13 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
             )}
           </section>
 
-          {/* Model Comparison — the primary decision surface for a buyer weighing options within
-              this brand's range, so it sits directly after model selection, not buried below a
-              single-model spec detail buyers may not scroll past. */}
-          {products.length > 1 && (
-            <section id="compare-models" className="scroll-mt-16">
-              <h2 className="font-heading font-bold text-sm text-heading mb-3">Compare Models in This Line</h2>
-              <div className="bg-surface border border-line rounded-2xl overflow-x-auto shadow-xs">
-                <table className="w-full text-left text-[11px] border-collapse min-w-[480px]">
-                  <thead>
-                    <tr className="bg-canvas">
-                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Model</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">{products[0].keySpecLabel}</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Price Range</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Delivery</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Warranty</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((prod, idx) => (
-                      <tr
-                        key={prod.id}
-                        onClick={() => setSelectedModelId(prod.id)}
-                        className={`cursor-pointer transition ${
-                          selectedProduct?.id === prod.id ? 'bg-cta/10' : idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-canvas/50'
-                        }`}
-                      >
-                        <td className="px-3 py-2.5 font-mono text-heading font-bold border-b border-line whitespace-nowrap">
-                          {prod.modelNumber}
-                        </td>
-                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.keySpecValue}</td>
-                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.priceRange}</td>
-                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.deliveryTime}</td>
-                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.warranty}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
-
-          {/* Selected Model Detail — conversion centre: full spec + get-quotes context without leaving the page */}
+          {/* Selected Model Detail — conversion centre: full spec + get-quotes context without
+              leaving the page. Sits directly after the picker (not after the comparison list)
+              since selecting a model is the buyer committing to inspect *that one* — the
+              comparison list is the "still deciding" surface and now comes after this, not
+              before it. */}
           {selectedProduct && (
-            <section>
+            <section id="specifications" className="scroll-mt-[120px]">
               <h2 className="font-heading font-bold text-sm text-heading mb-3">Specifications — {selectedProduct.modelNumber}</h2>
               <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs space-y-4">
                 <div className="flex items-start gap-3">
@@ -386,20 +591,82 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
             </section>
           )}
 
+          {/* Model Comparison — the "still deciding between a few" surface, so it follows
+              Specifications rather than preceding it: a buyer who already picked one model
+              to inspect is weighing it against the others, not starting from a blank table.
+              Redesigned from a dense horizontal-scrolling 5-column table (Model/Spec/Price/
+              Delivery/Warranty, up to 15 rows on a long line) into a vertical list of compact
+              rows — Delivery/Warranty are dropped here since they're already visible in the
+              Specifications panel above the moment a row is tapped, and a vertical list needs
+              no horizontal scroll on a 390px screen. Long lines start collapsed to 6 rows
+              (plus the selected row if it'd otherwise be hidden) with a "Show all" expand,
+              instead of dumping every variant into view at once. Shares filteredProducts with
+              the picker above, so an active filter narrows both consistently. */}
+          {filteredProducts.length > 1 && (
+            <section id="compare-models" className="scroll-mt-[120px]">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-heading font-bold text-sm text-heading">Compare Models in This Line</h2>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{filteredProducts.length} models</span>
+              </div>
+              <div className="bg-surface border border-line rounded-2xl overflow-hidden shadow-xs divide-y divide-line">
+                {(showAllCompareModels || filteredProducts.length <= 6
+                  ? filteredProducts
+                  : (() => {
+                      const first6 = filteredProducts.slice(0, 6);
+                      return selectedProduct && !first6.some(p => p.id === selectedProduct.id)
+                        ? [...first6, selectedProduct]
+                        : first6;
+                    })()
+                ).map((prod) => {
+                  const isSelected = selectedProduct?.id === prod.id;
+                  return (
+                    <button
+                      key={prod.id}
+                      type="button"
+                      onClick={() => handleSelectModel(prod.id)}
+                      className={`w-full flex items-center gap-3 px-3.5 py-3 text-left transition ${isSelected ? 'bg-cta/10' : 'hover:bg-canvas'}`}
+                    >
+                      <div className="w-10 h-10 bg-canvas rounded-lg border border-line flex items-center justify-center shrink-0 p-1">
+                        <img src={prod.image} alt={prod.name} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-[10.5px] font-bold text-heading">{prod.modelNumber}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{prod.keySpecValue}</p>
+                      </div>
+                      <span className="text-[10.5px] font-black text-slate-900 dark:text-slate-50 shrink-0">{prod.priceRange.split(' - ')[0]}</span>
+                      {isSelected && (
+                        <span className="w-4 h-4 bg-cta rounded-full flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {!showAllCompareModels && filteredProducts.length > 6 && (
+                <button onClick={() => setShowAllCompareModels(true)} className="text-[10px] text-accent-blue font-bold hover:underline mt-2">
+                  Show all {filteredProducts.length} models
+                </button>
+              )}
+            </section>
+          )}
+
           {/* Nearby Options — the immediate higher/lower-capacity sibling within this same
               line, right after the buyer has settled on one model, so weighing "do I need
               slightly more/less" never requires leaving the page or re-reading the full
               comparison table above. */}
           {selectedProduct && products.length > 1 && (
-            <NearbyOptionsEngine
-              currentProduct={selectedProduct}
-              siblings={products}
-              onRequestQuote={handleRequestQuoteForProduct}
-            />
+            <div id="nearby-options" className="scroll-mt-[120px]">
+              <NearbyOptionsEngine
+                currentProduct={selectedProduct}
+                siblings={products}
+                onRequestQuote={handleRequestQuoteForProduct}
+              />
+            </div>
           )}
 
           {/* Verified Dealers */}
-          <section id="verified-dealers" className="scroll-mt-16">
+          <section id="verified-dealers" className="scroll-mt-[120px]">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <h2 className="font-heading font-bold text-sm text-heading">
                 Verified Dealers{!showAllModelsDealers && selectedProduct ? ` — ${selectedProduct.modelNumber}` : ''}
@@ -537,7 +804,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
 
           {/* Ratings & Reviews */}
           {reviews.length > 0 && (
-            <section>
+            <section id="reviews" className="scroll-mt-[120px]">
               <h2 className="font-heading font-bold text-sm text-heading mb-3 flex items-center gap-1.5">
                 <AnimatedIcon icon={ShieldCheck} variant="pulse" className="w-4 h-4 text-accent-green" />
                 Buyer Ratings &amp; Reviews
@@ -575,7 +842,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           )}
 
           {/* FAQs */}
-          <section>
+          <section id="faq" className="scroll-mt-[120px]">
             <h2 className="font-heading font-bold text-sm text-heading mb-3 flex items-center gap-1.5">
               <AnimatedIcon icon={HelpCircle} variant="pulse" className="w-4 h-4 text-accent-blue" />
               Frequently Asked Questions
@@ -638,7 +905,8 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           )}
           <div className="flex items-center gap-2.5">
             <a
-              href={products.length > 1 ? '#compare-models' : `/compare?productId=${selectedProduct?.id ?? ''}`}
+              href={filteredProducts.length > 1 ? '#compare-models' : `/compare?productId=${selectedProduct?.id ?? ''}`}
+              onClick={(e) => { if (filteredProducts.length > 1) scrollToSection(e, 'compare-models'); }}
               className="flex-1 md:flex-none md:px-10 bg-cta hover:bg-cta-hover text-white py-3.5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-md"
             >
               <GitCompare className="w-4 h-4" />

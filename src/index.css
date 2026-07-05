@@ -43,12 +43,27 @@
    text-heading), so components using semantic tokens adapt with no per-component changes.
    Brand/accent colors (primary, cta, accent-*, success/warning/error) are deliberately left
    unchanged — they already have enough contrast on a dark background, and keeping them
-   identical means a screenshot in either theme still reads as "the same brand." */
+   identical means a screenshot in either theme still reads as "the same brand."
+
+   Also overrides Tailwind's own --color-slate-700/800/900: most components were codemod'd
+   to raw dark:bg-slate-900 (card)/dark:bg-slate-800 (inset panel)/dark:border-slate-700
+   (border) rather than the semantic tokens above. Measured via computed styles, the
+   defaults put cards (slate-900, #0f172a) and the page background (slate-800/60 blended
+   over canvas) within a couple RGB values of each other — cards were visually
+   indistinguishable from the page behind them. These three are re-ordered so the card tone
+   is clearly the *lightest* of the three (a raised surface), the inset/page tone sits
+   between canvas and card, and the border tone is lighter still for a visible edge. Scoped
+   entirely under .dark, so light mode (which never uses a bare slate-900/800/700 outside
+   dark: variants) is untouched. */
 .dark {
-  --color-canvas: #0B1220;
-  --color-surface: #141B2E;
-  --color-line: #232B3D;
+  --color-canvas: #080C16;
+  --color-surface: #1B2438;
+  --color-line: #3A4864;
   --color-heading: #F1F4F9;
+
+  --color-slate-900: #1B2438;
+  --color-slate-800: #141B2E;
+  --color-slate-700: #3A4864;
 }
 
 body {

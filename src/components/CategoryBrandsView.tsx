@@ -15,6 +15,7 @@ import { useSearchHistory } from './SearchHistoryProvider';
 import { BackButton } from './BackButton';
 import { Breadcrumb } from './Breadcrumb';
 import { buildRfqRequirement } from '../lib/rfq';
+import { scrollToSection } from '../lib/anchorScroll';
 
 interface CategoryBrandsViewProps {
   category: MCat;
@@ -63,6 +64,8 @@ export default function CategoryBrandsView({
     initialPriceBucket !== undefined && !isNaN(initialPriceBucket) ? initialPriceBucket : null
   ); // bucket index
   const [selectedCertification, setSelectedCertification] = useState<string | null>(initialCertification ?? null);
+  const hasActiveFilters = selectedBrandIds.size > 0 || !!selectedSpecValue || selectedPriceBucket !== null || !!selectedCertification;
+  const activeFilterCount = selectedBrandIds.size + (selectedSpecValue ? 1 : 0) + (selectedPriceBucket !== null ? 1 : 0) + (selectedCertification ? 1 : 0);
   // Filters now live in a bottom-sheet triggered from the header's filter icon, not an
   // inline collapsible — never auto-opens (even with a filter already applied via a
   // shared link, the active-count badge on the icon is enough of a signal on its own).
@@ -110,13 +113,6 @@ export default function CategoryBrandsView({
     return new Set(brands.filter(b => b.certifications.includes(selectedCertification)).map(b => b.id));
   }, [brands, selectedCertification]);
 
-  const displayedBrands = useMemo(() => {
-    if (!certifiedBrandIds) return brands;
-    return brands.filter(b => certifiedBrandIds.has(b.id));
-  }, [brands, certifiedBrandIds]);
-
-  const sortedByRating = [...displayedBrands].sort((a, b) => b.rating - a.rating);
-
   // Seller availability per brand, scoped to this MCat's products only
   const sellerCountByBrand = useMemo(() => {
     const map = new Map<string, number>();
@@ -126,8 +122,9 @@ export default function CategoryBrandsView({
 
   // One representative product image per brand for the brand card — a real photo reads
   // far better than a text/logo tile, and gives the buyer a concrete sense of what the
-  // brand actually makes in this category. Independent of the spec/price filters (those
-  // only affect Top Model/comparison sections below).
+  // brand actually makes in this category. Kept off the unfiltered product list on purpose:
+  // it's just illustrative art for a brand tile, not a claim about which exact model matched
+  // an active filter, so there's no "wrong" image to show regardless of filter state.
   const brandImageByBrand = useMemo(() => {
     const map = new Map<string, string>();
     products.forEach(p => {
@@ -184,6 +181,20 @@ export default function CategoryBrandsView({
     });
   }, [products, selectedBrandIds, selectedSpecValue, selectedPriceBucket, priceBuckets, certifiedBrandIds]);
 
+  // Brand Cards and Brand Comparison used to only respect the certification filter,
+  // leaving them showing every brand while Top Model From Each Brand (built off
+  // filteredProducts directly) had already narrowed to a handful — a buyer who filtered to
+  // one price band would see it reflected in one section but not the two above it. Deriving
+  // from filteredProducts instead makes every filter (brand, spec, price, certification)
+  // apply consistently everywhere a "which brands/models" list appears on this page.
+  const displayedBrands = useMemo(() => {
+    if (!hasActiveFilters) return brands;
+    const idsWithMatches = new Set(filteredProducts.map(p => p.brandId));
+    return brands.filter(b => idsWithMatches.has(b.id));
+  }, [brands, filteredProducts, hasActiveFilters]);
+
+  const sortedByRating = [...displayedBrands].sort((a, b) => b.rating - a.rating);
+
   // One representative (highest-priced / most capable) model per brand
   const topModelPerBrand = useMemo(() => {
     const byBrand = new Map<string, Product>();
@@ -210,9 +221,6 @@ export default function CategoryBrandsView({
     setSelectedPriceBucket(null);
     setSelectedCertification(null);
   };
-
-  const hasActiveFilters = selectedBrandIds.size > 0 || !!selectedSpecValue || selectedPriceBucket !== null || !!selectedCertification;
-  const activeFilterCount = selectedBrandIds.size + (selectedSpecValue ? 1 : 0) + (selectedPriceBucket !== null ? 1 : 0) + (selectedCertification ? 1 : 0);
 
   // Search narrows every filter-chip row at once (spec ranges, brands, price bands,
   // certifications) so a buyer with many options can jump straight to the one they want.
@@ -252,7 +260,12 @@ export default function CategoryBrandsView({
           search, and filtering are all one compact block instead of three. */}
       <div className="bg-surface border-b border-line px-4 md:px-8 py-2.5 shrink-0">
         <div className="flex items-center gap-1.5">
-          <BackButton fallbackHref="/categories" title="Back to all categories" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" />
+          {/* alwaysCanonical: every level of Home > Category > Brand > Brand-MCat >
+              Product needs to retrace the same taxonomy on every back press, not just
+              this one page in isolation — real browser history mixed with canonical
+              Link-navigation ("back" pushes a new entry rather than truly going back)
+              caused the chain to bounce between two levels instead of climbing it. */}
+          <BackButton fallbackHref="/categories" title="Back to all categories" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" alwaysCanonical />
           {headerSearchOpen ? (
             <form onSubmit={handleHeaderSearchSubmit} className="flex-1 flex items-center gap-2 min-w-0">
               <div className="relative flex-1 min-w-0">
@@ -324,10 +337,10 @@ export default function CategoryBrandsView({
               {/* Feature teaser — Compare Brands and Top Model From Each Brand both exist
                   further down but aren't visible until scrolled to; advertise + jump now. */}
               <div className="flex gap-2">
-                <a href="#brand-comparison" className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
+                <a href="#brand-comparison" onClick={(e) => scrollToSection(e, 'brand-comparison')} className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
                   ⇄ Compare Brands
                 </a>
-                <a href="#top-models" className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
+                <a href="#top-models" onClick={(e) => scrollToSection(e, 'top-models')} className="flex-1 bg-surface border border-line rounded-xl px-3 py-2 text-center text-[10.5px] font-bold text-accent-blue hover:border-accent-blue/40 transition">
                   ★ Top Models
                 </a>
               </div>
@@ -338,12 +351,12 @@ export default function CategoryBrandsView({
                   scrolling past every brand card first. */}
               <section>
                 <h2 className="font-heading font-bold text-sm text-heading mb-2.5">
-                  Brands in {category.name}{selectedCertification ? ` — ${selectedCertification}` : ''}
+                  Brands in {category.name}{hasActiveFilters ? ' (Filtered)' : ''}
                 </h2>
                 {displayedBrands.length === 0 ? (
                   <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
-                    No brands in {category.name} hold {selectedCertification} yet.{' '}
-                    <button onClick={() => setSelectedCertification(null)} className="text-accent-blue font-bold hover:underline">Clear this filter</button> to see all brands.
+                    No brands in {category.name} match these filters.{' '}
+                    <button onClick={clearFilters} className="text-accent-blue font-bold hover:underline">Clear filters</button> to see all brands.
                   </div>
                 ) : (
                 <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4">

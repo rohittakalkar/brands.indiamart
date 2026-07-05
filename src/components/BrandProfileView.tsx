@@ -82,7 +82,18 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
         {/* router.back() when the buyer has real in-app history (preserves native scroll
             restoration); falls back to the brand directory on a cold landing (e.g. from
             a search engine), where there's nothing in-app to go back to. */}
-        <BackButton fallbackHref="/brands" title="Back to all brands" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" />
+        {/* alwaysCanonical — see CategoryBrandsView's BackButton for why every level of
+            Home > Category > Brand > Brand-MCat > Product needs it, not just the product
+            page. Falls back to the category the buyer actually arrived from when that
+            context exists (matching the breadcrumb above), not always the flat /brands
+            listing — a buyer who filtered into Diesel Generators first should land back
+            there, not lose that context. */}
+        <BackButton
+          fallbackHref={contextCategory ? `/categories/${contextCategory.id}` : '/brands'}
+          title={contextCategory ? `Back to ${contextCategory.name}` : 'Back to all brands'}
+          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0"
+          alwaysCanonical
+        />
         {headerSearchOpen ? (
           <form onSubmit={handleHeaderSearchSubmit} className="flex-1 flex items-center gap-2 min-w-0">
             <div className="relative flex-1 min-w-0">

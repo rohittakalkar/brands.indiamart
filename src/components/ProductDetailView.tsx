@@ -13,6 +13,7 @@ import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
 import { buildRfqRequirement } from '../lib/rfq';
+import { scrollToSection } from '../lib/anchorScroll';
 import { BackButton } from './BackButton';
 import { getMaskedConnectNumber } from '../lib/connect';
 import { Breadcrumb } from './Breadcrumb';
@@ -241,6 +242,7 @@ export default function ProductDetailView({ product, brand, category, brandMCat,
         {alternatives.length > 0 && (
           <a
             href="#compare-alternatives"
+            onClick={(e) => scrollToSection(e, 'compare-alternatives')}
             className="mx-4 mt-2.5 flex items-center gap-1.5 bg-accent-blue/10 border border-accent-blue/25 rounded-xl px-2.5 py-1.5 text-[9px] font-bold text-accent-blue hover:bg-accent-blue/15 transition"
           >
             <GitCompare className="w-3 h-3 shrink-0" />

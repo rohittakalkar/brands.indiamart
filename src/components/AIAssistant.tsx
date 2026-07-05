@@ -88,7 +88,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-800/60">
       {/* AI Assistant Header */}
       <div className="bg-gradient-to-r from-primary to-secondary px-4 py-3.5 text-white flex items-center justify-between shadow-md shrink-0">
         <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
 
                 {/* Content Bubble */}
                 <div className="flex flex-col gap-1.5">
-                  <div className={`rounded-2xl px-4 py-2.5 text-xs shadow-sm leading-relaxed ${isUser ? 'bg-accent-blue text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
+                  <div className={`rounded-2xl px-4 py-2.5 text-xs shadow-sm leading-relaxed ${isUser ? 'bg-accent-blue text-white rounded-tr-none' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 rounded-tl-none'}`}>
                     <div className="whitespace-pre-line prose prose-sm prose-slate max-w-none">
                       {/* Simple markdown parsing for bold text */}
                       {msg.text.split('\n').map((line, lIdx) => {
@@ -130,7 +130,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
                           return (
                             <p key={lIdx} className="mb-1">
                               {formattedLine.split('**').map((part, pIdx) => 
-                                pIdx % 2 === 1 ? <strong key={pIdx} className={isUser ? "text-white font-extrabold" : "text-slate-900 font-extrabold"}>{part}</strong> : part
+                                pIdx % 2 === 1 ? <strong key={pIdx} className={isUser ? "text-white font-extrabold" : "text-slate-900 dark:text-slate-50 font-extrabold"}>{part}</strong> : part
                               )}
                             </p>
                           );
@@ -152,7 +152,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
                       {msg.recommendedBrandId && msg.recommendedBrandId !== 'all' && (
                         <button
                           onClick={() => onSelectBrand(msg.recommendedBrandId!)}
-                          className="w-full flex items-center justify-between px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 rounded-lg text-slate-700 font-semibold transition text-[11px]"
+                          className="w-full flex items-center justify-between px-3 py-1.5 bg-white dark:bg-slate-900 border border-amber-300 hover:bg-amber-100 rounded-lg text-slate-700 dark:text-slate-300 font-semibold transition text-[11px]"
                         >
                           <span className="flex items-center gap-1.5">
                             <ShoppingBag className="w-3.5 h-3.5 text-amber-600" />
@@ -166,7 +166,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
                       {msg.recommendedCategory && (
                         <button
                           onClick={() => onSelectCategory(msg.recommendedCategory!)}
-                          className="w-full flex items-center justify-between px-3 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 rounded-lg text-slate-700 font-semibold transition text-[11px]"
+                          className="w-full flex items-center justify-between px-3 py-1.5 bg-white dark:bg-slate-900 border border-amber-300 hover:bg-amber-100 rounded-lg text-slate-700 dark:text-slate-300 font-semibold transition text-[11px]"
                         >
                           <span className="flex items-center gap-1.5">
                             <Layers className="w-3.5 h-3.5 text-amber-600" />
@@ -182,11 +182,11 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
                           <span className="text-[10px] text-amber-700 font-medium block">
                             Prepared inquiry for standard matching suppliers:
                           </span>
-                          <div className="bg-white/80 border border-amber-100 rounded p-2 text-[10px] space-y-1 text-slate-600 font-mono">
-                            <div><strong className="text-slate-800">Product:</strong> {msg.draftedBuyLead.productName}</div>
-                            <div><strong className="text-slate-800">Qty:</strong> {msg.draftedBuyLead.quantity}</div>
-                            {msg.draftedBuyLead.location && <div><strong className="text-slate-800">Location:</strong> {msg.draftedBuyLead.location}</div>}
-                            <div className="line-clamp-2"><strong className="text-slate-800">Req:</strong> {msg.draftedBuyLead.requirement}</div>
+                          <div className="bg-white/80 border border-amber-100 rounded p-2 text-[10px] space-y-1 text-slate-600 dark:text-slate-400 font-mono">
+                            <div><strong className="text-slate-800 dark:text-slate-200">Product:</strong> {msg.draftedBuyLead.productName}</div>
+                            <div><strong className="text-slate-800 dark:text-slate-200">Qty:</strong> {msg.draftedBuyLead.quantity}</div>
+                            {msg.draftedBuyLead.location && <div><strong className="text-slate-800 dark:text-slate-200">Location:</strong> {msg.draftedBuyLead.location}</div>}
+                            <div className="line-clamp-2"><strong className="text-slate-800 dark:text-slate-200">Req:</strong> {msg.draftedBuyLead.requirement}</div>
                           </div>
                           <button
                             onClick={() => onAutoFillLead({
@@ -217,7 +217,7 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
               <div className="w-8 h-8 rounded-full bg-accent-blue/10 text-accent-blue flex items-center justify-center shrink-0">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="bg-white border border-slate-200 text-slate-500 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs shadow-sm flex items-center gap-2">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs shadow-sm flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-blue" />
                 <span>Gemini is analyzing brands & drafting RFQ...</span>
               </div>
@@ -239,13 +239,13 @@ export default function AIAssistant({ onAutoFillLead, onSelectBrand, onSelectCat
       </div>
 
       {/* Input Form */}
-      <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-100 flex gap-2 shrink-0">
+      <form onSubmit={handleSend} className="p-3 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-2 shrink-0">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask AI or describe your B2B requirements..."
-          className="flex-1 bg-slate-50 border border-slate-200 focus:border-accent-blue focus:bg-white rounded-xl px-3 py-2 text-xs outline-none transition"
+          className="flex-1 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 focus:border-accent-blue focus:bg-white dark:focus:bg-slate-900 rounded-xl px-3 py-2 text-xs outline-none transition"
           disabled={isLoading}
         />
         <button

@@ -67,40 +67,40 @@ export function NearbyOptionsEngine({ currentProduct, siblings, onRequestQuote, 
     const { product, priceDelta, specDiffs } = candidate;
     const Icon = direction === 'higher' ? ArrowUp : ArrowDown;
     return (
-      <div key={product.id} className="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+      <div key={product.id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
         <div className="flex items-center gap-1.5">
           <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${direction === 'higher' ? 'bg-accent-blue/10 text-accent-blue' : 'bg-emerald-50 text-emerald-700'}`}>
             <Icon className="w-3 h-3" />
           </span>
-          <span className="text-[10px] font-extrabold text-slate-900">
+          <span className="text-[10px] font-extrabold text-slate-900 dark:text-slate-50">
             Need {direction === 'higher' ? 'higher' : 'lower'} {currentProduct.keySpecLabel.toLowerCase()}?
           </span>
         </div>
 
         <div>
-          <p className="text-[11px] font-bold text-slate-900 leading-snug">{product.name}</p>
-          <p className="text-[9px] text-slate-400 font-mono mt-0.5">{product.modelNumber}</p>
+          <p className="text-[11px] font-bold text-slate-900 dark:text-slate-50 leading-snug">{product.name}</p>
+          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">{product.modelNumber}</p>
         </div>
 
-        <div className="flex items-center gap-2 text-[10px] bg-slate-50 rounded-lg px-2.5 py-1.5">
-          <span className="text-slate-500">{currentProduct.keySpecLabel}:</span>
-          <span className="font-semibold text-slate-400 line-through">{currentProduct.keySpecValue}</span>
-          <span className="text-slate-400">→</span>
-          <span className="font-extrabold text-slate-900">{product.keySpecValue}</span>
+        <div className="flex items-center gap-2 text-[10px] bg-slate-50 dark:bg-slate-800/60 rounded-lg px-2.5 py-1.5">
+          <span className="text-slate-500 dark:text-slate-400">{currentProduct.keySpecLabel}:</span>
+          <span className="font-semibold text-slate-400 dark:text-slate-500 line-through">{currentProduct.keySpecValue}</span>
+          <span className="text-slate-400 dark:text-slate-500">→</span>
+          <span className="font-extrabold text-slate-900 dark:text-slate-50">{product.keySpecValue}</span>
         </div>
 
         {specDiffs.length > 0 && (
           <div className="space-y-1">
             {specDiffs.map((diff) => (
-              <p key={diff.label} className="text-[9.5px] text-slate-500 leading-relaxed">
-                <span className="font-bold text-slate-600">{diff.label}:</span> {diff.from} → {diff.to}
+              <p key={diff.label} className="text-[9.5px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                <span className="font-bold text-slate-600 dark:text-slate-400">{diff.label}:</span> {diff.from} → {diff.to}
               </p>
             ))}
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-1.5 border-t border-slate-100">
-          <span className={`text-[11px] font-black ${priceDelta > 0 ? 'text-slate-900' : 'text-emerald-700'}`}>
+        <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800">
+          <span className={`text-[11px] font-black ${priceDelta > 0 ? 'text-slate-900 dark:text-slate-50' : 'text-emerald-700'}`}>
             {priceDelta > 0 ? `+${formatINR(priceDelta)}` : priceDelta < 0 ? `−${formatINR(Math.abs(priceDelta))}` : 'Same price band'}
           </span>
           <button
@@ -118,8 +118,8 @@ export function NearbyOptionsEngine({ currentProduct, siblings, onRequestQuote, 
 
   return (
     <section className={className}>
-      <h2 className="font-heading font-bold text-sm text-primary mb-2.5">Nearby Options in This Line</h2>
-      <p className="text-[10px] text-slate-500 mb-2.5 -mt-1.5">
+      <h2 className="font-heading font-bold text-sm text-heading mb-2.5">Nearby Options in This Line</h2>
+      <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2.5 -mt-1.5">
         Same {currentProduct.brandName.split(' ')[0]} line, adjacent {currentProduct.keySpecLabel.toLowerCase()} — so you can weigh fit without leaving this page.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

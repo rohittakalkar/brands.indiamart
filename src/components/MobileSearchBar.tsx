@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { useScrollChrome } from './ScrollChromeProvider';
 import { useSearchHistory } from './SearchHistoryProvider';
+import { floatingSearchBarHidden } from '../lib/searchBarVisibility';
 
 // Closes a real gap: before this, search only existed on the Home page — every other
 // mobile page had no way to search without navigating back. Collapsed to an icon by
@@ -20,19 +21,11 @@ export default function MobileSearchBar() {
   const [focused, setFocused] = useState(false);
 
   // Home already has its own full hero search; the success screen hides all chrome.
-  // Category pages carry their own inline search in the header row (next to the
-  // breadcrumb), so the floating pill would just duplicate it. The dedicated search
-  // screen (/search) has its own full-width input right there — a second floating
-  // search icon on top of it is pure redundancy. The Product page's own header is
-  // already full (back, basket, shortlist, share) and this floating pill visually
-  // collided with those icons rather than sitting cleanly beside them.
-  if (
-    pathname === '/' ||
-    pathname === '/leads/success' ||
-    pathname === '/search' ||
-    pathname.startsWith('/categories/') ||
-    pathname.startsWith('/products/')
-  ) return null;
+  // Category, Brand Hub, Brand-MCat, and Product pages all carry their own inline search
+  // (or, for Product, a deliberately-full header with no room for one) in the header row
+  // itself — the floating pill would just duplicate or collide with those. See
+  // lib/searchBarVisibility.ts for why this check lives in one shared place.
+  if (floatingSearchBarHidden(pathname)) return null;
 
   const expanded = searchExpanded || focused || query.length > 0;
 
@@ -60,7 +53,7 @@ export default function MobileSearchBar() {
         <button
           type={expanded ? 'submit' : 'button'}
           onClick={() => !expanded && setFocused(true)}
-          className="w-9 h-9 shrink-0 flex items-center justify-center text-slate-500"
+          className="w-9 h-9 shrink-0 flex items-center justify-center text-slate-500 dark:text-slate-400"
           aria-label="Search"
         >
           <Search className="w-4 h-4" />

@@ -252,11 +252,11 @@ export default function CategoryBrandsView({
           search, and filtering are all one compact block instead of three. */}
       <div className="bg-surface border-b border-line px-4 md:px-8 py-2.5 shrink-0">
         <div className="flex items-center gap-1.5">
-          <BackButton fallbackHref="/categories" title="Back to all categories" className="p-1.5 hover:bg-slate-100 rounded-full transition shrink-0" />
+          <BackButton fallbackHref="/categories" title="Back to all categories" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" />
           {headerSearchOpen ? (
             <form onSubmit={handleHeaderSearchSubmit} className="flex-1 flex items-center gap-2 min-w-0">
               <div className="relative flex-1 min-w-0">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   autoFocus
                   type="text"
@@ -269,7 +269,7 @@ export default function CategoryBrandsView({
               <button
                 type="button"
                 onClick={() => { setHeaderSearchOpen(false); setHeaderSearchQuery(''); }}
-                className="text-[10.5px] font-bold text-slate-500 shrink-0 px-1"
+                className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 shrink-0 px-1"
               >
                 Cancel
               </button>
@@ -282,7 +282,7 @@ export default function CategoryBrandsView({
               <button
                 type="button"
                 onClick={() => setHeaderSearchOpen(true)}
-                className="p-2 rounded-full hover:bg-slate-100 text-slate-600 shrink-0 transition"
+                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 transition"
                 aria-label="Search"
               >
                 <Search className="w-4 h-4" />
@@ -290,7 +290,7 @@ export default function CategoryBrandsView({
               <button
                 type="button"
                 onClick={() => setFiltersOpen(true)}
-                className="relative p-2 rounded-full hover:bg-slate-100 text-slate-600 shrink-0 transition"
+                className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0 transition"
                 aria-label="Filters"
               >
                 <SlidersHorizontal className="w-4 h-4" />
@@ -304,9 +304,9 @@ export default function CategoryBrandsView({
           )}
         </div>
         {!headerSearchOpen && (
-          <p className="font-heading font-extrabold text-sm text-primary tracking-tight truncate mt-1">
+          <p className="font-heading font-extrabold text-sm text-heading tracking-tight truncate mt-1">
             {category.name} Brands
-            <span className="font-semibold text-slate-400 text-[10px] ml-1.5">
+            <span className="font-semibold text-slate-400 dark:text-slate-500 text-[10px] ml-1.5">
               · {brands.length} {brands.length === 1 ? 'brand' : 'brands'} · {products.length} {products.length === 1 ? 'model' : 'models'}
             </span>
           </p>
@@ -316,7 +316,7 @@ export default function CategoryBrandsView({
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 space-y-5">
           {brands.length === 0 ? (
-            <div className="bg-surface border border-line rounded-2xl p-8 text-center text-slate-400 text-xs">
+            <div className="bg-surface border border-line rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
               No branded catalog is listed for {category.name} yet. Send a requirement and we'll match you with verified manufacturers.
             </div>
           ) : (
@@ -337,11 +337,11 @@ export default function CategoryBrandsView({
                   category — comparison table, top models, buying guide — without endless
                   scrolling past every brand card first. */}
               <section>
-                <h2 className="font-heading font-bold text-sm text-primary mb-2.5">
+                <h2 className="font-heading font-bold text-sm text-heading mb-2.5">
                   Brands in {category.name}{selectedCertification ? ` — ${selectedCertification}` : ''}
                 </h2>
                 {displayedBrands.length === 0 ? (
-                  <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 text-xs">
+                  <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
                     No brands in {category.name} hold {selectedCertification} yet.{' '}
                     <button onClick={() => setSelectedCertification(null)} className="text-accent-blue font-bold hover:underline">Clear this filter</button> to see all brands.
                   </div>
@@ -365,13 +365,13 @@ export default function CategoryBrandsView({
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-white border border-line rounded-xl flex items-center justify-center overflow-hidden p-1.5">
+                            <div className="w-10 h-10 bg-white dark:bg-slate-900 border border-line rounded-xl flex items-center justify-center overflow-hidden p-1.5">
                               <BrandLogo logo={brand.logo} name={brand.name} />
                             </div>
                           )}
                         </div>
                         <div className="p-2 flex-1 flex flex-col min-w-0">
-                          <h3 className="font-extrabold text-[10.5px] text-slate-900 truncate leading-tight">{brand.name}</h3>
+                          <h3 className="font-extrabold text-[10.5px] text-slate-900 dark:text-slate-50 truncate leading-tight">{brand.name}</h3>
                           <div className="flex items-center gap-1 mt-1 flex-wrap">
                             <TrustBadge type="manufacturer-oem" who={brand.name} className="!px-1 !py-0 !text-[7px]" />
                             {brand.verified && <TrustBadge type="verified-supplier" who="IndiaMART" since={brand.verifiedSince} className="!px-1 !py-0 !text-[7px]" />}
@@ -409,7 +409,7 @@ export default function CategoryBrandsView({
               {/* Brand Comparison */}
               {displayedBrands.length > 1 && (
                 <section id="brand-comparison" className="scroll-mt-16">
-                  <h2 className="font-heading font-bold text-sm text-primary mb-2.5">Brand Comparison</h2>
+                  <h2 className="font-heading font-bold text-sm text-heading mb-2.5">Brand Comparison</h2>
                   {/* Capped to ~5 rows visible, scrollable for the rest — a category with
                       10 brands shouldn't force a buyer to scroll past a 10-row table just to
                       reach what's below it. Header stays pinned while scrolling through rows. */}
@@ -417,28 +417,28 @@ export default function CategoryBrandsView({
                     <table className="w-full text-left text-[11px] border-collapse min-w-[520px]">
                       <thead className="sticky top-0 z-10">
                         <tr className="bg-canvas">
-                          <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Brand</th>
-                          <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Rating</th>
-                          <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Established</th>
-                          <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Mfg. Units</th>
-                          <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Countries</th>
-                          <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Verified</th>
+                          <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Brand</th>
+                          <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Rating</th>
+                          <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Established</th>
+                          <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Mfg. Units</th>
+                          <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Countries</th>
+                          <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Verified</th>
                         </tr>
                       </thead>
                       <tbody>
                         {sortedByRating.map((brand, idx) => (
-                          <tr key={brand.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-canvas/50'}>
-                            <td className="px-3 py-2.5 font-bold text-primary border-b border-line whitespace-nowrap">
+                          <tr key={brand.id} className={idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-canvas/50'}>
+                            <td className="px-3 py-2.5 font-bold text-heading border-b border-line whitespace-nowrap">
                               <Link href={brandHref(brand.id)} className="hover:text-accent-blue">{brand.name}</Link>
                             </td>
-                            <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">
+                            <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">
                               <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-amber-400 text-amber-400" />{brand.rating}</span>
                             </td>
-                            <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{brand.establishedYear}</td>
-                            <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{brand.manufacturingUnits}</td>
-                            <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{brand.countriesServed}+</td>
+                            <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{brand.establishedYear}</td>
+                            <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{brand.manufacturingUnits}</td>
+                            <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{brand.countriesServed}+</td>
                             <td className="px-3 py-2.5 border-b border-line whitespace-nowrap">
-                              {brand.verified ? <span className="text-accent-green font-bold">Yes</span> : <span className="text-slate-400">Pending</span>}
+                              {brand.verified ? <span className="text-accent-green font-bold">Yes</span> : <span className="text-slate-400 dark:text-slate-500">Pending</span>}
                             </td>
                           </tr>
                         ))}
@@ -451,8 +451,8 @@ export default function CategoryBrandsView({
                       icon circle or stacked layout eating extra height on mobile. */}
                   <div className="mt-2.5 bg-accent-green/5 border border-accent-green/20 rounded-xl px-3 py-2.5 flex items-center gap-2.5">
                     <ShieldCheck className="w-4 h-4 text-accent-green shrink-0" />
-                    <p className="flex-1 min-w-0 text-[10.5px] font-bold text-slate-800 leading-snug">
-                      Done comparing? <span className="text-slate-500 font-medium">One request reaches every seller.</span>
+                    <p className="flex-1 min-w-0 text-[10.5px] font-bold text-slate-800 dark:text-slate-200 leading-snug">
+                      Done comparing? <span className="text-slate-500 dark:text-slate-400 font-medium">One request reaches every seller.</span>
                     </p>
                     <button
                       type="button"
@@ -469,7 +469,7 @@ export default function CategoryBrandsView({
                   Brand Cards above it, for a consistent horizontal-scroll language. */}
               {topModelPerBrand.length > 0 && (
                 <section id="top-models" className="scroll-mt-16">
-                  <h2 className="font-heading font-bold text-sm text-primary mb-2.5">Top Model From Each Brand{hasActiveFilters ? ' (Filtered)' : ''}</h2>
+                  <h2 className="font-heading font-bold text-sm text-heading mb-2.5">Top Model From Each Brand{hasActiveFilters ? ' (Filtered)' : ''}</h2>
                   <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4">
                     {topModelPerBrand.map((prod) => (
                       <Link
@@ -480,11 +480,11 @@ export default function CategoryBrandsView({
                         <div className="h-16 bg-canvas rounded-lg flex items-center justify-center mb-2">
                           <img src={prod.image} alt={prod.name} className="max-h-14 max-w-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
                         </div>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase truncate">{prod.brandName.split(' ')[0]}</p>
-                        <p className="text-[10.5px] font-bold text-slate-900 line-clamp-2 leading-tight mt-0.5">{prod.name}</p>
-                        <p className="text-[10px] font-black text-primary mt-1">
+                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase truncate">{prod.brandName.split(' ')[0]}</p>
+                        <p className="text-[10.5px] font-bold text-slate-900 dark:text-slate-50 line-clamp-2 leading-tight mt-0.5">{prod.name}</p>
+                        <p className="text-[10px] font-black text-heading mt-1">
                           {prod.priceRange.split(' - ')[0]}
-                          {prod.priceRange.includes(' - ') && <span className="text-[8.5px] font-semibold text-slate-400"> onwards</span>}
+                          {prod.priceRange.includes(' - ') && <span className="text-[8.5px] font-semibold text-slate-400 dark:text-slate-500"> onwards</span>}
                         </p>
                         {/* One action here — call/WhatsApp live on the product page itself, once
                             the buyer has actually seen specs and seller trust signals; stacking
@@ -511,7 +511,7 @@ export default function CategoryBrandsView({
                 </section>
               )}
               {topModelPerBrand.length === 0 && hasActiveFilters && (
-                <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 text-xs">
+                <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
                   No models match these filters. <button onClick={clearFilters} className="text-accent-blue font-bold hover:underline">Clear filters</button> to see all models.
                 </div>
               )}
@@ -520,32 +520,32 @@ export default function CategoryBrandsView({
 
           {/* Buying Guide */}
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-2.5 flex items-center gap-1.5">
+            <h2 className="font-heading font-bold text-sm text-heading mb-2.5 flex items-center gap-1.5">
               <AnimatedIcon icon={BookOpen} variant="flip" className="w-4 h-4 text-accent-purple" />
               Buying Guide
             </h2>
-            <div className="bg-surface border border-line rounded-2xl p-4 space-y-2.5 text-[11px] text-slate-600 leading-relaxed">
-              <p><strong className="text-slate-900">1. Confirm the exact model &amp; specification</strong> — match your requirement to the exact model, not just the brand, before requesting quotes.</p>
-              <p><strong className="text-slate-900">2. Check trust badges</strong> — look for Verified Supplier, Authorized Dealer, and Manufacturer/OEM badges to confirm who you're really buying from.</p>
-              <p><strong className="text-slate-900">3. Compare at least 2-3 brands</strong> — use the brand comparison table above to weigh rating, manufacturing scale, and years in business.</p>
-              <p><strong className="text-slate-900">4. Get quotes from multiple verified sellers</strong> — pricing, delivery time, and after-sales support can vary meaningfully between sellers of the same brand.</p>
+            <div className="bg-surface border border-line rounded-2xl p-4 space-y-2.5 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+              <p><strong className="text-slate-900 dark:text-slate-50">1. Confirm the exact model &amp; specification</strong> — match your requirement to the exact model, not just the brand, before requesting quotes.</p>
+              <p><strong className="text-slate-900 dark:text-slate-50">2. Check trust badges</strong> — look for Verified Supplier, Authorized Dealer, and Manufacturer/OEM badges to confirm who you're really buying from.</p>
+              <p><strong className="text-slate-900 dark:text-slate-50">3. Compare at least 2-3 brands</strong> — use the brand comparison table above to weigh rating, manufacturing scale, and years in business.</p>
+              <p><strong className="text-slate-900 dark:text-slate-50">4. Get quotes from multiple verified sellers</strong> — pricing, delivery time, and after-sales support can vary meaningfully between sellers of the same brand.</p>
             </div>
           </section>
 
           {/* FAQs */}
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-2.5 flex items-center gap-1.5">
+            <h2 className="font-heading font-bold text-sm text-heading mb-2.5 flex items-center gap-1.5">
               <AnimatedIcon icon={HelpCircle} variant="pulse" className="w-4 h-4 text-accent-blue" />
               Frequently Asked Questions
             </h2>
             <div className="bg-surface border border-line rounded-2xl divide-y divide-line">
               <div className="p-4">
-                <p className="text-[12px] font-bold text-slate-800">How many verified brands are available for {category.name}?</p>
-                <p className="text-[11px] text-slate-600 mt-1.5 leading-relaxed">{brands.length} verified {brands.length === 1 ? 'brand is' : 'brands are'} currently listed, each with authorized sellers you can compare directly.</p>
+                <p className="text-[12px] font-bold text-slate-800 dark:text-slate-200">How many verified brands are available for {category.name}?</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">{brands.length} verified {brands.length === 1 ? 'brand is' : 'brands are'} currently listed, each with authorized sellers you can compare directly.</p>
               </div>
               <div className="p-4">
-                <p className="text-[12px] font-bold text-slate-800">What's the difference between comparing brands here vs. comparing sellers?</p>
-                <p className="text-[11px] text-slate-600 mt-1.5 leading-relaxed">This page compares manufacturers (brands). Once you pick a brand and model, the product page lets you compare the specific sellers authorized to sell it.</p>
+                <p className="text-[12px] font-bold text-slate-800 dark:text-slate-200">What's the difference between comparing brands here vs. comparing sellers?</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">This page compares manufacturers (brands). Once you pick a brand and model, the product page lets you compare the specific sellers authorized to sell it.</p>
               </div>
             </div>
           </section>
@@ -564,7 +564,7 @@ export default function CategoryBrandsView({
           </Link>
           <button
             onClick={handleGetQuotes}
-            className="shrink-0 px-4 py-3.5 bg-canvas hover:bg-line border border-line text-slate-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
+            className="shrink-0 px-4 py-3.5 bg-canvas hover:bg-line border border-line text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
           >
             <Send className="w-4 h-4" />
             <span className="hidden md:inline">Get Quotes</span>
@@ -580,7 +580,7 @@ export default function CategoryBrandsView({
           <div className="absolute inset-0 bg-black/40" onClick={() => setFiltersOpen(false)} />
           <div className="relative w-full max-w-5xl bg-surface rounded-t-3xl max-h-[82vh] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-4 py-3 border-b border-line shrink-0">
-              <h3 className="font-heading font-bold text-sm text-primary flex items-center gap-1.5">
+              <h3 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
                 <SlidersHorizontal className="w-4 h-4 text-accent-blue" />
                 Refine Results
                 {activeFilterCount > 0 && (
@@ -589,7 +589,7 @@ export default function CategoryBrandsView({
                   </span>
                 )}
               </h3>
-              <button onClick={() => setFiltersOpen(false)} className="p-1.5 hover:bg-slate-100 rounded-full text-slate-500 transition" aria-label="Close">
+              <button onClick={() => setFiltersOpen(false)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition" aria-label="Close">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -598,16 +598,16 @@ export default function CategoryBrandsView({
               {/* Search narrows every chip row below at once — faster than scanning/
                   scrolling through them for categories with many options. */}
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={filterSearch}
                   onChange={(e) => setFilterSearch(e.target.value)}
                   placeholder="Search brand, spec or certification..."
-                  className="w-full bg-canvas border border-line rounded-xl pl-9 pr-8 py-2.5 text-[11px] font-semibold text-slate-700 placeholder:text-slate-400 placeholder:font-medium outline-none focus:border-accent-blue/50"
+                  className="w-full bg-canvas border border-line rounded-xl pl-9 pr-8 py-2.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-medium outline-none focus:border-accent-blue/50"
                 />
                 {filterSearch && (
-                  <button onClick={() => setFilterSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <button onClick={() => setFilterSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -615,7 +615,7 @@ export default function CategoryBrandsView({
 
               {(searchedSpecValues.length > 0 || allApplications.length > 0) && (
                 <div className="bg-canvas border border-line rounded-2xl p-4 space-y-2.5">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Popular {keySpecLabel} Ranges &amp; Applications</span>
+                  <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Popular {keySpecLabel} Ranges &amp; Applications</span>
                   {searchedSpecValues.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
                       {searchedSpecValues.map((val) => (
@@ -625,7 +625,7 @@ export default function CategoryBrandsView({
                           className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold border transition ${
                             selectedSpecValue === val
                               ? 'bg-accent-blue text-white border-accent-blue'
-                              : 'bg-surface border-line text-slate-700 hover:border-accent-blue/40'
+                              : 'bg-surface border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'
                           }`}
                         >
                           {val}
@@ -647,10 +647,10 @@ export default function CategoryBrandsView({
 
               {(searchedBrands.length > 0 || searchedPriceBuckets.length > 0 || searchedCertifications.length > 0) && (
                 <div className="bg-canvas border border-line rounded-2xl p-4 space-y-3">
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Filter by Brand, Price &amp; Certification</span>
+                  <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block">Filter by Brand, Price &amp; Certification</span>
                   {searchedBrands.length > 0 && (
                     <div>
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Brand</span>
+                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5">Brand</span>
                       <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
                         {searchedBrands.map((brand) => (
                           <button
@@ -659,7 +659,7 @@ export default function CategoryBrandsView({
                             className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold border transition ${
                               selectedBrandIds.has(brand.id)
                                 ? 'bg-primary text-white border-primary'
-                                : 'bg-surface border-line text-slate-700 hover:border-accent-blue/40'
+                                : 'bg-surface border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'
                             }`}
                           >
                             {brand.name.split(' ')[0]}
@@ -670,7 +670,7 @@ export default function CategoryBrandsView({
                   )}
                   {searchedPriceBuckets.length > 0 && (
                     <div>
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Price</span>
+                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5">Price</span>
                       <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
                         {searchedPriceBuckets.map((bucket) => {
                           const idx = priceBuckets.indexOf(bucket);
@@ -681,7 +681,7 @@ export default function CategoryBrandsView({
                               className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold border transition whitespace-nowrap ${
                                 selectedPriceBucket === idx
                                   ? 'bg-primary text-white border-primary'
-                                  : 'bg-surface border-line text-slate-700 hover:border-accent-blue/40'
+                                  : 'bg-surface border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'
                               }`}
                             >
                               {bucket.label}
@@ -693,7 +693,7 @@ export default function CategoryBrandsView({
                   )}
                   {searchedCertifications.length > 0 && (
                     <div>
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-1.5">Certification</span>
+                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1.5">Certification</span>
                       <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
                         {searchedCertifications.map((cert) => (
                           <button
@@ -702,7 +702,7 @@ export default function CategoryBrandsView({
                             className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold border transition whitespace-nowrap ${
                               selectedCertification === cert
                                 ? 'bg-primary text-white border-primary'
-                                : 'bg-surface border-line text-slate-700 hover:border-accent-blue/40'
+                                : 'bg-surface border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'
                             }`}
                           >
                             {cert}
@@ -715,13 +715,13 @@ export default function CategoryBrandsView({
               )}
 
               {filterSearchQuery && searchedSpecValues.length === 0 && searchedBrands.length === 0 && searchedPriceBuckets.length === 0 && searchedCertifications.length === 0 && (
-                <div className="text-center text-[11px] text-slate-400 py-2">No filters match &quot;{filterSearch}&quot;.</div>
+                <div className="text-center text-[11px] text-slate-400 dark:text-slate-500 py-2">No filters match &quot;{filterSearch}&quot;.</div>
               )}
             </div>
 
             <div className="p-4 border-t border-line shrink-0 flex gap-2">
               {hasActiveFilters && (
-                <button onClick={clearFilters} className="px-4 py-3 border border-line rounded-xl text-xs font-bold text-slate-600 hover:bg-canvas transition">
+                <button onClick={clearFilters} className="px-4 py-3 border border-line rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-canvas transition">
                   Clear
                 </button>
               )}

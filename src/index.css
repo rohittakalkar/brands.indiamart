@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (not just prefers-color-scheme) — an in-app toggle needs to be
+   able to override the OS preference in either direction, which the default media-query
+   variant can't do. ThemeProvider stamps/removes `dark` on <html>; every `dark:` utility
+   below responds to that class, not just the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -22,13 +28,33 @@
   --color-warning: #FFB020;
   --color-error: #E53935;
   --color-line: #E8EDF4;
+  /* Split from --color-primary on purpose: that token also backs hero-gradient
+     *backgrounds* (bg-primary), which should stay the same deep blue in both themes.
+     Heading *text* (text-heading) needs to flip to a light color in dark mode instead —
+     one CSS variable can't serve both roles once themes diverge, so heading text gets
+     its own token, overridden below under .dark. */
+  --color-heading: #0A2A6B;
 
   --radius-brand: 16px;
+}
+
+/* Dark-mode token overrides — redefining the same custom properties under .dark cascades
+   into every utility already built from them (bg-canvas, bg-surface, border-line,
+   text-heading), so components using semantic tokens adapt with no per-component changes.
+   Brand/accent colors (primary, cta, accent-*, success/warning/error) are deliberately left
+   unchanged — they already have enough contrast on a dark background, and keeping them
+   identical means a screenshot in either theme still reads as "the same brand." */
+.dark {
+  --color-canvas: #0B1220;
+  --color-surface: #141B2E;
+  --color-line: #232B3D;
+  --color-heading: #F1F4F9;
 }
 
 body {
   font-family: var(--font-sans);
   background-color: var(--color-canvas);
+  transition: background-color 200ms ease;
 }
 
 h1, h2, h3, h4, h5, h6 {

@@ -23,7 +23,7 @@ interface BackButtonProps {
 // buyer actually has in-app history to go back to; falls back to a fixed-parent Link only
 // on a cold landing (search engine, direct link, new tab) where there's nothing to go
 // back to in-app. Pass alwaysCanonical to skip the history check entirely.
-export function BackButton({ fallbackHref, title, className = 'p-1.5 hover:bg-slate-100 rounded-full transition', alwaysCanonical = false }: BackButtonProps) {
+export function BackButton({ fallbackHref, title, className = 'p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition', alwaysCanonical = false }: BackButtonProps) {
   const router = useRouter();
   const { hasHistory } = useNavigationHistory();
   // Every call site should really pass a specific title ("Back to Kirloskar Brothers
@@ -34,14 +34,14 @@ export function BackButton({ fallbackHref, title, className = 'p-1.5 hover:bg-sl
   if (hasHistory && !alwaysCanonical) {
     return (
       <button type="button" onClick={() => router.back()} className={className} title={title} aria-label={accessibleLabel}>
-        <ArrowLeft className="w-4 h-4 text-slate-800" />
+        <ArrowLeft className="w-4 h-4 text-slate-800 dark:text-slate-200" />
       </button>
     );
   }
 
   return (
     <Link href={fallbackHref} className={className} title={title} aria-label={accessibleLabel}>
-      <ArrowLeft className="w-4 h-4 text-slate-800" />
+      <ArrowLeft className="w-4 h-4 text-slate-800 dark:text-slate-200" />
     </Link>
   );
 }

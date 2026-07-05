@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Compass, GitCompare, Download, FileText, Wrench, Phone, Clock, Gauge } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowRight, Sparkles, ShieldCheck, MapPin, Star, Globe, Calendar, Users, Heart, Compass, GitCompare, Download, FileText, Wrench, Phone, Clock, Gauge, Search } from 'lucide-react';
 import { Brand, Product, Supplier, Review, BrandMCat, ServiceCenter, MCat } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { TrustBadge } from './TrustBadge';
@@ -10,6 +11,7 @@ import { AnimatedIcon } from './AnimatedIcon';
 import { useShortlist } from './ShortlistProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
 import { useScrollChrome } from './ScrollChromeProvider';
+import { useSearchHistory } from './SearchHistoryProvider';
 import { BackButton } from './BackButton';
 import { Breadcrumb } from './Breadcrumb';
 
@@ -28,10 +30,17 @@ interface BrandProfileViewProps {
 }
 
 export default function BrandProfileView({ brand, primaryCategory, brandMCats, brandProducts, brandSuppliers, serviceCenters, reviews, contextCategory, contextProduct }: BrandProfileViewProps) {
+  const router = useRouter();
   const { shortlistedBrands, toggleShortlistBrand } = useShortlist();
   const { trackView } = useRecentlyViewed();
   const { navVisible } = useScrollChrome();
+  const { trackSearch } = useSearchHistory();
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Inline in this page's own header rather than the floating MobileSearchBar (hidden on
+  // every /brands/* route) — same pattern as Category pages, so search is always reachable
+  // without a separate overlay competing for the same top-of-screen real estate.
+  const [headerSearchOpen, setHeaderSearchOpen] = useState(false);
+  const [headerSearchQuery, setHeaderSearchQuery] = useState('');
   // Arriving with category context means the buyer already has purchase intent for a
   // specific product line — open straight to Products instead of making them find the tab.
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'products' | 'suppliers' | 'trust'>(contextCategory ? 'products' : 'overview');
@@ -58,54 +67,95 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
 
   const isBrandSaved = shortlistedBrands.includes(brand.id);
 
+  const handleHeaderSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (headerSearchQuery.trim()) {
+      trackSearch(headerSearchQuery);
+      router.push(`/search?q=${encodeURIComponent(headerSearchQuery)}`);
+    }
+  };
+
   return (
-    <div className="flex-1 bg-slate-50 flex flex-col h-full overflow-hidden">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-800/60 flex flex-col h-full overflow-hidden">
       {/* Brand Header */}
-      <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between shrink-0 relative z-10">
-        <div className="flex items-center gap-3">
-          {/* router.back() when the buyer has real in-app history (preserves native scroll
-              restoration); falls back to the brand directory on a cold landing (e.g. from
-              a search engine), where there's nothing in-app to go back to. */}
-          <BackButton fallbackHref="/brands" title="Back to all brands" />
-          <div>
-            {/* Single source of truth for the brand name — the gradient hero below no
-                longer repeats it, so this is the one place it's stated. */}
-            <h1 className="font-extrabold text-sm text-slate-900 tracking-tight">{brand.name}</h1>
-            {/* Compact stat line — replaces the old full-width stat row inside the gradient
-                hero below, which took a disproportionate amount of vertical space for three
-                numbers a buyer can take in at a glance. */}
-            <div className="flex items-center gap-1 text-[9.5px] text-slate-500 font-bold">
-              <span className="flex items-center gap-0.5 text-slate-700">
-                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                {brand.rating}
-              </span>
-              <span className="text-slate-300">·</span>
-              <span>{brand.reviewsCount}+ Reviews</span>
-              <span className="text-slate-300">·</span>
-              <span>30K+ Buyers</span>
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center justify-between shrink-0 relative z-10 gap-1.5">
+        {/* router.back() when the buyer has real in-app history (preserves native scroll
+            restoration); falls back to the brand directory on a cold landing (e.g. from
+            a search engine), where there's nothing in-app to go back to. */}
+        <BackButton fallbackHref="/brands" title="Back to all brands" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" />
+        {headerSearchOpen ? (
+          <form onSubmit={handleHeaderSearchSubmit} className="flex-1 flex items-center gap-2 min-w-0">
+            <div className="relative flex-1 min-w-0">
+              <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                autoFocus
+                type="text"
+                value={headerSearchQuery}
+                onChange={(e) => setHeaderSearchQuery(e.target.value)}
+                placeholder="Search products, brands, models…"
+                className="w-full bg-canvas border border-line rounded-full pl-8 pr-3 py-1.5 text-[11px] outline-none focus:border-accent-blue/50"
+              />
             </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => toggleShortlistBrand(brand.id)}
-            className="p-1.5 hover:bg-rose-50 rounded-full text-rose-500 transition"
-            title={isBrandSaved ? "Remove Brand from Shortlist" : "Shortlist Brand"}
-          >
-            <Heart className={`w-4.5 h-4.5 ${isBrandSaved ? 'text-rose-500 fill-rose-500' : 'text-slate-400'}`} />
-          </button>
-          {brand.website && (
-            <a
-              href={`https://${brand.website}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-1.5 hover:bg-slate-100 rounded-full text-slate-600 transition"
-              title="Visit Official Website"
+            <button
+              type="button"
+              onClick={() => { setHeaderSearchOpen(false); setHeaderSearchQuery(''); }}
+              className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 shrink-0 px-1"
             >
-              <Globe className="w-4 h-4" />
-            </a>
-          )}
-        </div>
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="min-w-0">
+                {/* Single source of truth for the brand name — the gradient hero below no
+                    longer repeats it, so this is the one place it's stated. */}
+                <h1 className="font-extrabold text-sm text-slate-900 dark:text-slate-50 tracking-tight truncate">{brand.name}</h1>
+                {/* Compact stat line — replaces the old full-width stat row inside the gradient
+                    hero below, which took a disproportionate amount of vertical space for three
+                    numbers a buyer can take in at a glance. */}
+                <div className="flex items-center gap-1 text-[9.5px] text-slate-500 dark:text-slate-400 font-bold">
+                  <span className="flex items-center gap-0.5 text-slate-700 dark:text-slate-300">
+                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                    {brand.rating}
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                  <span>{brand.reviewsCount}+ Reviews</span>
+                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                  <span>30K+ Buyers</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setHeaderSearchOpen(true)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition"
+                aria-label="Search"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => toggleShortlistBrand(brand.id)}
+                className="p-1.5 hover:bg-rose-50 rounded-full text-rose-500 transition"
+                title={isBrandSaved ? "Remove Brand from Shortlist" : "Shortlist Brand"}
+              >
+                <Heart className={`w-4.5 h-4.5 ${isBrandSaved ? 'text-rose-500 fill-rose-500' : 'text-slate-400 dark:text-slate-500'}`} />
+              </button>
+              {brand.website && (
+                <a
+                  href={`https://${brand.website}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 transition"
+                  title="Visit Official Website"
+                >
+                  <Globe className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main brand scroll area — pb-24 clears the truly-fixed footer below */}
@@ -113,7 +163,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
         {/* Breadcrumb — states Home ▸ Category ▸ Brand so a cold-landed buyer has an
             immediate sense of hierarchy; the hero below no longer repeats the brand name,
             so the header's h1 and this trail are the only two places it appears. */}
-        <div className="bg-white px-5 pt-3 pb-1">
+        <div className="bg-white dark:bg-slate-900 px-5 pt-3 pb-1">
           <Breadcrumb
             segments={[
               ...(primaryCategory ? [{ label: primaryCategory.name, href: `/categories/${primaryCategory.id}` }] : []),
@@ -169,11 +219,11 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
             cold/search-driven visit to this brand. */}
         {contextCategory && (
           <div className="bg-accent-blue/5 border-b border-accent-blue/15 px-4 py-3">
-            <div className="flex items-start gap-2 text-[11px] text-slate-700 font-semibold leading-snug">
+            <div className="flex items-start gap-2 text-[11px] text-slate-700 dark:text-slate-300 font-semibold leading-snug">
               <Sparkles className="w-3.5 h-3.5 text-accent-blue shrink-0 mt-0.5" />
               <span>
                 You were exploring{' '}
-                <strong className="text-slate-900">
+                <strong className="text-slate-900 dark:text-slate-50">
                   {brand.name.split(' ')[0]}{contextProduct ? ` ${contextProduct.keySpecValue.split(',')[0]}` : ''} {contextCategory.name}
                 </strong>
               </span>
@@ -181,7 +231,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
             {contextProduct && (
               <Link
                 href={`/brands/${brand.id}/${contextCategory.id}?model=${contextProduct.id}`}
-                className="inline-flex items-center gap-1 mt-1.5 ml-5 text-[11px] font-bold text-accent-blue hover:text-primary transition"
+                className="inline-flex items-center gap-1 mt-1.5 ml-5 text-[11px] font-bold text-accent-blue hover:text-heading transition"
               >
                 Continue with {contextProduct.modelNumber}
                 <ArrowRight className="w-3 h-3" />
@@ -191,31 +241,31 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
         )}
 
         {/* Quick Horizontal Scroll Sub Tabs */}
-        <div className="bg-white border-b border-slate-100 flex text-xs select-none sticky top-0 z-10 shadow-xs px-2 overflow-x-auto whitespace-nowrap scrollbar-none">
+        <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex text-xs select-none sticky top-0 z-10 shadow-xs px-2 overflow-x-auto whitespace-nowrap scrollbar-none">
           <button
             onClick={() => setActiveSubTab('overview')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'overview' ? 'text-accent-blue' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'overview' ? 'text-accent-blue' : 'text-slate-500 dark:text-slate-400'}`}
           >
             Overview
             {activeSubTab === 'overview' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
           <button
             onClick={() => setActiveSubTab('products')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'products' ? 'text-accent-blue' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'products' ? 'text-accent-blue' : 'text-slate-500 dark:text-slate-400'}`}
           >
             Products ({brandProducts.length})
             {activeSubTab === 'products' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
           <button
             onClick={() => setActiveSubTab('suppliers')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'suppliers' ? 'text-accent-blue' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'suppliers' ? 'text-accent-blue' : 'text-slate-500 dark:text-slate-400'}`}
           >
             Sellers ({brandSuppliers.length})
             {activeSubTab === 'suppliers' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
           </button>
           <button
             onClick={() => setActiveSubTab('trust')}
-            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'trust' ? 'text-accent-blue' : 'text-slate-500'}`}
+            className={`px-4 py-3 font-bold relative transition ${activeSubTab === 'trust' ? 'text-accent-blue' : 'text-slate-500 dark:text-slate-400'}`}
           >
             Trust & Credentials
             {activeSubTab === 'trust' && <div className="absolute bottom-0 left-3 right-3 h-0.5 bg-accent-blue rounded-full"></div>}
@@ -228,41 +278,41 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
             <div className="space-y-4">
               {/* Long Description */}
               {brand.longDescription && (
-                <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs">
-                  <h3 className="font-extrabold text-slate-900 text-xs mb-1.5 uppercase tracking-wider">About the Brand</h3>
-                  <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{brand.longDescription}</p>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 shadow-xs">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs mb-1.5 uppercase tracking-wider">About the Brand</h3>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">{brand.longDescription}</p>
                 </div>
               )}
 
               {/* Statistics Highlights */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Company Highlights</h3>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 shadow-xs space-y-3">
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider">Company Highlights</h3>
                 <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                    <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-wider">Established</span>
-                    <span className="text-xs font-bold text-slate-900 mt-0.5 flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 block font-bold uppercase tracking-wider">Established</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-50 mt-0.5 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       Year {brand.establishedYear}
                     </span>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                    <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-wider">Headquarters</span>
-                    <span className="text-xs font-bold text-slate-900 mt-0.5 flex items-center gap-1 truncate" title={brand.headquarters}>
-                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 block font-bold uppercase tracking-wider">Headquarters</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-50 mt-0.5 flex items-center gap-1 truncate" title={brand.headquarters}>
+                      <MapPin className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       {brand.headquarters.split(',')[0]}
                     </span>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                    <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-wider">Global Reach</span>
-                    <span className="text-xs font-bold text-slate-900 mt-0.5 flex items-center gap-1">
-                      <Globe className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 block font-bold uppercase tracking-wider">Global Reach</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-50 mt-0.5 flex items-center gap-1">
+                      <Globe className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       {brand.countriesServed}+ Countries
                     </span>
                   </div>
-                  <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                    <span className="text-[9px] text-slate-400 block font-bold uppercase tracking-wider">Employees</span>
-                    <span className="text-xs font-bold text-slate-900 mt-0.5 flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <span className="text-[9px] text-slate-400 dark:text-slate-500 block font-bold uppercase tracking-wider">Employees</span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-50 mt-0.5 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                       {brand.employees}
                     </span>
                   </div>
@@ -272,8 +322,8 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
               {/* Service Performance — quantified breakdown of the single blended `rating`,
                   answering three separate buyer questions: does the seller reply, is the
                   product as described, does delivery happen on time. */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 shadow-xs space-y-3">
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider flex items-center gap-1">
                   <Gauge className="w-4 h-4 text-accent-blue" />
                   <span>Service Performance</span>
                 </h3>
@@ -285,10 +335,10 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                   ].map((metric) => (
                     <div key={metric.label}>
                       <div className="flex items-center justify-between text-[10px] mb-1">
-                        <span className="font-bold text-slate-700">{metric.label}</span>
-                        <span className="font-extrabold text-slate-900">{metric.value}%</span>
+                        <span className="font-bold text-slate-700 dark:text-slate-300">{metric.label}</span>
+                        <span className="font-extrabold text-slate-900 dark:text-slate-50">{metric.value}%</span>
                       </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div className="h-full bg-accent-green rounded-full" style={{ width: `${metric.value}%` }} />
                       </div>
                     </div>
@@ -297,41 +347,41 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
               </div>
 
               {/* Business Authenticity Data */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1">
+              <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 shadow-xs space-y-3">
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider flex items-center gap-1">
                   <AnimatedIcon icon={ShieldCheck} variant="pulse" className="w-4 h-4 text-emerald-600" />
                   <span>Business Authenticity Proof</span>
                 </h3>
-                <div className="divide-y divide-slate-100 text-[11px] font-medium text-slate-600">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-400">
                   {brand.gstNumber && (
                     <div className="py-2.5 flex justify-between">
-                      <span className="text-slate-400">GST Registration:</span>
-                      <span className="text-slate-900 font-mono font-bold flex items-center gap-1">
+                      <span className="text-slate-400 dark:text-slate-500">GST Registration:</span>
+                      <span className="text-slate-900 dark:text-slate-50 font-mono font-bold flex items-center gap-1">
                         {brand.gstNumber}
                         <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1 py-0.2 rounded font-sans font-bold">VERIFIED</span>
                       </span>
                     </div>
                   )}
                   <div className="py-2.5 flex justify-between">
-                    <span className="text-slate-400">Legal Status:</span>
-                    <span className="text-slate-900 font-bold">{brand.businessType}</span>
+                    <span className="text-slate-400 dark:text-slate-500">Legal Status:</span>
+                    <span className="text-slate-900 dark:text-slate-50 font-bold">{brand.businessType}</span>
                   </div>
                   {brand.annualTurnover && (
                     <div className="py-2.5 flex justify-between">
-                      <span className="text-slate-400">Annual Turnover:</span>
-                      <span className="text-slate-900 font-bold">{brand.annualTurnover}</span>
+                      <span className="text-slate-400 dark:text-slate-500">Annual Turnover:</span>
+                      <span className="text-slate-900 dark:text-slate-50 font-bold">{brand.annualTurnover}</span>
                     </div>
                   )}
                   {brand.panNumber && (
                     <div className="py-2.5 flex justify-between">
-                      <span className="text-slate-400">PAN Card ID:</span>
-                      <span className="text-slate-900 font-mono font-bold">{brand.panNumber}</span>
+                      <span className="text-slate-400 dark:text-slate-500">PAN Card ID:</span>
+                      <span className="text-slate-900 dark:text-slate-50 font-mono font-bold">{brand.panNumber}</span>
                     </div>
                   )}
                   {brand.cinNumber && (
                     <div className="py-2.5 flex justify-between">
-                      <span className="text-slate-400">Corporate Identification (CIN):</span>
-                      <span className="text-slate-900 font-mono font-bold truncate max-w-[140px]">{brand.cinNumber}</span>
+                      <span className="text-slate-400 dark:text-slate-500">Corporate Identification (CIN):</span>
+                      <span className="text-slate-900 dark:text-slate-50 font-mono font-bold truncate max-w-[140px]">{brand.cinNumber}</span>
                     </div>
                   )}
                 </div>
@@ -341,14 +391,14 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
               {brand.catalogueUrl && (
                 <a
                   href={brand.catalogueUrl}
-                  className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex items-center gap-3 hover:border-accent-blue/40 transition"
+                  className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 shadow-xs flex items-center gap-3 hover:border-accent-blue/40 transition"
                 >
                   <div className="w-10 h-10 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-center shrink-0 text-rose-500">
                     <FileText className="w-5 h-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-extrabold text-slate-900 text-xs truncate">{brand.name} Product Catalogue</h4>
-                    <span className="text-[9.5px] text-slate-400 font-semibold">PDF &middot; {brand.catalogueSizeMb} MB &middot; Updated {brand.catalogueUpdated}</span>
+                    <h4 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs truncate">{brand.name} Product Catalogue</h4>
+                    <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-semibold">PDF &middot; {brand.catalogueSizeMb} MB &middot; Updated {brand.catalogueUpdated}</span>
                   </div>
                   <Download className="w-4 h-4 text-accent-blue shrink-0" />
                 </a>
@@ -360,7 +410,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
             <div className="space-y-5">
               {brandMCats.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Product Lines</h3>
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider">Product Lines</h3>
                   <div className="grid grid-cols-1 gap-2.5">
                     {brandMCats.map((mcat) => {
                       const isContextMatch = contextCategory?.id === mcat.mcatId;
@@ -371,18 +421,18 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                         <Link
                           key={mcat.id}
                           href={href}
-                          className={`bg-white border rounded-xl p-3 flex items-center justify-between transition ${
-                            isContextMatch ? 'border-accent-blue ring-1 ring-accent-blue/30' : 'border-slate-200/80 hover:border-accent-blue/40'
+                          className={`bg-white dark:bg-slate-900 border rounded-xl p-3 flex items-center justify-between transition ${
+                            isContextMatch ? 'border-accent-blue ring-1 ring-accent-blue/30' : 'border-slate-200/80 dark:border-slate-700/80 hover:border-accent-blue/40'
                           }`}
                         >
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <h4 className="font-bold text-[11px] text-slate-900 truncate">{mcat.name}</h4>
+                              <h4 className="font-bold text-[11px] text-slate-900 dark:text-slate-50 truncate">{mcat.name}</h4>
                               {isContextMatch && (
                                 <span className="text-[7.5px] font-black text-accent-blue uppercase bg-accent-blue/10 px-1.5 py-0.5 rounded-full shrink-0">You were here</span>
                               )}
                             </div>
-                            <p className="text-[9px] text-slate-400 mt-0.5 truncate">{mcat.tagline}</p>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{mcat.tagline}</p>
                           </div>
                           <span className="text-[9px] font-extrabold text-accent-blue uppercase tracking-wider shrink-0 ml-2">View</span>
                         </Link>
@@ -392,11 +442,11 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                 </div>
               )}
               <div className="flex items-center justify-between">
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Active Standard Catalog</h3>
-                <span className="text-[9px] font-bold text-slate-400">{brandProducts.length} Models</span>
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider">Active Standard Catalog</h3>
+                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">{brandProducts.length} Models</span>
               </div>
               {brandProducts.length === 0 ? (
-                <div className="bg-white rounded-2xl p-6 border text-center text-slate-400 text-xs">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border text-center text-slate-400 dark:text-slate-500 text-xs">
                   No direct product records listed yet. Use inquiry form to ask brand.
                 </div>
               ) : (
@@ -406,7 +456,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                       <Link
                         key={prod.id}
                         href={`/products/${prod.id}`}
-                        className="bg-white border border-slate-200/80 rounded-2xl p-3 flex flex-col justify-between shadow-xs hover:border-accent-blue/40 transition cursor-pointer"
+                        className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 flex flex-col justify-between shadow-xs hover:border-accent-blue/40 transition cursor-pointer"
                       >
                         <div>
                           <img
@@ -414,15 +464,15 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                             alt={prod.name}
                             referrerPolicy="no-referrer"
                             loading="lazy"
-                            className="w-full h-24 object-contain rounded-xl bg-slate-50 mix-blend-multiply"
+                            className="w-full h-24 object-contain rounded-xl bg-slate-50 dark:bg-slate-800/60 mix-blend-multiply"
                           />
-                          <h4 className="font-bold text-[11px] text-slate-900 mt-2 line-clamp-2 leading-tight">
+                          <h4 className="font-bold text-[11px] text-slate-900 dark:text-slate-50 mt-2 line-clamp-2 leading-tight">
                             {prod.name}
                           </h4>
                         </div>
-                        <div className="border-t border-slate-100 pt-2 mt-2">
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-2 mt-2">
                           <span className="text-[10px] font-extrabold text-accent-blue block">{prod.priceRange}</span>
-                          <span className="text-[8px] text-slate-400 font-bold block mt-0.5 uppercase font-mono">MOQ: {prod.moq}</span>
+                          <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold block mt-0.5 uppercase font-mono">MOQ: {prod.moq}</span>
                         </div>
                       </Link>
                     ))}
@@ -431,7 +481,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                     <button
                       type="button"
                       onClick={() => setShowAllProducts(true)}
-                      className="w-full py-2.5 bg-white border border-slate-200 hover:border-accent-blue/40 text-accent-blue rounded-xl text-[11px] font-bold transition"
+                      className="w-full py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-accent-blue/40 text-accent-blue rounded-xl text-[11px] font-bold transition"
                     >
                       Show All {brandProducts.length} Products
                     </button>
@@ -444,7 +494,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
           {activeSubTab === 'suppliers' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Dealer Network</h3>
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider">Dealer Network</h3>
                 {brandSuppliers.length > 0 && (
                   <Link
                     href={`/compare?brandId=${brand.id}`}
@@ -457,25 +507,25 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
               </div>
               {brandSuppliers.length > 0 && (
                 <div className="bg-primary/5 border border-primary/10 rounded-xl px-3.5 py-2.5 flex items-center gap-4 text-[10px]">
-                  <span className="font-bold text-primary">{brandSuppliers.length} Authorized Dealer{brandSuppliers.length !== 1 ? 's' : ''}</span>
-                  <span className="text-slate-400">&bull;</span>
-                  <span className="font-bold text-primary">{new Set(brandSuppliers.map(s => s.location.split(',').pop()?.trim())).size} States Covered</span>
+                  <span className="font-bold text-heading">{brandSuppliers.length} Authorized Dealer{brandSuppliers.length !== 1 ? 's' : ''}</span>
+                  <span className="text-slate-400 dark:text-slate-500">&bull;</span>
+                  <span className="font-bold text-heading">{new Set(brandSuppliers.map(s => s.location.split(',').pop()?.trim())).size} States Covered</span>
                 </div>
               )}
               {brandSuppliers.length === 0 ? (
-                <div className="bg-white rounded-2xl p-6 border text-center text-slate-400 text-xs">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border text-center text-slate-400 dark:text-slate-500 text-xs">
                   No local authorized supplier recorded. Inquire directly to match nearest dealer.
                 </div>
               ) : (
                 <>
                   <div className="space-y-3">
                     {(showAllSuppliers ? brandSuppliers : brandSuppliers.slice(0, 6)).map((supp) => (
-                      <div key={supp.id} className="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+                      <div key={supp.id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="font-bold text-xs text-slate-900 leading-tight">{supp.name}</h4>
-                            <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 mt-1">
-                              <MapPin className="w-3 h-3 text-slate-400" />
+                            <h4 className="font-bold text-xs text-slate-900 dark:text-slate-50 leading-tight">{supp.name}</h4>
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1 mt-1">
+                              <MapPin className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                               {supp.location}
                             </span>
                             {/* No direct contact action here on purpose — the buyer hasn't
@@ -490,19 +540,19 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-center text-[10px] text-slate-600 font-medium">
+                        <div className="grid grid-cols-3 gap-2 border-t border-slate-100 dark:border-slate-800 pt-2 text-center text-[10px] text-slate-600 dark:text-slate-400 font-medium">
                           <div>
-                            <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Experience</span>
-                            <span className="font-bold text-slate-900 block mt-0.5">{supp.experienceYears} Years</span>
+                            <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase scale-90">Experience</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-50 block mt-0.5">{supp.experienceYears} Years</span>
                           </div>
-                          <div className="border-x border-slate-100">
-                            <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Resp. Time</span>
-                            <span className="font-bold text-slate-900 block mt-0.5">{supp.responseTime}</span>
+                          <div className="border-x border-slate-100 dark:border-slate-800">
+                            <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase scale-90">Resp. Time</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-50 block mt-0.5">{supp.responseTime}</span>
                             <span className="text-[7.5px] text-accent-green font-bold block mt-0.5">{supp.responseRate}% reply rate</span>
                           </div>
                           <div>
-                            <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Rating</span>
-                            <span className="font-bold text-slate-900 block mt-0.5 flex items-center justify-center gap-0.5">
+                            <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase scale-90">Rating</span>
+                            <span className="font-bold text-slate-900 dark:text-slate-50 block mt-0.5 flex items-center justify-center gap-0.5">
                               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                               {supp.rating}
                             </span>
@@ -515,7 +565,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                     <button
                       type="button"
                       onClick={() => setShowAllSuppliers(true)}
-                      className="w-full py-2.5 bg-white border border-slate-200 hover:border-accent-blue/40 text-accent-blue rounded-xl text-[11px] font-bold transition"
+                      className="w-full py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-accent-blue/40 text-accent-blue rounded-xl text-[11px] font-bold transition"
                     >
                       Show All {brandSuppliers.length} Dealers
                     </button>
@@ -526,17 +576,17 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
               {/* Service Network */}
               {serviceCenters.length > 0 && (
                 <div className="space-y-3 pt-2">
-                  <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider flex items-center gap-1.5">
                     <Wrench className="w-3.5 h-3.5 text-accent-purple" />
                     Service Network
                   </h3>
                   <div className="space-y-3">
                     {serviceCenters.map((svc) => (
-                      <div key={svc.id} className="bg-white border border-slate-200/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+                      <div key={svc.id} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
                         <div>
-                          <h4 className="font-bold text-xs text-slate-900 leading-tight">{svc.name}</h4>
-                          <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 mt-1">
-                            <MapPin className="w-3 h-3 text-slate-400" />
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-slate-50 leading-tight">{svc.name}</h4>
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                             {svc.location}
                           </span>
                         </div>
@@ -547,13 +597,13 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                             </span>
                           ))}
                         </div>
-                        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-[10px] text-slate-600 font-medium">
+                        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-slate-800 pt-2 text-[10px] text-slate-600 dark:text-slate-400 font-medium">
                           <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400" />
+                            <Phone className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                             {svc.contactPhone}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-slate-400" />
+                            <Clock className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                             {svc.workingHours}
                           </span>
                         </div>
@@ -568,11 +618,11 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
           {activeSubTab === 'trust' && (
             <div className="space-y-4">
               {/* Credentials Grid */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Quality Certifications</h3>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 shadow-xs space-y-3">
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider">Quality Certifications</h3>
                 <div className="space-y-2">
                   {brand.certifications.map((cert, idx) => (
-                    <div key={idx} className="flex gap-2 text-xs font-semibold text-slate-700">
+                    <div key={idx} className="flex gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
                       <span className="w-5 h-5 bg-indigo-100 text-indigo-800 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0">✓</span>
                       <span>{cert}</span>
                     </div>
@@ -581,15 +631,15 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
               </div>
 
               {/* Reviews & Client Voices Section */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs space-y-3">
-                <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Buyer Voices</h3>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 shadow-xs space-y-3">
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs uppercase tracking-wider">Buyer Voices</h3>
                 <div className="space-y-4">
                   {reviews.map((rev) => (
-                    <div key={rev.id} className="space-y-1.5 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+                    <div key={rev.id} className="space-y-1.5 border-b border-slate-100 dark:border-slate-800 pb-3 last:border-b-0 last:pb-0">
                       <div className="flex justify-between items-start">
                         <div>
-                          <span className="font-bold text-[11px] text-slate-900 block leading-tight">{rev.userName}</span>
-                          <span className="text-[9px] text-slate-400 font-semibold">{rev.userRole}, {rev.companyName}</span>
+                          <span className="font-bold text-[11px] text-slate-900 dark:text-slate-50 block leading-tight">{rev.userName}</span>
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold">{rev.userRole}, {rev.companyName}</span>
                         </div>
                         <div className="flex gap-0.5 items-center text-amber-500">
                           {[...Array(5)].map((_, i) => (
@@ -597,7 +647,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
                           ))}
                         </div>
                       </div>
-                      <p className="text-[10px] text-slate-600 leading-relaxed font-medium italic">"{rev.comment}"</p>
+                      <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium italic">"{rev.comment}"</p>
                     </div>
                   ))}
                 </div>
@@ -617,7 +667,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
           the brand itself. Neither is a contact-seller action. Genuinely fixed to the
           viewport rather than a flex-flow sibling that only looked pinned on short pages. */}
       <div
-        className={`md:static md:bottom-auto fixed left-0 right-0 z-30 border-t border-slate-100 bg-white p-4 flex items-center gap-2.5 transition-[bottom] duration-200 ${
+        className={`md:static md:bottom-auto fixed left-0 right-0 z-30 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex items-center gap-2.5 transition-[bottom] duration-200 ${
           navVisible ? 'bottom-14' : 'bottom-0'
         }`}
       >
@@ -630,7 +680,7 @@ export default function BrandProfileView({ brand, primaryCategory, brandMCats, b
         </button>
         <Link
           href={`/compare?brandId=${brand.id}`}
-          className="shrink-0 px-4 py-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
+          className="shrink-0 px-4 py-3.5 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
         >
           <GitCompare className="w-4 h-4" />
           <span>Compare</span>

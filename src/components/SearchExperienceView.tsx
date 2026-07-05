@@ -115,9 +115,9 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
   return (
     <div className="flex-1 bg-canvas flex flex-col overflow-hidden">
       <div className="bg-surface border-b border-line px-3 py-2.5 flex items-center gap-2 shrink-0">
-        <BackButton fallbackHref="/" title="Back to Home" className="p-1.5 hover:bg-slate-100 rounded-full transition shrink-0" />
+        <BackButton fallbackHref="/" title="Back to Home" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" />
         <form onSubmit={handleSubmit} className="relative flex-1 min-w-0">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             autoFocus
             type="text"
@@ -130,7 +130,7 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"
               aria-label="Clear search"
             >
               <X className="w-3.5 h-3.5" />
@@ -144,13 +144,13 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
           {trimmedQuery ? (
             /* Live suggestions — replaces the landing content the instant typing starts */
             suggestions.length === 0 ? (
-              <div className="bg-surface border border-line rounded-2xl p-8 text-center text-slate-400 text-xs">
+              <div className="bg-surface border border-line rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-xs">
                 No matches for &ldquo;{trimmedQuery}&rdquo;. Try a broader term, or{' '}
                 <Link href="/categories" className="text-accent-blue font-bold hover:underline">browse categories</Link>.
               </div>
             ) : (
               <section>
-                <h2 className="font-heading font-bold text-xs text-slate-500 uppercase tracking-wider mb-2.5">Suggestions</h2>
+                <h2 className="font-heading font-bold text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">Suggestions</h2>
                 <div className="space-y-1.5">
                   {suggestions.map((s: CatalogSuggestion) => {
                     const Icon = TYPE_ICON[s.type];
@@ -167,14 +167,14 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
                           ) : s.logo ? (
                             <BrandLogo logo={s.logo} name={s.label} />
                           ) : (
-                            <Icon className="w-3.5 h-3.5 text-slate-400" />
+                            <Icon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-bold text-slate-900 truncate">{s.label}</p>
-                          <p className="text-[9.5px] text-slate-400 truncate">{s.sublabel}</p>
+                          <p className="text-[11px] font-bold text-slate-900 dark:text-slate-50 truncate">{s.label}</p>
+                          <p className="text-[9.5px] text-slate-400 dark:text-slate-500 truncate">{s.sublabel}</p>
                         </div>
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-wide shrink-0">{TYPE_LABEL[s.type]}</span>
+                        <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wide shrink-0">{TYPE_LABEL[s.type]}</span>
                       </Link>
                     );
                   })}
@@ -186,8 +186,8 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
             <>
               {recentItems.length > 0 && (
                 <section>
-                  <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
-                    <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400" />
+                  <h2 className="font-heading font-bold text-sm text-heading mb-3 flex items-center gap-1.5">
+                    <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     Recently Viewed
                   </h2>
                   <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-2.5">
@@ -205,10 +205,10 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
                           ) : 'icon' in item && item.icon ? (
                             <CategoryIcon icon={item.icon} className="w-4 h-4 text-accent-blue" />
                           ) : (
-                            <Package className="w-3.5 h-3.5 text-slate-300" />
+                            <Package className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
                           )}
                         </div>
-                        <span className="text-[10px] font-bold text-slate-700 truncate leading-tight">{item.name}</span>
+                        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate leading-tight">{item.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -217,7 +217,7 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
 
               {recommendedBrands.length > 0 && (
                 <section>
-                  <h2 className="font-heading font-bold text-sm text-primary mb-3">
+                  <h2 className="font-heading font-bold text-sm text-heading mb-3">
                     {recentItems.length > 0 ? 'Recommended Brands' : 'Popular Brands'}
                   </h2>
                   <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
@@ -227,10 +227,10 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
                         href={`/brands/${brand.id}`}
                         className="bg-surface border border-line rounded-xl p-3 w-[110px] shrink-0 flex flex-col items-center gap-2 hover:border-accent-blue/40 transition"
                       >
-                        <div className="w-12 h-12 bg-white border border-line rounded-lg flex items-center justify-center overflow-hidden p-1.5">
+                        <div className="w-12 h-12 bg-white dark:bg-slate-900 border border-line rounded-lg flex items-center justify-center overflow-hidden p-1.5">
                           <BrandLogo logo={brand.logo} name={brand.name} />
                         </div>
-                        <span className="text-[9.5px] font-bold text-slate-700 text-center leading-tight line-clamp-2">
+                        <span className="text-[9.5px] font-bold text-slate-700 dark:text-slate-300 text-center leading-tight line-clamp-2">
                           {brand.name.split(' ').slice(0, 2).join(' ')}
                         </span>
                       </Link>
@@ -241,7 +241,7 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
 
               {recommendedBrandMCats.length > 0 && (
                 <section>
-                  <h2 className="font-heading font-bold text-sm text-primary mb-3">
+                  <h2 className="font-heading font-bold text-sm text-heading mb-3">
                     {recentItems.length > 0 ? 'Recommended Product Lines' : 'Popular Product Lines'}
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
@@ -252,8 +252,8 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
                         className="bg-surface border border-line rounded-xl p-3 flex items-center justify-between hover:border-accent-blue/40 transition"
                       >
                         <div className="min-w-0">
-                          <h3 className="font-bold text-[11px] text-slate-900 truncate">{mcat.name}</h3>
-                          <p className="text-[9px] text-slate-400 truncate mt-0.5">{mcat.tagline}</p>
+                          <h3 className="font-bold text-[11px] text-slate-900 dark:text-slate-50 truncate">{mcat.name}</h3>
+                          <p className="text-[9px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{mcat.tagline}</p>
                         </div>
                       </Link>
                     ))}
@@ -262,7 +262,7 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
               )}
 
               <section>
-                <h2 className="font-heading font-bold text-sm text-primary mb-3">Browse Categories</h2>
+                <h2 className="font-heading font-bold text-sm text-heading mb-3">Browse Categories</h2>
                 <div className="grid grid-cols-2 min-[420px]:grid-cols-3 gap-2.5">
                   {categories.slice(0, 6).map((cat) => (
                     <Link
@@ -273,7 +273,7 @@ export default function SearchExperienceView({ initialQuery, brands, products, c
                       <div className="w-8 h-8 bg-accent-blue/10 rounded-lg flex items-center justify-center text-accent-blue">
                         <CategoryIcon icon={cat.icon} className="w-4 h-4" />
                       </div>
-                      <span className="text-[9px] font-bold text-slate-700 leading-tight line-clamp-2">{cat.name}</span>
+                      <span className="text-[9px] font-bold text-slate-700 dark:text-slate-300 leading-tight line-clamp-2">{cat.name}</span>
                     </Link>
                   ))}
                 </div>

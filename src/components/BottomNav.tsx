@@ -34,7 +34,7 @@ export default function BottomNav() {
       <Link
         href="/"
         className={`flex flex-col items-center justify-center gap-0.5 transition w-full ${
-          isActive('/') ? 'text-accent-blue font-black' : 'text-slate-400 hover:text-slate-600'
+          isActive('/') ? 'text-accent-blue font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400'
         }`}
       >
         <Home className="w-4 h-4" />
@@ -45,7 +45,7 @@ export default function BottomNav() {
       <Link
         href="/categories"
         className={`flex flex-col items-center justify-center gap-0.5 transition w-full ${
-          isActive('/categories') ? 'text-accent-blue font-black' : 'text-slate-400 hover:text-slate-600'
+          isActive('/categories') ? 'text-accent-blue font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400'
         }`}
       >
         <Layers className="w-4 h-4" />
@@ -65,14 +65,14 @@ export default function BottomNav() {
         >
           <GitCompare className="w-4.5 h-4.5" />
         </Link>
-        <span className="absolute bottom-[-13px] text-[8px] text-slate-500 font-extrabold tracking-tighter uppercase">Compare</span>
+        <span className="absolute bottom-[-13px] text-[8px] text-slate-500 dark:text-slate-400 font-extrabold tracking-tighter uppercase">Compare</span>
       </div>
 
       {/* 4. Shortlist */}
       <Link
         href="/shortlist"
         className={`flex flex-col items-center justify-center gap-0.5 transition relative w-full ${
-          isActive('/shortlist') ? 'text-accent-blue font-black' : 'text-slate-400 hover:text-slate-600'
+          isActive('/shortlist') ? 'text-accent-blue font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400'
         }`}
       >
         <Heart className={`w-4 h-4 ${isActive('/shortlist') ? 'fill-rose-500 text-rose-500' : ''}`} />
@@ -88,7 +88,7 @@ export default function BottomNav() {
       <Link
         href="/brands"
         className={`flex flex-col items-center justify-center gap-0.5 transition relative w-full ${
-          isActive('/brands') ? 'text-accent-blue font-black' : 'text-slate-400 hover:text-slate-600'
+          isActive('/brands') ? 'text-accent-blue font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400'
         }`}
       >
         <Building2 className="w-4 h-4" />
@@ -99,7 +99,7 @@ export default function BottomNav() {
       <Link
         href="/leads"
         className={`flex flex-col items-center justify-center gap-0.5 transition relative w-full ${
-          isActive('/leads') ? 'text-accent-blue font-black' : 'text-slate-400 hover:text-slate-600'
+          isActive('/leads') ? 'text-accent-blue font-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400'
         }`}
       >
         <FileText className="w-4 h-4" />

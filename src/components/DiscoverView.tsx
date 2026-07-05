@@ -12,6 +12,7 @@ import { BrandLogo } from './BrandLogo';
 import { CategoryIcon } from './CategoryIcon';
 import { TrustBadge, TrustBadgeType } from './TrustBadge';
 import { AnimatedIcon } from './AnimatedIcon';
+import { ThemeToggle } from './ThemeToggle';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useRecentlyViewed } from './RecentlyViewedProvider';
 import { useSearchHistory } from './SearchHistoryProvider';
@@ -137,13 +138,14 @@ export default function DiscoverView({ brands, products, categories, categoryFom
       });
 
   return (
-    <div className="flex-1 bg-canvas overflow-y-auto select-none font-sans text-slate-800 relative">
+    <div className="flex-1 bg-canvas overflow-y-auto select-none font-sans text-slate-800 dark:text-slate-200 relative">
 
       {/* Mobile-only compact header (desktop uses DesktopNav) */}
       <div className="md:hidden bg-surface border-b border-line px-4 py-2.5 flex items-center justify-between shrink-0">
         <img src="/indiamart-logo.png" alt="IndiaMART" className="h-8 w-auto select-none" />
         <div className="flex items-center gap-1">
-          <Link href="/quote-basket" className="relative p-1.5 text-slate-500 hover:text-primary transition" title="Quote Basket">
+          <ThemeToggle className="text-slate-500 dark:text-slate-400 hover:bg-canvas" />
+          <Link href="/quote-basket" className="relative p-1.5 text-slate-500 dark:text-slate-400 hover:text-heading transition" title="Quote Basket">
             <ShoppingBag className="w-4.5 h-4.5" />
             {basketCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 bg-cta text-white text-[7.5px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center ring-1 ring-white">
@@ -298,7 +300,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
         <section>
           <div className="flex items-center gap-1.5 mb-2.5">
             <AnimatedIcon icon={Flame} variant="flicker" className="w-3.5 h-3.5 text-cta shrink-0" />
-            <h2 className="font-heading font-bold text-sm text-primary">Buyers Are Exploring</h2>
+            <h2 className="font-heading font-bold text-sm text-heading">Buyers Are Exploring</h2>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
             {categoryFomo.map((cat) => (
@@ -311,14 +313,14 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                   <div className="w-6 h-6 bg-accent-blue/10 rounded-md flex items-center justify-center text-accent-blue shrink-0">
                     <CategoryIcon icon={cat.icon} className="w-3.5 h-3.5" />
                   </div>
-                  <span className="text-[9.5px] font-bold text-slate-800 leading-tight line-clamp-2">{cat.name}</span>
+                  <span className="text-[9.5px] font-bold text-slate-800 dark:text-slate-200 leading-tight line-clamp-2">{cat.name}</span>
                 </div>
                 <div className="mt-2 pt-2 border-t border-line">
                   {cat.brandCount > 0 ? (
                     <div className="flex items-center gap-1.5">
                       <div className="flex -space-x-2">
                         {cat.topBrands.map((b) => (
-                          <div key={b.id} className="w-5 h-5 rounded-full bg-white ring-2 ring-white border border-line overflow-hidden flex items-center justify-center shrink-0">
+                          <div key={b.id} className="w-5 h-5 rounded-full bg-white dark:bg-slate-900 ring-2 ring-white border border-line overflow-hidden flex items-center justify-center shrink-0">
                             <BrandLogo logo={b.logo} name={b.name} className="w-full h-full object-contain p-0.5" />
                           </div>
                         ))}
@@ -326,7 +328,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                       <span className="text-[8.5px] font-black text-accent-green tabular-nums">{cat.brandCount} Brand{cat.brandCount !== 1 ? 's' : ''}</span>
                     </div>
                   ) : (
-                    <span className="text-[8.5px] font-black text-slate-400 uppercase tracking-wide">Standard Catalog</span>
+                    <span className="text-[8.5px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wide">Standard Catalog</span>
                   )}
                 </div>
               </Link>
@@ -342,8 +344,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             the page before they've started browsing. */}
         {recentItems.length > 0 && (
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-2 flex items-center gap-1.5">
-              <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400" />
+            <h2 className="font-heading font-bold text-sm text-heading mb-2 flex items-center gap-1.5">
+              <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               Recently Viewed
             </h2>
             <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-2.5">
@@ -361,10 +363,10 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                     ) : 'icon' in item && item.icon ? (
                       <CategoryIcon icon={item.icon} className="w-4 h-4 text-accent-blue" />
                     ) : (
-                      <Package className="w-3.5 h-3.5 text-slate-300" />
+                      <Package className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
                     )}
                   </div>
-                  <span className="text-[9.5px] font-bold text-slate-700 truncate leading-tight">{item.name}</span>
+                  <span className="text-[9.5px] font-bold text-slate-700 dark:text-slate-300 truncate leading-tight">{item.name}</span>
                 </Link>
               ))}
             </div>
@@ -375,7 +377,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             not the product-category vocabulary to search for it */}
         {scoredProblems.length > 0 && (
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-2">Not Sure What You Need?</h2>
+            <h2 className="font-heading font-bold text-sm text-heading mb-2">Not Sure What You Need?</h2>
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
               {scoredProblems.map((p) => (
                 <Link
@@ -383,7 +385,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                   href={`/categories/${p.mcatId}`}
                   className="shrink-0 w-[176px] bg-surface border border-line rounded-xl p-3 flex flex-col gap-2 hover:border-accent-blue/40 transition"
                 >
-                  <p className="text-[10px] font-semibold text-slate-700 leading-snug line-clamp-3">&ldquo;{p.problem}&rdquo;</p>
+                  <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 leading-snug line-clamp-3">&ldquo;{p.problem}&rdquo;</p>
                   <span className="text-[9px] font-black text-accent-blue uppercase tracking-wide flex items-center gap-1 mt-auto">
                     <CategoryIcon icon={p.category.icon} className="w-3 h-3" />
                     {p.category.name}
@@ -397,8 +399,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
         {/* Browse Categories */}
         <section>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-heading font-bold text-sm text-primary">Browse Categories</h2>
-            <Link href="/categories" className="text-[10px] font-bold text-accent-blue hover:text-primary transition">View All</Link>
+            <h2 className="font-heading font-bold text-sm text-heading">Browse Categories</h2>
+            <Link href="/categories" className="text-[10px] font-bold text-accent-blue hover:text-heading transition">View All</Link>
           </div>
           <div className="grid grid-cols-2 min-[420px]:grid-cols-3 md:grid-cols-5 gap-2.5">
             {categories.slice(0, 9).map((cat) => (
@@ -410,7 +412,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                 <div className="w-8 h-8 bg-accent-blue/10 rounded-lg flex items-center justify-center text-accent-blue">
                   <CategoryIcon icon={cat.icon} className="w-4 h-4" />
                 </div>
-                <span className="text-[9px] font-bold text-slate-700 leading-tight line-clamp-2">{cat.name}</span>
+                <span className="text-[9px] font-bold text-slate-700 dark:text-slate-300 leading-tight line-clamp-2">{cat.name}</span>
               </Link>
             ))}
           </div>
@@ -430,7 +432,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Trending Categories */}
         <section>
-          <h2 className="font-heading font-bold text-sm text-primary mb-2 flex items-center gap-1.5">
+          <h2 className="font-heading font-bold text-sm text-heading mb-2 flex items-center gap-1.5">
             <AnimatedIcon icon={TrendingUp} variant="bounce" className="w-4 h-4 text-accent-green" />
             Trending Categories
           </h2>
@@ -450,8 +452,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
         {/* Popular Brands */}
         <section>
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-heading font-bold text-sm text-primary">Popular Brands</h2>
-            <Link href="/brands" className="text-[10px] font-bold text-accent-blue hover:text-primary transition">View All</Link>
+            <h2 className="font-heading font-bold text-sm text-heading">Popular Brands</h2>
+            <Link href="/brands" className="text-[10px] font-bold text-accent-blue hover:text-heading transition">View All</Link>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
             {popularBrands.map((brand) => (
@@ -460,10 +462,10 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                 href={`/brands/${brand.id}`}
                 className="bg-surface border border-line rounded-xl p-3 w-[110px] shrink-0 flex flex-col items-center gap-2 hover:border-accent-blue/40 transition"
               >
-                <div className="w-12 h-12 bg-white border border-line rounded-lg flex items-center justify-center overflow-hidden p-1.5">
+                <div className="w-12 h-12 bg-white dark:bg-slate-900 border border-line rounded-lg flex items-center justify-center overflow-hidden p-1.5">
                   <BrandLogo logo={brand.logo} name={brand.name} />
                 </div>
-                <span className="text-[9.5px] font-bold text-slate-700 text-center leading-tight line-clamp-2">{brand.name.split(' ').slice(0, 2).join(' ')}</span>
+                <span className="text-[9.5px] font-bold text-slate-700 dark:text-slate-300 text-center leading-tight line-clamp-2">{brand.name.split(' ').slice(0, 2).join(' ')}</span>
               </Link>
             ))}
           </div>
@@ -473,7 +475,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             rather than a vertically-stacked list; card width is tuned so ~1.5 columns show
             by default, an explicit hint that more is reachable with a swipe. */}
         <section>
-          <h2 className="font-heading font-bold text-sm text-primary mb-2">Featured Models</h2>
+          <h2 className="font-heading font-bold text-sm text-heading mb-2">Featured Models</h2>
           <div
             className="grid grid-flow-col grid-rows-2 gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0"
             style={{ gridAutoColumns: 'minmax(200px, 66%)' }}
@@ -491,11 +493,11 @@ export default function DiscoverView({ brands, products, categories, categoryFom
                     <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                   </div>
                   <div className="flex-1 p-3 min-w-0 flex flex-col">
-                    <p className="text-[9px] text-slate-400 font-bold uppercase truncate">{prod.brandName.split(' ')[0]}</p>
-                    <p className="text-[11px] font-bold text-slate-900 line-clamp-2 leading-snug mt-0.5">{prod.name}</p>
-                    <p className="text-[11px] font-black text-primary mt-1.5">
+                    <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase truncate">{prod.brandName.split(' ')[0]}</p>
+                    <p className="text-[11px] font-bold text-slate-900 dark:text-slate-50 line-clamp-2 leading-snug mt-0.5">{prod.name}</p>
+                    <p className="text-[11px] font-black text-heading mt-1.5">
                       {prod.priceRange.split(' - ')[0]}
-                      {prod.priceRange.includes(' - ') && <span className="text-[9px] font-semibold text-slate-400"> onwards</span>}
+                      {prod.priceRange.includes(' - ') && <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500"> onwards</span>}
                     </p>
                     <div className="mt-2.5 flex gap-1.5">
                       {/* A <button>, not a nested <a> — an anchor can't validly contain
@@ -540,7 +542,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Buying Guides */}
         <section className="pb-4">
-          <h2 className="font-heading font-bold text-sm text-primary mb-2 flex items-center gap-1.5">
+          <h2 className="font-heading font-bold text-sm text-heading mb-2 flex items-center gap-1.5">
             <AnimatedIcon icon={BookOpen} variant="flip" className="w-4 h-4 text-accent-purple" />
             Buying Guides
           </h2>
@@ -548,7 +550,7 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             {BUYING_GUIDES.map((guide, idx) => (
               <div key={idx} className="bg-surface border border-line rounded-xl p-3.5">
                 <span className="text-[8.5px] font-black text-accent-purple uppercase tracking-wider bg-accent-purple/10 px-1.5 py-0.5 rounded">{guide.tag}</span>
-                <p className="text-[11px] font-bold text-slate-800 mt-2 leading-snug">{guide.title}</p>
+                <p className="text-[11px] font-bold text-slate-800 dark:text-slate-200 mt-2 leading-snug">{guide.title}</p>
               </div>
             ))}
           </div>

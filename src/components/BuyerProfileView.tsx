@@ -6,6 +6,7 @@ import { Heart, FileText, ShoppingBag, Clock, ChevronRight, MapPin } from 'lucid
 import { Brand, Product } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { AnimatedIcon } from './AnimatedIcon';
+import { ThemeToggle } from './ThemeToggle';
 import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
@@ -58,31 +59,31 @@ export default function BuyerProfileView({ brands, products }: BuyerProfileViewP
           <div className="grid grid-cols-3 gap-2.5">
             <Link href="/shortlist" className="bg-surface border border-line rounded-xl p-3.5 text-center hover:border-accent-blue/40 transition">
               <Heart className="w-4 h-4 text-rose-500 mx-auto mb-1" />
-              <div className="text-lg font-heading font-extrabold text-primary">{shortlistedTotal}</div>
-              <div className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide">Shortlisted</div>
+              <div className="text-lg font-heading font-extrabold text-heading">{shortlistedTotal}</div>
+              <div className="text-[8.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide">Shortlisted</div>
             </Link>
             <Link href="/leads" className="bg-surface border border-line rounded-xl p-3.5 text-center hover:border-accent-blue/40 transition">
               <FileText className="w-4 h-4 text-accent-blue mx-auto mb-1" />
-              <div className="text-lg font-heading font-extrabold text-primary">{leadsCount}</div>
-              <div className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide">Quote Requests</div>
+              <div className="text-lg font-heading font-extrabold text-heading">{leadsCount}</div>
+              <div className="text-[8.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide">Quote Requests</div>
             </Link>
             <Link href="/quote-basket" className="bg-surface border border-line rounded-xl p-3.5 text-center hover:border-accent-blue/40 transition">
               <ShoppingBag className="w-4 h-4 text-cta mx-auto mb-1" />
-              <div className="text-lg font-heading font-extrabold text-primary">{basketItems.length}</div>
-              <div className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide">In Basket</div>
+              <div className="text-lg font-heading font-extrabold text-heading">{basketItems.length}</div>
+              <div className="text-[8.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide">In Basket</div>
             </Link>
           </div>
 
           {/* Recently Viewed */}
           <section>
             <div className="flex items-center justify-between mb-2.5">
-              <h2 className="font-heading font-bold text-sm text-primary flex items-center gap-1.5">
-                <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400" />
+              <h2 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
+                <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                 Recently Viewed
               </h2>
             </div>
             {recentItems.length === 0 ? (
-              <div className="bg-surface border border-line rounded-xl p-5 text-center text-slate-400 text-[11px]">
+              <div className="bg-surface border border-line rounded-xl p-5 text-center text-slate-400 dark:text-slate-500 text-[11px]">
                 Nothing viewed yet.
               </div>
             ) : (
@@ -100,8 +101,8 @@ export default function BuyerProfileView({ brands, products }: BuyerProfileViewP
                         <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
                       ) : null}
                     </div>
-                    <span className="text-[11px] font-bold text-slate-700 truncate flex-1">{item.name}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate flex-1">{item.name}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -110,21 +111,29 @@ export default function BuyerProfileView({ brands, products }: BuyerProfileViewP
 
           {/* Quick Links */}
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-2.5">Manage</h2>
+            <h2 className="font-heading font-bold text-sm text-heading mb-2.5">Manage</h2>
             <div className="bg-surface border border-line rounded-xl divide-y divide-line">
               <Link href="/shortlist" className="flex items-center justify-between px-4 py-3 hover:bg-canvas transition">
-                <span className="text-[12px] font-bold text-slate-700">My Shortlist</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <span className="text-[12px] font-bold text-slate-700 dark:text-slate-300">My Shortlist</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               </Link>
               <Link href="/leads" className="flex items-center justify-between px-4 py-3 hover:bg-canvas transition">
-                <span className="text-[12px] font-bold text-slate-700">My Quote Requests</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <span className="text-[12px] font-bold text-slate-700 dark:text-slate-300">My Quote Requests</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               </Link>
               <Link href="/quote-basket" className="flex items-center justify-between px-4 py-3 hover:bg-canvas transition">
-                <span className="text-[12px] font-bold text-slate-700">Quote Basket</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <span className="text-[12px] font-bold text-slate-700 dark:text-slate-300">Quote Basket</span>
+                <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               </Link>
             </div>
+          </section>
+
+          {/* Appearance — theme setting lives here, the conventional place a buyer would
+              look for it, in addition to the always-visible toggle in the desktop header
+              and Home's mobile header. */}
+          <section>
+            <h2 className="font-heading font-bold text-sm text-heading mb-2.5">Settings</h2>
+            <ThemeToggle variant="row" />
           </section>
         </div>
       </div>

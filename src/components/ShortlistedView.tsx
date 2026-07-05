@@ -30,9 +30,9 @@ function InlineSectionSearch({
   return (
     <div className="flex items-center gap-1.5 transition-all duration-300 ml-auto">
       <div
-        className={`flex items-center bg-slate-50 border rounded-lg overflow-hidden transition-all duration-300 ${
+        className={`flex items-center bg-slate-50 dark:bg-slate-800/60 border rounded-lg overflow-hidden transition-all duration-300 ${
           isExpanded
-            ? 'w-36 px-2 py-1 border-slate-300 bg-white'
+            ? 'w-36 px-2 py-1 border-slate-300 bg-white dark:bg-slate-900'
             : 'w-0 border-transparent p-0'
         }`}
       >
@@ -41,14 +41,14 @@ function InlineSectionSearch({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-transparent text-[10px] text-slate-700 placeholder-slate-400 outline-none font-bold h-4"
+          className="w-full bg-transparent text-[10px] text-slate-700 dark:text-slate-300 placeholder-slate-400 outline-none font-bold h-4"
           autoFocus={isExpanded}
         />
         {isExpanded && value && (
           <button
             type="button"
             onClick={() => onChange('')}
-            className="text-slate-400 hover:text-slate-600 font-extrabold text-[10px] shrink-0 ml-1"
+            className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 font-extrabold text-[10px] shrink-0 ml-1"
           >
             ✕
           </button>
@@ -65,7 +65,7 @@ function InlineSectionSearch({
         className={`p-1.5 rounded-lg transition duration-200 ${
           isExpanded
             ? 'bg-rose-50 border border-rose-200 text-rose-500 hover:bg-rose-100/60'
-            : 'bg-slate-50 border border-slate-200/50 text-slate-500 hover:bg-accent-blue/10 hover:text-accent-blue'
+            : 'bg-slate-50 dark:bg-slate-800/60 border border-slate-200/50 text-slate-500 dark:text-slate-400 hover:bg-accent-blue/10 hover:text-accent-blue'
         }`}
         title={isExpanded ? "Close search" : "Search this section"}
       >
@@ -128,15 +128,15 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
   const totalItemsCount = baseProducts.length + baseBrands.length + baseCategories.length;
 
   return (
-    <div className="flex-1 bg-canvas flex flex-col overflow-hidden select-none font-sans text-slate-800">
+    <div className="flex-1 bg-canvas flex flex-col overflow-hidden select-none font-sans text-slate-800 dark:text-slate-200">
 
       {/* Header bar (styled like brands header with white background) */}
-      <div className="bg-white border-b border-slate-100 p-4 shrink-0">
-        <h2 className="font-extrabold text-sm text-slate-900 tracking-tight flex items-center gap-1.5">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-4 shrink-0">
+        <h2 className="font-extrabold text-sm text-slate-900 dark:text-slate-50 tracking-tight flex items-center gap-1.5">
           <Heart className="w-4 h-4 text-rose-500 fill-rose-500/10" />
           <span>My Shortlist</span>
         </h2>
-        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mt-0.5">
+        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider block mt-0.5">
           Everything you've saved — request quotes for all of it in one go
         </span>
       </div>
@@ -144,13 +144,13 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
       {/* Main scroll container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
         {totalItemsCount === 0 ? (
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center space-y-4 max-w-sm mx-auto shadow-sm mt-12">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-8 text-center space-y-4 max-w-sm mx-auto shadow-sm mt-12">
             <div className="w-12 h-12 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center mx-auto text-rose-500">
               <Heart className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-extrabold text-slate-800 text-sm">Your Shortlist is Empty</h3>
-              <p className="text-[10.5px] text-slate-400 leading-normal">
+              <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">Your Shortlist is Empty</h3>
+              <p className="text-[10.5px] text-slate-400 dark:text-slate-500 leading-normal">
                 Explore verified products & brands, then click the heart icon to save them here for consolidated price quotes.
               </p>
             </div>
@@ -167,8 +167,8 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
             {baseProducts.length > 0 && (
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Package className="w-3.5 h-3.5 text-slate-400" />
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                     <span>Shortlisted Products ({filteredProducts.length})</span>
                   </h3>
                   <InlineSectionSearch
@@ -181,19 +181,19 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
                 </div>
                 <div className="space-y-3">
                   {filteredProducts.length === 0 ? (
-                    <div className="text-slate-400 text-[10.5px] font-bold py-6 px-3 bg-white border border-slate-200/80 rounded-2xl text-center italic">
+                    <div className="text-slate-400 dark:text-slate-500 text-[10.5px] font-bold py-6 px-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl text-center italic">
                       No matching products in your shortlist
                     </div>
                   ) : (
                     filteredProducts.map((prod) => (
                     <div
                       key={prod.id}
-                      className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-xs hover:border-accent-blue/40 transition duration-200 flex"
+                      className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-xs hover:border-accent-blue/40 transition duration-200 flex"
                     >
                       {/* Image side */}
                       <Link
                         href={`/products/${prod.id}`}
-                        className="w-24 bg-slate-50 flex items-center justify-center p-2 shrink-0 border-r border-slate-100 relative cursor-pointer"
+                        className="w-24 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-center p-2 shrink-0 border-r border-slate-100 dark:border-slate-800 relative cursor-pointer"
                       >
                         <img
                           src={prod.image}
@@ -210,18 +210,18 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
                           <div className="flex justify-between items-start gap-2">
                             <Link
                               href={`/products/${prod.id}`}
-                              className="font-bold text-[11px] text-slate-900 leading-snug line-clamp-2 hover:text-accent-blue cursor-pointer"
+                              className="font-bold text-[11px] text-slate-900 dark:text-slate-50 leading-snug line-clamp-2 hover:text-accent-blue cursor-pointer"
                             >
                               {prod.name}
                             </Link>
                             <button
                               onClick={() => toggleShortlistProduct(prod.id)}
-                              className="text-slate-400 hover:text-rose-500 transition shrink-0 p-1 bg-slate-50 rounded"
+                              className="text-slate-400 dark:text-slate-500 hover:text-rose-500 transition shrink-0 p-1 bg-slate-50 dark:bg-slate-800/60 rounded"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <p className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider">
+                          <p className="text-[8.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                             By: {prod.brandName.split(' ')[0]}
                           </p>
                           <span className="text-xs font-black text-accent-blue block">
@@ -229,7 +229,7 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
                           </span>
                         </div>
 
-                        <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
+                        <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                           <button
                             onClick={() =>
                               openBuyLeadForm({
@@ -256,8 +256,8 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
             {baseBrands.length > 0 && (
               <div className="space-y-2.5 pt-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                     <span>Shortlisted Manufacturers ({filteredBrands.length})</span>
                   </h3>
                   <InlineSectionSearch
@@ -270,31 +270,31 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
                 </div>
                 <div className="space-y-3">
                   {filteredBrands.length === 0 ? (
-                    <div className="text-slate-400 text-[10.5px] font-bold py-6 px-3 bg-white border border-slate-200/80 rounded-2xl text-center italic">
+                    <div className="text-slate-400 dark:text-slate-500 text-[10.5px] font-bold py-6 px-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl text-center italic">
                       No matching manufacturers in your shortlist
                     </div>
                   ) : (
                     filteredBrands.map((brand) => (
                     <div
                       key={brand.id}
-                      className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-xs hover:border-accent-blue/40 transition duration-200 space-y-3"
+                      className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 shadow-xs hover:border-accent-blue/40 transition duration-200 space-y-3"
                     >
                       <div className="flex justify-between items-start gap-3">
                         <Link
                           href={`/brands/${brand.id}`}
                           className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0"
                         >
-                          <div className="w-9 h-9 bg-accent-blue/10 border border-accent-blue/20 rounded-xl flex items-center justify-center font-black text-accent-blue text-[10px] shrink-0 overflow-hidden p-0.5 bg-white">
+                          <div className="w-9 h-9 bg-accent-blue/10 border border-accent-blue/20 rounded-xl flex items-center justify-center font-black text-accent-blue text-[10px] shrink-0 overflow-hidden p-0.5 bg-white dark:bg-slate-900">
                             <BrandLogo logo={brand.logo} name={brand.name} />
                           </div>
                           <div className="min-w-0">
-                            <h4 className="font-extrabold text-[12px] text-slate-900 truncate flex items-center gap-1 leading-tight hover:text-accent-blue transition">
+                            <h4 className="font-extrabold text-[12px] text-slate-900 dark:text-slate-50 truncate flex items-center gap-1 leading-tight hover:text-accent-blue transition">
                               {brand.name}
                               {brand.verified && (
                                 <TrustBadge type="verified-supplier" who="IndiaMART" since={brand.verifiedSince} className="!px-1 !py-0" />
                               )}
                             </h4>
-                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-semibold mt-0.5">
+                            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
                               <span className="flex items-center gap-0.5 text-amber-500 font-extrabold">
                                 <Star className="w-2.5 h-2.5 fill-amber-500" /> {brand.rating}
                               </span>
@@ -306,13 +306,13 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
 
                         <button
                           onClick={() => toggleShortlistBrand(brand.id)}
-                          className="text-slate-400 hover:text-rose-500 transition shrink-0 p-1.5 bg-slate-50 rounded"
+                          className="text-slate-400 dark:text-slate-500 hover:text-rose-500 transition shrink-0 p-1.5 bg-slate-50 dark:bg-slate-800/60 rounded"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
-                      <div className="bg-slate-50 rounded-xl p-2.5 text-[10px] text-slate-600 leading-relaxed font-medium">
+                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-2.5 text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                         {brand.description}
                       </div>
 
@@ -347,8 +347,8 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
             {baseCategories.length > 0 && (
               <div className="space-y-2.5 pt-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-slate-400" />
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                     <span>Shortlisted Categories ({filteredCategories.length})</span>
                   </h3>
                   <InlineSectionSearch
@@ -361,14 +361,14 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
                 </div>
                 <div className="flex flex-col gap-2">
                   {filteredCategories.length === 0 ? (
-                    <div className="text-slate-400 text-[10.5px] font-bold py-6 px-3 bg-white border border-slate-200/80 rounded-2xl text-center italic">
+                    <div className="text-slate-400 dark:text-slate-500 text-[10.5px] font-bold py-6 px-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl text-center italic">
                       No matching categories in your shortlist
                     </div>
                   ) : (
                     filteredCategories.map((cat) => (
                     <div
                       key={cat.id}
-                      className="bg-white border border-slate-200/80 rounded-xl px-3.5 py-2.5 flex items-center justify-between shadow-xs hover:border-accent-blue/40 transition"
+                      className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 rounded-xl px-3.5 py-2.5 flex items-center justify-between shadow-xs hover:border-accent-blue/40 transition"
                     >
                       <Link
                         href={`/categories/${cat.id}`}
@@ -377,19 +377,19 @@ export default function ShortlistedView({ products, brands, categories }: Shortl
                         <div className="w-7 h-7 bg-accent-blue/10 rounded-lg flex items-center justify-center text-accent-blue shrink-0">
                           <CategoryIcon icon={cat.icon} />
                         </div>
-                        <span className="text-xs font-bold text-slate-800 truncate hover:text-accent-blue transition">{cat.name}</span>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate hover:text-accent-blue transition">{cat.name}</span>
                       </Link>
 
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => toggleShortlistCategory(cat.id)}
-                          className="text-slate-400 hover:text-rose-500 transition shrink-0 p-1.5 bg-slate-50 rounded"
+                          className="text-slate-400 dark:text-slate-500 hover:text-rose-500 transition shrink-0 p-1.5 bg-slate-50 dark:bg-slate-800/60 rounded"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                         <Link
                           href={`/categories/${cat.id}`}
-                          className="p-1.5 bg-slate-50 border border-slate-200 hover:border-accent-blue hover:text-accent-blue text-slate-500 rounded transition"
+                          className="p-1.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-accent-blue hover:text-accent-blue text-slate-500 dark:text-slate-400 rounded transition"
                         >
                           <ChevronRight className="w-3.5 h-3.5" />
                         </Link>

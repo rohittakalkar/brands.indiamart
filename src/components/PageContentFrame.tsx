@@ -2,14 +2,16 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
+import { floatingSearchBarHidden } from '../lib/searchBarVisibility';
 
-// Reserves top clearance for the collapsed MobileSearchBar — which hides itself on '/',
-// '/leads/success', and every category page (those carry their own inline header search
-// instead), so this padding must match that same condition exactly, or those pages end up
-// with dead space above their own header.
+// Reserves top clearance for the collapsed MobileSearchBar. Must use the exact same
+// condition as MobileSearchBar's own hide check (shared, not duplicated) — the two drifted
+// out of sync once already, when MobileSearchBar was updated to also hide on /products/*
+// but this component's own copy of the condition wasn't, leaving a blank reserved gap with
+// nothing left to clear on those pages.
 export default function PageContentFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showsSearchBar = pathname !== '/' && pathname !== '/leads/success' && !pathname.startsWith('/categories/');
+  const showsSearchBar = !floatingSearchBarHidden(pathname);
 
   return (
     <div

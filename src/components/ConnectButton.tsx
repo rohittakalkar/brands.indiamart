@@ -71,7 +71,7 @@ export function ConnectButton({ supplierId, brandName, className = '', compact =
             WhatsApp
           </a>
         </div>
-        <p className="text-[8px] text-slate-500 mt-1.5 leading-snug flex items-start gap-1">
+        <p className="text-[8px] text-slate-500 dark:text-slate-400 mt-1.5 leading-snug flex items-start gap-1">
           <ShieldCheck className="w-2.5 h-2.5 text-accent-green shrink-0 mt-0.5" />
           Routed via IndiaMART — {brandName.split(' ')[0]}&apos;s number stays private.
         </p>

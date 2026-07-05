@@ -63,9 +63,9 @@ export function TrustBadge({ type, who, since, detail = false, className = '' }:
           <Icon className={`w-3.5 h-3.5 ${def.iconClasses}`} />
         </span>
         <div className="min-w-0">
-          <span className="text-[11px] font-extrabold text-slate-900 block">{def.label}</span>
-          <span className="text-[9.5px] text-slate-500 font-medium leading-snug block">{def.what}</span>
-          <span className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wide block mt-0.5">
+          <span className="text-[11px] font-extrabold text-slate-900 dark:text-slate-50 block">{def.label}</span>
+          <span className="text-[9.5px] text-slate-500 dark:text-slate-400 font-medium leading-snug block">{def.what}</span>
+          <span className="text-[8.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide block mt-0.5">
             By {who}{since ? ` · Since ${since}` : ''}
           </span>
         </div>

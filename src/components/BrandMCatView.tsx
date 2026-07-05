@@ -2,7 +2,8 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, GitCompare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, GitCompare, Search } from 'lucide-react';
 import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { ConnectButton } from './ConnectButton';
@@ -11,6 +12,7 @@ import { AnimatedIcon } from './AnimatedIcon';
 import { useScrollChrome } from './ScrollChromeProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useShortlist } from './ShortlistProvider';
+import { useSearchHistory } from './SearchHistoryProvider';
 import { buildRfqRequirement } from '../lib/rfq';
 import { BackButton } from './BackButton';
 import { WhatsAppFloatingButton } from './WhatsAppFloatingButton';
@@ -44,10 +46,16 @@ const FAQ_TEMPLATE = (mcatName: string, brandName: string) => [
 ];
 
 export default function BrandMCatView({ brandMCat, brand, categoryName, products, suppliers, reviews, initialModelId }: BrandMCatViewProps) {
+  const router = useRouter();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { shortlistedProducts, toggleShortlistProduct } = useShortlist();
   const { navVisible } = useScrollChrome();
+  const { trackSearch } = useSearchHistory();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  // Inline in this page's own header rather than the floating MobileSearchBar (hidden on
+  // every /brands/* route) — same pattern as Category and Brand Hub pages.
+  const [headerSearchOpen, setHeaderSearchOpen] = useState(false);
+  const [headerSearchQuery, setHeaderSearchQuery] = useState('');
   // Prefer the buyer's carried-forward model selection; fall back to the first product
   // only when there's no prior context (e.g. a cold visit via search or direct link).
   const initialProductExists = initialModelId && products.some(p => p.id === initialModelId);
@@ -102,23 +110,62 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
     });
   };
 
+  const handleHeaderSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (headerSearchQuery.trim()) {
+      trackSearch(headerSearchQuery);
+      router.push(`/search?q=${encodeURIComponent(headerSearchQuery)}`);
+    }
+  };
+
   return (
     <div className="flex-1 bg-canvas flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="bg-surface border-b border-line px-4 md:px-8 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <BackButton fallbackHref={`/brands/${brand.id}`} title={`Back to ${brand.name}`} className="p-1.5 hover:bg-slate-100 rounded-full transition shrink-0" />
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-wider truncate">
-              <Link href={`/categories/${brandMCat.mcatId}`} className="hover:text-accent-blue">{categoryName}</Link>
-              <ChevronRight className="w-2.5 h-2.5 shrink-0" />
-              <Link href={`/brands/${brand.id}`} className="hover:text-accent-blue">{brand.name}</Link>
+      <div className="bg-surface border-b border-line px-4 md:px-8 py-3 flex items-center justify-between shrink-0 gap-1.5">
+        <BackButton fallbackHref={`/brands/${brand.id}`} title={`Back to ${brand.name}`} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition shrink-0" />
+        {headerSearchOpen ? (
+          <form onSubmit={handleHeaderSearchSubmit} className="flex-1 flex items-center gap-2 min-w-0">
+            <div className="relative flex-1 min-w-0">
+              <Search className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                autoFocus
+                type="text"
+                value={headerSearchQuery}
+                onChange={(e) => setHeaderSearchQuery(e.target.value)}
+                placeholder="Search products, brands, models…"
+                className="w-full bg-canvas border border-line rounded-full pl-8 pr-3 py-1.5 text-[11px] outline-none focus:border-accent-blue/50"
+              />
             </div>
-            {/* Page heading lives once, in the hero below — this is a compact sticky
-                restatement, not a second <h1>. */}
-            <p className="font-heading font-extrabold text-sm md:text-base text-primary tracking-tight truncate">{brandMCat.name}</p>
-          </div>
-        </div>
+            <button
+              type="button"
+              onClick={() => { setHeaderSearchOpen(false); setHeaderSearchQuery(''); }}
+              className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 shrink-0 px-1"
+            >
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider truncate">
+                <Link href={`/categories/${brandMCat.mcatId}`} className="hover:text-accent-blue">{categoryName}</Link>
+                <ChevronRight className="w-2.5 h-2.5 shrink-0" />
+                <Link href={`/brands/${brand.id}`} className="hover:text-accent-blue">{brand.name}</Link>
+              </div>
+              {/* Page heading lives once, in the hero below — this is a compact sticky
+                  restatement, not a second <h1>. */}
+              <p className="font-heading font-extrabold text-sm md:text-base text-heading tracking-tight truncate">{brandMCat.name}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHeaderSearchOpen(true)}
+              className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition shrink-0"
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* pb-24 clears the now-truly-fixed footer below (previously just a flow sibling that
@@ -178,10 +225,10 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
 
           {/* Applications */}
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-3">Popular Applications</h2>
+            <h2 className="font-heading font-bold text-sm text-heading mb-3">Popular Applications</h2>
             <div className="flex flex-wrap gap-2">
               {brandMCat.applications.map((app, idx) => (
-                <span key={idx} className="bg-surface border border-line rounded-full px-3 py-1.5 text-[11px] font-semibold text-slate-700">
+                <span key={idx} className="bg-surface border border-line rounded-full px-3 py-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                   {app}
                 </span>
               ))}
@@ -191,11 +238,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           {/* Model Picker */}
           <section>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-heading font-bold text-sm text-primary">Select a Model</h2>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{products.length} in this line</span>
+              <h2 className="font-heading font-bold text-sm text-heading">Select a Model</h2>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{products.length} in this line</span>
             </div>
             {products.length === 0 ? (
-              <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 text-xs">
+              <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
                 No models currently listed in this line. Send a requirement and we'll match you with {brand.name}.
               </div>
             ) : (
@@ -225,22 +272,22 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                       <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
                         <div>
                           <div className="flex items-start justify-between gap-2">
-                            <span className="font-bold text-[11px] text-slate-900 leading-snug line-clamp-2">
+                            <span className="font-bold text-[11px] text-slate-900 dark:text-slate-50 leading-snug line-clamp-2">
                               {prod.name}
                             </span>
                             <span
                               role="button"
                               onClick={(e) => { e.stopPropagation(); toggleShortlistProduct(prod.id); }}
-                              className={`shrink-0 text-[9px] font-black uppercase ${isSaved ? 'text-rose-500' : 'text-slate-300 hover:text-rose-500'}`}
+                              className={`shrink-0 text-[9px] font-black uppercase ${isSaved ? 'text-rose-500' : 'text-slate-300 dark:text-slate-600 hover:text-rose-500'}`}
                             >
                               ♥
                             </span>
                           </div>
-                          <p className="text-[9px] text-slate-400 font-mono mt-1">{prod.modelNumber}</p>
-                          <p className="text-[9px] text-slate-500 mt-0.5">{prod.keySpecLabel}: <strong className="text-slate-700">{prod.keySpecValue}</strong></p>
+                          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-mono mt-1">{prod.modelNumber}</p>
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">{prod.keySpecLabel}: <strong className="text-slate-700 dark:text-slate-300">{prod.keySpecValue}</strong></p>
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-line">
-                          <span className="text-[11px] font-black text-primary">{prod.priceRange.split(' - ')[0]}</span>
+                          <span className="text-[11px] font-black text-heading">{prod.priceRange.split(' - ')[0]}</span>
                           <Link href={`/products/${prod.id}`} onClick={(e) => e.stopPropagation()} className="text-[9px] font-bold text-accent-blue hover:underline">
                             Details →
                           </Link>
@@ -263,16 +310,16 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               single-model spec detail buyers may not scroll past. */}
           {products.length > 1 && (
             <section id="compare-models" className="scroll-mt-16">
-              <h2 className="font-heading font-bold text-sm text-primary mb-3">Compare Models in This Line</h2>
+              <h2 className="font-heading font-bold text-sm text-heading mb-3">Compare Models in This Line</h2>
               <div className="bg-surface border border-line rounded-2xl overflow-x-auto shadow-xs">
                 <table className="w-full text-left text-[11px] border-collapse min-w-[480px]">
                   <thead>
                     <tr className="bg-canvas">
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Model</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">{products[0].keySpecLabel}</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Price Range</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Delivery</th>
-                      <th className="px-3 py-2.5 font-bold text-slate-500 border-b border-line">Warranty</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Model</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">{products[0].keySpecLabel}</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Price Range</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Delivery</th>
+                      <th className="px-3 py-2.5 font-bold text-slate-500 dark:text-slate-400 border-b border-line">Warranty</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -281,16 +328,16 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                         key={prod.id}
                         onClick={() => setSelectedModelId(prod.id)}
                         className={`cursor-pointer transition ${
-                          selectedProduct?.id === prod.id ? 'bg-cta/10' : idx % 2 === 0 ? 'bg-white' : 'bg-canvas/50'
+                          selectedProduct?.id === prod.id ? 'bg-cta/10' : idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-canvas/50'
                         }`}
                       >
-                        <td className="px-3 py-2.5 font-mono text-primary font-bold border-b border-line whitespace-nowrap">
+                        <td className="px-3 py-2.5 font-mono text-heading font-bold border-b border-line whitespace-nowrap">
                           {prod.modelNumber}
                         </td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.keySpecValue}</td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.priceRange}</td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.deliveryTime}</td>
-                        <td className="px-3 py-2.5 text-slate-700 border-b border-line whitespace-nowrap">{prod.warranty}</td>
+                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.keySpecValue}</td>
+                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.priceRange}</td>
+                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.deliveryTime}</td>
+                        <td className="px-3 py-2.5 text-slate-700 dark:text-slate-300 border-b border-line whitespace-nowrap">{prod.warranty}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -302,37 +349,37 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           {/* Selected Model Detail — conversion centre: full spec + get-quotes context without leaving the page */}
           {selectedProduct && (
             <section>
-              <h2 className="font-heading font-bold text-sm text-primary mb-3">Specifications — {selectedProduct.modelNumber}</h2>
+              <h2 className="font-heading font-bold text-sm text-heading mb-3">Specifications — {selectedProduct.modelNumber}</h2>
               <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-16 h-16 bg-canvas rounded-xl border border-line flex items-center justify-center shrink-0 p-1.5">
                     <img src={selectedProduct.image} alt={selectedProduct.name} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" loading="lazy" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-xs text-slate-900 leading-snug">{selectedProduct.name}</h3>
-                    <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">{selectedProduct.description}</p>
+                    <h3 className="font-bold text-xs text-slate-900 dark:text-slate-50 leading-snug">{selectedProduct.name}</h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{selectedProduct.description}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {Object.entries(selectedProduct.specifications).map(([key, val]) => (
                     <div key={key} className="bg-canvas rounded-lg p-2 border border-line">
-                      <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wide block">{key}</span>
-                      <span className="text-[10.5px] font-bold text-slate-900">{val}</span>
+                      <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide block">{key}</span>
+                      <span className="text-[10.5px] font-bold text-slate-900 dark:text-slate-50">{val}</span>
                     </div>
                   ))}
                 </div>
                 <div className="grid grid-cols-3 gap-2 border-t border-line pt-3 text-center">
                   <div>
-                    <span className="text-[8px] text-slate-400 block font-bold uppercase">Price</span>
-                    <span className="text-[11px] font-black text-primary">{selectedProduct.priceRange}</span>
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase">Price</span>
+                    <span className="text-[11px] font-black text-heading">{selectedProduct.priceRange}</span>
                   </div>
                   <div className="border-x border-line">
-                    <span className="text-[8px] text-slate-400 block font-bold uppercase">Delivery</span>
-                    <span className="text-[11px] font-bold text-slate-900">{selectedProduct.deliveryTime}</span>
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase">Delivery</span>
+                    <span className="text-[11px] font-bold text-slate-900 dark:text-slate-50">{selectedProduct.deliveryTime}</span>
                   </div>
                   <div>
-                    <span className="text-[8px] text-slate-400 block font-bold uppercase">Warranty</span>
-                    <span className="text-[11px] font-bold text-slate-900">{selectedProduct.warranty}</span>
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase">Warranty</span>
+                    <span className="text-[11px] font-bold text-slate-900 dark:text-slate-50">{selectedProduct.warranty}</span>
                   </div>
                 </div>
               </div>
@@ -354,7 +401,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           {/* Verified Dealers */}
           <section id="verified-dealers" className="scroll-mt-16">
             <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-              <h2 className="font-heading font-bold text-sm text-primary">
+              <h2 className="font-heading font-bold text-sm text-heading">
                 Verified Dealers{!showAllModelsDealers && selectedProduct ? ` — ${selectedProduct.modelNumber}` : ''}
               </h2>
               {dealerLocations.length > 1 && (
@@ -362,7 +409,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                   <button
                     onClick={() => setSelectedLocation(null)}
                     className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${
-                      !selectedLocation ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 hover:border-accent-blue/40'
+                      !selectedLocation ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'
                     }`}
                   >
                     All Locations
@@ -372,7 +419,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                       key={loc}
                       onClick={() => setSelectedLocation(prev => prev === loc ? null : loc)}
                       className={`rounded-full px-2.5 py-1 text-[9.5px] font-bold border transition ${
-                        selectedLocation === loc ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 hover:border-accent-blue/40'
+                        selectedLocation === loc ? 'bg-primary text-white border-primary' : 'bg-canvas border-line text-slate-700 dark:text-slate-300 hover:border-accent-blue/40'
                       }`}
                     >
                       {loc}
@@ -382,7 +429,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               )}
             </div>
             {visibleDealers.length === 0 ? (
-              <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 text-xs space-y-2">
+              <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs space-y-2">
                 <p>
                   {!showAllModelsDealers && selectedProduct
                     ? `No dealer recorded for ${selectedProduct.modelNumber} in this location yet.`
@@ -400,9 +447,9 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                   <div key={supp.id} className="bg-surface border border-line rounded-2xl p-3.5 space-y-2.5 shadow-xs">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0">
-                        <h4 className="font-bold text-xs text-slate-900 leading-tight">{supp.name}</h4>
-                        <span className="text-[9px] text-slate-400 font-semibold flex items-center gap-1 mt-1">
-                          <MapPin className="w-3 h-3 text-slate-400" />
+                        <h4 className="font-bold text-xs text-slate-900 dark:text-slate-50 leading-tight">{supp.name}</h4>
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold flex items-center gap-1 mt-1">
+                          <MapPin className="w-3 h-3 text-slate-400 dark:text-slate-500" />
                           {supp.location}
                         </span>
                         <ConnectButton supplierId={supp.id} brandName={brand.name} />
@@ -412,19 +459,19 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                         {supp.isAuthorizedDealer && <TrustBadge type="authorized-dealer" who={brand.name} since={supp.authorizedSince} />}
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 border-t border-line pt-2 text-center text-[10px] text-slate-600 font-medium">
+                    <div className="grid grid-cols-3 gap-2 border-t border-line pt-2 text-center text-[10px] text-slate-600 dark:text-slate-400 font-medium">
                       <div>
-                        <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Rating</span>
-                        <span className="font-bold text-slate-900 flex items-center justify-center gap-0.5 mt-0.5"><Star className="w-3 h-3 fill-amber-400 text-amber-400" />{supp.rating}</span>
+                        <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase scale-90">Rating</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-50 flex items-center justify-center gap-0.5 mt-0.5"><Star className="w-3 h-3 fill-amber-400 text-amber-400" />{supp.rating}</span>
                       </div>
                       <div className="border-x border-line">
-                        <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Response</span>
-                        <span className="font-bold text-slate-900 block mt-0.5">{supp.responseTime}</span>
+                        <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase scale-90">Response</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-50 block mt-0.5">{supp.responseTime}</span>
                         <span className="text-[7.5px] text-accent-green font-bold block mt-0.5">{supp.responseRate}% reply rate</span>
                       </div>
                       <div>
-                        <span className="text-[8px] text-slate-400 block font-bold uppercase scale-90">Experience</span>
-                        <span className="font-bold text-slate-900 block mt-0.5">{supp.experienceYears} Yrs</span>
+                        <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase scale-90">Experience</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-50 block mt-0.5">{supp.experienceYears} Yrs</span>
                       </div>
                     </div>
                   </div>
@@ -443,10 +490,10 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                 <ShieldCheck className="w-4.5 h-4.5 text-accent-green" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11.5px] font-extrabold text-slate-900">
+                <p className="text-[11.5px] font-extrabold text-slate-900 dark:text-slate-50">
                   {selectedProduct ? `Ready to order the ${selectedProduct.modelNumber}?` : 'Ready to order?'}
                 </p>
-                <p className="text-[9.5px] text-slate-500 mt-0.5">Get quotes from every authorized dealer above in one request.</p>
+                <p className="text-[9.5px] text-slate-500 dark:text-slate-400 mt-0.5">Get quotes from every authorized dealer above in one request.</p>
               </div>
               <button
                 type="button"
@@ -469,8 +516,8 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                   <FileText className="w-5 h-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-extrabold text-slate-900 text-xs truncate">{brandMCat.name} Catalogue</h4>
-                  <span className="text-[9.5px] text-slate-400 font-semibold">PDF &middot; {brand.catalogueSizeMb} MB &middot; Updated {brand.catalogueUpdated}</span>
+                  <h4 className="font-extrabold text-slate-900 dark:text-slate-50 text-xs truncate">{brandMCat.name} Catalogue</h4>
+                  <span className="text-[9.5px] text-slate-400 dark:text-slate-500 font-semibold">PDF &middot; {brand.catalogueSizeMb} MB &middot; Updated {brand.catalogueUpdated}</span>
                 </div>
                 <Download className="w-4 h-4 text-accent-blue shrink-0" />
               </a>
@@ -480,46 +527,46 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           {/* Mid-scroll breadcrumb repetition — a buyer this far down a long page may have
               lost track of navigational context; the header trail above has long scrolled
               out of view (it lives in the non-sticky top bar, not a fixed chrome element). */}
-          <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
             <Link href={`/categories/${brandMCat.mcatId}`} className="hover:text-accent-blue">{categoryName}</Link>
             <ChevronRight className="w-2.5 h-2.5 shrink-0" />
             <Link href={`/brands/${brand.id}`} className="hover:text-accent-blue">{brand.name}</Link>
             <ChevronRight className="w-2.5 h-2.5 shrink-0" />
-            <span className="text-slate-600 normal-case truncate">{brandMCat.name}</span>
+            <span className="text-slate-600 dark:text-slate-400 normal-case truncate">{brandMCat.name}</span>
           </div>
 
           {/* Ratings & Reviews */}
           {reviews.length > 0 && (
             <section>
-              <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
+              <h2 className="font-heading font-bold text-sm text-heading mb-3 flex items-center gap-1.5">
                 <AnimatedIcon icon={ShieldCheck} variant="pulse" className="w-4 h-4 text-accent-green" />
                 Buyer Ratings &amp; Reviews
               </h2>
               <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs space-y-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl font-heading font-extrabold text-primary">{brand.rating}</span>
+                  <span className="text-2xl font-heading font-extrabold text-heading">{brand.rating}</span>
                   <div>
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} className={`w-3.5 h-3.5 ${i < Math.round(brand.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
                       ))}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-semibold">{brand.reviewsCount}+ reviews for {brand.name}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">{brand.reviewsCount}+ reviews for {brand.name}</span>
                   </div>
                 </div>
                 <div className="divide-y divide-line">
                   {reviews.map((rev) => (
                     <div key={rev.id} className="py-3 first:pt-0 last:pb-0 space-y-1">
                       <div className="flex justify-between items-start">
-                        <span className="font-bold text-[11px] text-slate-900">{rev.userName}</span>
+                        <span className="font-bold text-[11px] text-slate-900 dark:text-slate-50">{rev.userName}</span>
                         <div className="flex gap-0.5">
                           {[...Array(5)].map((_, i) => (
                             <Star key={i} className={`w-2.5 h-2.5 ${i < Math.floor(rev.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
                           ))}
                         </div>
                       </div>
-                      <span className="text-[9px] text-slate-400 font-semibold block">{rev.userRole}, {rev.companyName}</span>
-                      <p className="text-[10px] text-slate-600 leading-relaxed italic mt-1">"{rev.comment}"</p>
+                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold block">{rev.userRole}, {rev.companyName}</span>
+                      <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed italic mt-1">"{rev.comment}"</p>
                     </div>
                   ))}
                 </div>
@@ -529,7 +576,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
 
           {/* FAQs */}
           <section>
-            <h2 className="font-heading font-bold text-sm text-primary mb-3 flex items-center gap-1.5">
+            <h2 className="font-heading font-bold text-sm text-heading mb-3 flex items-center gap-1.5">
               <AnimatedIcon icon={HelpCircle} variant="pulse" className="w-4 h-4 text-accent-blue" />
               Frequently Asked Questions
             </h2>
@@ -540,11 +587,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                     onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                     className="w-full flex items-center justify-between px-4 py-3 text-left"
                   >
-                    <span className="text-[12px] font-bold text-slate-800">{faq.q}</span>
-                    <ChevronRight className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${openFaq === idx ? 'rotate-90' : ''}`} />
+                    <span className="text-[12px] font-bold text-slate-800 dark:text-slate-200">{faq.q}</span>
+                    <ChevronRight className={`w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 transition-transform ${openFaq === idx ? 'rotate-90' : ''}`} />
                   </button>
                   {openFaq === idx && (
-                    <p className="px-4 pb-3 text-[11px] text-slate-600 leading-relaxed">{faq.a}</p>
+                    <p className="px-4 pb-3 text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{faq.a}</p>
                   )}
                 </div>
               ))}
@@ -585,8 +632,8 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               short ("Compare"/"Quote") per the two-word CTA rule, but a buyer scrolled deep
               into a long model list shouldn't lose track of which model "Quote" refers to. */}
           {selectedProduct && (
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide mb-1.5 truncate">
-              Quoting <span className="text-slate-700">{selectedProduct.modelNumber}</span> · {selectedProduct.priceRange.split(' - ')[0]} onwards
+            <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-1.5 truncate">
+              Quoting <span className="text-slate-700 dark:text-slate-300">{selectedProduct.modelNumber}</span> · {selectedProduct.priceRange.split(' - ')[0]} onwards
             </p>
           )}
           <div className="flex items-center gap-2.5">
@@ -599,7 +646,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
             </a>
             <button
               onClick={handleGetQuotes}
-              className="shrink-0 px-4 py-3.5 bg-canvas hover:bg-line border border-line text-slate-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
+              className="shrink-0 px-4 py-3.5 bg-canvas hover:bg-line border border-line text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" />
               <span>Quote</span>

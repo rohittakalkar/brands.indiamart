@@ -8,6 +8,7 @@ import { useShortlist } from './ShortlistProvider';
 import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useQuoteBasket } from './QuoteBasketProvider';
 import { useSearchHistory } from './SearchHistoryProvider';
+import { ThemeToggle } from './ThemeToggle';
 
 const NAV_LINKS = [
   { href: '/categories', label: 'Categories', icon: Layers },
@@ -94,7 +95,7 @@ export default function DesktopNav() {
           >
             <FileText className="w-4.5 h-4.5" />
             {leadsCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-slate-300 text-primary text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-primary">
+              <span className="absolute -top-0.5 -right-0.5 bg-slate-300 text-heading text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-primary">
                 {leadsCount}
               </span>
             )}
@@ -118,6 +119,7 @@ export default function DesktopNav() {
           >
             <User className="w-4.5 h-4.5" />
           </Link>
+          <ThemeToggle className="text-white/70 hover:text-white hover:bg-white/5" />
           <button
             onClick={() => openBuyLeadForm({})}
             className="ml-2 flex items-center gap-1.5 bg-cta hover:bg-cta-hover text-white font-bold text-[13px] px-4 py-2 rounded-lg transition shadow-sm"

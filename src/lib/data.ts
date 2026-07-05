@@ -5866,6 +5866,56 @@ export const REVIEWS: Review[] = [
     rating: 4.5,
     comment: 'Atlas Copco\'s authorized service network responded within hours for an urgent breakdown. Genuine spares were available locally, which minimized our downtime.',
     date: '2026-06-02'
+  },
+  {
+    id: 'rev-apple-1',
+    brandId: 'apple',
+    userName: 'Aditya Rao',
+    userRole: 'IT Procurement Manager',
+    companyName: 'Cognizant Solutions, Bengaluru',
+    rating: 4.8,
+    comment: 'Ordered 120 units for our leadership rollout. Bulk invoicing was straightforward and the authorized dealer handled device enrollment for us at no extra cost.',
+    date: '2026-06-18'
+  },
+  {
+    id: 'rev-samsung-1',
+    brandId: 'samsung',
+    userName: 'Priya Nair',
+    userRole: 'Admin & HR Head',
+    companyName: 'Nair Logistics, Kochi',
+    rating: 4.6,
+    comment: 'Good mix of price points across the Galaxy range let us standardize on one brand for both field staff and management. Warranty claims have been hassle-free so far.',
+    date: '2026-06-05'
+  },
+  {
+    id: 'rev-xiaomi-1',
+    brandId: 'xiaomi',
+    userName: 'Karan Mehta',
+    userRole: 'Operations Head',
+    companyName: 'Mehta Retail Chain, Ahmedabad',
+    rating: 4.3,
+    comment: 'Best value for equipping our delivery staff — durable enough for daily field use and the per-unit cost let us cover the whole fleet within budget.',
+    date: '2026-05-28'
+  },
+  {
+    id: 'rev-oneplus-1',
+    brandId: 'oneplus',
+    userName: 'Sandeep Iyer',
+    userRole: 'IT Head',
+    companyName: 'Iyer Consulting Group, Chennai',
+    rating: 4.5,
+    comment: 'Battery life and build quality held up well for our consulting team who are on the road most of the week. Dealer support was responsive on our bulk order queries.',
+    date: '2026-06-12'
+  },
+  {
+    id: 'rev-google-1',
+    brandId: 'google',
+    userName: 'Neha Kapoor',
+    userRole: 'Facility Manager',
+    companyName: 'Kapoor Enterprises, Gurugram',
+    rating: 4.4,
+    comment: 'Chose Pixel for our compliance team given the clean software updates. Slightly higher cost than other options but fewer support tickets since deployment.',
+    date: '2026-05-20'
   }
 ];
 

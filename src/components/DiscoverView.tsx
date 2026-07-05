@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Search, ChevronRight, ChevronDown, Send, Phone, Clock, Package, BookOpen, TrendingUp, ShoppingBag, Layers, Award, Flame, ShieldCheck } from 'lucide-react';
-import { Brand, Product } from '../types';
+import { Search, ChevronRight, Send, Phone, Clock, Package, BookOpen, TrendingUp, ShoppingBag, Layers, Award, Flame, ShieldCheck, GitCompare, Star, Quote } from 'lucide-react';
+import { Brand, Product, Review } from '../types';
 import { Category } from '../services/categories';
 import type { CategoryFomoSummary, CatalogStats } from '../lib/data';
 import { BrandLogo } from './BrandLogo';
@@ -26,6 +26,7 @@ interface DiscoverViewProps {
   categories: Category[];
   categoryFomo: CategoryFomoSummary[];
   catalogStats: CatalogStats;
+  reviews: Review[];
 }
 
 const BADGE_TYPES: TrustBadgeType[] = ['verified-supplier', 'authorized-dealer', 'manufacturer-oem', 'certified-product'];
@@ -51,7 +52,7 @@ const PROBLEM_SOLUTIONS: { problem: string; mcatId: string }[] = [
   { problem: 'I need precise on-site measurements', mcatId: 'measuring-instruments' }
 ];
 
-export default function DiscoverView({ brands, products, categories, categoryFomo, catalogStats }: DiscoverViewProps) {
+export default function DiscoverView({ brands, products, categories, categoryFomo, catalogStats, reviews }: DiscoverViewProps) {
   const router = useRouter();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { items: basketItems } = useQuoteBasket();
@@ -63,8 +64,6 @@ export default function DiscoverView({ brands, products, categories, categoryFom
   // recommendations, live suggestions as you type) rather than expanding a dropdown in
   // place — matching a "search is its own place" pattern instead of an inline overlay.
   const goToSearch = () => router.push('/search');
-
-  const [trustBrandsOpen, setTrustBrandsOpen] = useState(false);
 
   const heroBrands = [...brands].sort((a, b) => b.rating - a.rating).slice(0, 10);
 
@@ -117,6 +116,16 @@ export default function DiscoverView({ brands, products, categories, categoryFom
   const popularBrands = [...brands].sort((a, b) => b.rating - a.rating).slice(0, 6);
   const trendingCategories = categories.slice(0, 5);
   const featuredProducts = products.slice(0, 8);
+
+  // Platform-wide social proof for the homepage — every review elsewhere in the app is
+  // scoped to one brand or category; this is the one place a buyer sees real testimonials
+  // spanning the whole catalog before they've picked a category, the trust-building beat
+  // real B2B homepages (IndiaMART's own included) lead with.
+  const brandById = new Map(brands.map(b => [b.id, b]));
+  const testimonials = [...reviews]
+    .filter(r => r.rating >= 4.5)
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 3);
 
   // Resolve each problem statement against the real catalog, so a stale mapping never
   // silently links to a category that doesn't exist.
@@ -264,44 +273,60 @@ export default function DiscoverView({ brands, products, categories, categoryFom
               );
             })}
           </motion.div>
-
-          {/* Why Trust Brands — lives in the hero now, directly below the brand logos;
-              collapsed by default so it costs nothing toward hero height until opened. */}
-          <div className="mt-3.5 text-left">
-            <button
-              type="button"
-              onClick={() => setTrustBrandsOpen(prev => !prev)}
-              className="w-full flex items-center justify-between bg-white/10 border border-white/15 rounded-xl px-3 py-2"
-              aria-expanded={trustBrandsOpen}
-            >
-              <span className="text-white text-[11px] font-bold">Why Trust Brands</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-white/70 transition-transform ${trustBrandsOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {trustBrandsOpen && (
-              <div className="mt-2 bg-white rounded-xl p-3 space-y-2.5">
-                <p className="text-[10px] text-slate-500">Every listing shows exactly what's been verified — who verified it, and when.</p>
-                <div className="grid grid-cols-1 gap-2">
-                  {BADGE_TYPES.map((type) => (
-                    <div key={type} className="bg-canvas border border-line rounded-lg p-2.5">
-                      <TrustBadge type={type} who="IndiaMART" detail />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </motion.div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 space-y-5">
+        {/* How It Works — a new buyer lands straight into content below with no orientation
+            to the actual process; this is the missing "what happens when I use this" beat
+            real B2B homepages open with (IndiaMART's own included), right after the search
+            a buyer just used. Three steps, each naming a real feature elsewhere in the app
+            (category/brand browse, the Compare tool, the Get Quotes RFQ flow) rather than
+            invented marketing steps. */}
+        <section>
+          <h2 className="font-heading font-bold text-sm text-heading">How It Works</h2>
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">From search to a quote in three steps.</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { icon: Search, label: 'Search & Browse', detail: 'Verified brands and models by category' },
+              { icon: GitCompare, label: 'Compare', detail: 'Specs, sellers and pricing side by side' },
+              { icon: Send, label: 'Get Quotes', detail: 'One request reaches every verified seller' }
+            ].map((step, idx) => (
+              <div key={idx} className="bg-surface border border-line rounded-xl p-2.5 text-center space-y-1.5">
+                <div className="w-8 h-8 mx-auto bg-accent-blue/10 text-accent-blue rounded-full flex items-center justify-center">
+                  <step.icon className="w-4 h-4" />
+                </div>
+                <p className="text-[9.5px] font-bold text-slate-900 dark:text-slate-50 leading-tight">{idx + 1}. {step.label}</p>
+                <p className="text-[8.5px] text-slate-500 dark:text-slate-400 leading-snug">{step.detail}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Why Trust Brands — promoted from a collapsed accordion buried in the hero into
+            its own always-visible section; real B2B homepages (IndiaMART's own included)
+            put trust pillars right after the hero, not hidden behind a tap. */}
+        <section>
+          <h2 className="font-heading font-bold text-sm text-heading">Why Trust Brands</h2>
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">Every listing shows exactly what's been verified — who verified it, and when.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {BADGE_TYPES.map((type) => (
+              <div key={type} className="bg-surface border border-line rounded-xl p-2.5">
+                <TrustBadge type={type} who="IndiaMART" detail />
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Category × Brand rail — real brand density per category, moved out of the hero
             band into normal body flow (shorter label, no longer competing for hero height);
             an honest "Standard Catalog" tag covers categories with no curated brands yet. */}
         <section>
-          <div className="flex items-center gap-1.5 mb-2.5">
+          <div className="flex items-center gap-1.5 mb-1">
             <AnimatedIcon icon={Flame} variant="flicker" className="w-3.5 h-3.5 text-cta shrink-0" />
             <h2 className="font-heading font-bold text-sm text-heading">Buyers Are Exploring</h2>
           </div>
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2.5">See what's popular before you browse the full catalog.</p>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
             {categoryFomo.map((cat) => (
               <Link
@@ -344,10 +369,11 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             the page before they've started browsing. */}
         {recentItems.length > 0 && (
           <section>
-            <h2 className="font-heading font-bold text-sm text-heading mb-2 flex items-center gap-1.5">
+            <h2 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
               <AnimatedIcon icon={Clock} variant="tick" className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               Recently Viewed
             </h2>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2 mt-0.5">Pick up where you left off.</p>
             <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-2.5">
               {recentItems.map((item, idx) => (
                 <Link
@@ -377,7 +403,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             not the product-category vocabulary to search for it */}
         {scoredProblems.length > 0 && (
           <section>
-            <h2 className="font-heading font-bold text-sm text-heading mb-2">Not Sure What You Need?</h2>
+            <h2 className="font-heading font-bold text-sm text-heading">Not Sure What You Need?</h2>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2 mt-0.5">Start from your problem, not a product name.</p>
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
               {scoredProblems.map((p) => (
                 <Link
@@ -398,10 +425,11 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Browse Categories */}
         <section>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between">
             <h2 className="font-heading font-bold text-sm text-heading">Browse Categories</h2>
             <Link href="/categories" className="text-[10px] font-bold text-accent-blue hover:text-heading transition">View All</Link>
           </div>
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2 mt-0.5">Or explore the full catalog yourself.</p>
           <div className="grid grid-cols-2 min-[420px]:grid-cols-3 md:grid-cols-5 gap-2.5">
             {categories.slice(0, 9).map((cat) => (
               <Link
@@ -418,24 +446,13 @@ export default function DiscoverView({ brands, products, categories, categoryFom
           </div>
         </section>
 
-        {/* One Primary CTA — compact chip, not a full banner */}
-        <div className="flex justify-center">
-          <button
-            onClick={() => openBuyLeadForm({})}
-            className="inline-flex items-center gap-2 bg-primary hover:bg-secondary rounded-full pl-3 pr-3.5 py-2 text-white shadow-sm transition cursor-pointer"
-          >
-            <Send className="w-3 h-3 text-cta shrink-0" />
-            <span className="font-heading font-bold text-[10.5px] tracking-tight whitespace-nowrap">Get Quotes From Verified Sellers</span>
-            <ChevronRight className="w-3 h-3 text-white/70 shrink-0" />
-          </button>
-        </div>
-
         {/* Trending Categories */}
         <section>
-          <h2 className="font-heading font-bold text-sm text-heading mb-2 flex items-center gap-1.5">
+          <h2 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
             <AnimatedIcon icon={TrendingUp} variant="bounce" className="w-4 h-4 text-accent-green" />
             Trending Categories
           </h2>
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2 mt-0.5">Where the most buyer activity is right now.</p>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {trendingCategories.map((cat) => (
               <Link
@@ -451,10 +468,11 @@ export default function DiscoverView({ brands, products, categories, categoryFom
 
         {/* Popular Brands */}
         <section>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between">
             <h2 className="font-heading font-bold text-sm text-heading">Popular Brands</h2>
             <Link href="/brands" className="text-[10px] font-bold text-accent-blue hover:text-heading transition">View All</Link>
           </div>
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2 mt-0.5">The highest-rated manufacturers on the platform.</p>
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
             {popularBrands.map((brand) => (
               <Link
@@ -475,7 +493,8 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             rather than a vertically-stacked list; card width is tuned so ~1.5 columns show
             by default, an explicit hint that more is reachable with a swipe. */}
         <section>
-          <h2 className="font-heading font-bold text-sm text-heading mb-2">Featured Models</h2>
+          <h2 className="font-heading font-bold text-sm text-heading">Featured Models</h2>
+          <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2 mt-0.5">Specific models worth a closer look, from those brands.</p>
           <div
             className="grid grid-flow-col grid-rows-2 gap-3 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 md:mx-0 md:px-0"
             style={{ gridAutoColumns: 'minmax(200px, 66%)' }}
@@ -540,8 +559,39 @@ export default function DiscoverView({ brands, products, categories, categoryFom
           </div>
         </section>
 
+        {/* What Buyers Say — platform-wide testimonials (see the testimonials computation
+            above), the trust-building beat that follows seeing real brands/models and
+            precedes the final decision-support content below. Every other review section
+            in the app is scoped to one brand or category; this is the only place a buyer
+            sees proof spanning the whole catalog. */}
+        {testimonials.length > 0 && (
+          <section>
+            <h2 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
+              <Quote className="w-4 h-4 text-accent-green" />
+              What Buyers Say
+            </h2>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-2.5 mt-0.5">Real feedback from buyers who've already purchased.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+              {testimonials.map((rev) => (
+                <div key={rev.id} className="bg-surface border border-line rounded-xl p-3 space-y-1.5">
+                  <div className="flex gap-0.5">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`w-2.5 h-2.5 ${i < Math.round(rev.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-relaxed italic">&ldquo;{rev.comment}&rdquo;</p>
+                  <div>
+                    <span className="text-[9.5px] font-bold text-slate-900 dark:text-slate-50 block">{rev.userName}</span>
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500 font-semibold">{rev.userRole} · {brandById.get(rev.brandId)?.name.split(' ')[0]}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Buying Guides */}
-        <section className="pb-4">
+        <section>
           <h2 className="font-heading font-bold text-sm text-heading mb-2 flex items-center gap-1.5">
             <AnimatedIcon icon={BookOpen} variant="flip" className="w-4 h-4 text-accent-purple" />
             Buying Guides
@@ -555,6 +605,21 @@ export default function DiscoverView({ brands, products, categories, categoryFom
             ))}
           </div>
         </section>
+
+        {/* Final CTA — moved from its old position in the middle of the page (before the
+            buyer had even seen brands or products) to the actual end of the story: after
+            browsing, comparing, seeing trust signals and other buyers' proof, this is the
+            "ready to act" close, not a premature ask. */}
+        <div className="flex justify-center pb-4">
+          <button
+            onClick={() => openBuyLeadForm({})}
+            className="inline-flex items-center gap-2 bg-primary hover:bg-secondary rounded-full pl-3 pr-3.5 py-2 text-white shadow-sm transition cursor-pointer"
+          >
+            <Send className="w-3 h-3 text-cta shrink-0" />
+            <span className="font-heading font-bold text-[10.5px] tracking-tight whitespace-nowrap">Get Quotes From Verified Sellers</span>
+            <ChevronRight className="w-3 h-3 text-white/70 shrink-0" />
+          </button>
+        </div>
       </div>
     </div>
   );

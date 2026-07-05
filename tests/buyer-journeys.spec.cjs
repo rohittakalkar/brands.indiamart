@@ -117,11 +117,12 @@ function assert(cond, msg) {
 
   await record('CF-03', 'Brand filter narrows the model list', async () => {
     await page.goto(BASE_URL + '/categories/industrial-pumps');
-    // Refine Results is now a bottom sheet triggered by the header's filter icon (moved
-    // there so search + filter sit inline with the breadcrumb, not as inline page content).
-    await page.locator('button[aria-label="Filters"]').click();
-    await page.waitForSelector('text=Filter by Brand', { timeout: 10000 });
+    // Refine Results is always-visible inline chips now (not a bottom sheet) — matches the
+    // Brand-MCat page's filter pattern for consistency across the app.
+    await page.waitForSelector('text=Refine Results', { timeout: 10000 });
     const before = await page.locator('text=Top Model From Each Brand').locator('xpath=following::a[contains(@href,"/products/")]').count();
+    // The Refine Results brand chip is the first "Kirloskar" match in DOM order (it sits
+    // above the brand cards/comparison picker, which also mention brand names).
     await page.locator('button:has-text("Kirloskar")').first().click();
     await page.waitForTimeout(400);
     const after = await page.locator('text=Top Model From Each Brand').locator('xpath=following::a[contains(@href,"/products/")]').count();
@@ -130,25 +131,25 @@ function assert(cond, msg) {
 
   await record('CF-06', 'Clearing filters restores the full list', async () => {
     await page.goto(BASE_URL + '/categories/industrial-pumps');
-    await page.locator('button[aria-label="Filters"]').click();
-    await page.waitForSelector('text=Filter by Brand', { timeout: 10000 });
+    await page.waitForSelector('text=Refine Results', { timeout: 10000 });
     await page.locator('button:has-text("Kirloskar")').first().click();
     await page.waitForTimeout(300);
-    // "Clear" sits in the sheet's footer action row, next to "Show N Brands".
-    await page.locator('button:has-text("Clear")').click();
+    // "Clear all" is the inline reset link, shown only while a filter is active.
+    await page.locator('button:has-text("Clear all")').click();
     await page.waitForTimeout(300);
-    assert(await page.locator('button:has-text("Clear")').count() === 0, 'Clear button still shown after clearing');
+    assert(await page.locator('button:has-text("Clear all")').count() === 0, 'Clear all link still shown after clearing');
   });
 
-  await record('CF-08', 'Primary CTA is Compare Brands, linking into scoped Compare', async () => {
+  await record('CF-08', 'Primary CTA is Compare Brands, linking into the on-page comparison', async () => {
     await page.goto(BASE_URL + '/categories/diesel-generators');
-    // Exact-text match — a "⇄ Compare Brands" feature-teaser chip (anchor-jumps to the
-    // in-page comparison table) also contains this substring, distinct from the sticky
+    // Comparison now lives inline on this page (pick-to-compare cards) rather than linking
+    // out to /compare — the sticky footer's primary CTA jumps to that section instead.
+    // Exact-text match — a jump-nav "Compare" pill also exists, distinct from the sticky
     // footer's actual navigation CTA this test targets.
     const link = page.getByRole('link', { name: 'Compare Brands', exact: true });
     assert(await link.count() > 0, 'Compare Brands CTA not found');
     const href = await link.getAttribute('href');
-    assert(href.includes('category=diesel-generators'), `unexpected href: ${href}`);
+    assert(href === '#brand-comparison', `unexpected href: ${href}`);
   });
 
   await record('CF-09', 'Brand card navigates to Brand Hub', async () => {
@@ -175,29 +176,29 @@ function assert(cond, msg) {
     await page.waitForSelector('text=Kirloskar Brothers Limited', { timeout: 10000 });
   });
 
-  await record('BF-02', 'Products sub-tab switches tab without navigation', async () => {
+  await record('BF-02', 'Jump-nav pill scrolls to a section without navigating away', async () => {
+    // Brand Hub is now a single continuous scroll with a fixed jump-nav (Products/About/
+    // Why Choose/Sellers/Trust/Reviews) instead of a tab-switcher — every section is
+    // already in the DOM, so "switching" is a scroll + hash update, not a navigation.
     await page.goto(BASE_URL + '/brands/kirloskar');
-    const before = page.url();
-    // "Explore Products by Category" (a navigation-flavored sticky CTA) was replaced with
-    // Get Quotes + Compare Sellers, both real conversion actions — the Products sub-tab
-    // itself (always present in the tab bar) is the direct way to reach this content now.
-    await page.locator('button:has-text("Products (")').click();
-    await page.waitForSelector('text=Product Lines', { timeout: 5000 });
-    assert(page.url() === before, 'unexpected navigation on tab switch');
+    const beforePath = new URL(page.url()).pathname;
+    await page.locator('nav a[href="#about"]').click();
+    await page.waitForTimeout(400);
+    assert(new URL(page.url()).pathname === beforePath, 'unexpected navigation on jump-nav click');
+    assert(await page.locator('#about').isVisible(), 'About section not scrolled into view');
   });
 
-  await record('BF-03', 'All product lines listed under Products tab', async () => {
+  await record('BF-03', 'All product lines listed under Products', async () => {
+    // No tab click needed — Product Lines are always in the DOM now.
     await page.goto(BASE_URL + '/brands/kirloskar');
-    await page.locator('button:has-text("Products (")').click();
-    await page.waitForSelector('text=Kirloskar Diesel Generators', { timeout: 5000 });
+    await page.waitForSelector('text=Product Lines', { timeout: 10000 });
     assert(await page.locator('text=Kirloskar Pumps').count() > 0, 'Kirloskar Pumps line missing');
     assert(await page.locator('text=Kirloskar Valves').count() > 0, 'Kirloskar Valves line missing');
   });
 
   await record('BF-04', 'Dealer network and service network are distinct sections', async () => {
     await page.goto(BASE_URL + '/brands/kirloskar');
-    await page.locator('button:has-text("Sellers")').click();
-    await page.waitForSelector('text=Dealer Network', { timeout: 5000 });
+    await page.waitForSelector('text=Sellers & Dealer Network', { timeout: 10000 });
     assert(await page.locator('text=Service Network').count() > 0, 'Service Network section missing');
   });
 

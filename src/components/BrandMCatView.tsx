@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, GitCompare, Search, Layers, Package, ListChecks, ArrowUpDown } from 'lucide-react';
-import { BrandMCat, Brand, Product, Supplier, Review } from '../types';
+import { Star, MapPin, Send, ChevronRight, HelpCircle, ShieldCheck, Check, Download, FileText, GitCompare, Search, Layers, Package, ListChecks, ArrowUpDown, Scale } from 'lucide-react';
+import { BrandMCat, Brand, Product, Supplier, Review, AlternativeProduct } from '../types';
 import { TrustBadge } from './TrustBadge';
 import { ConnectButton } from './ConnectButton';
 import { NearbyOptionsEngine } from './NearbyOptionsEngine';
@@ -25,6 +25,10 @@ interface BrandMCatViewProps {
   products: Product[];
   suppliers: Supplier[];
   reviews: Review[];
+  // Cross-brand "Compare Alternatives", keyed per model — same data/pattern as the product
+  // page's own Compare Alternatives section, just looked up client-side by whichever model
+  // is currently selected instead of being fixed to one product.
+  alternativesByProduct: Record<string, AlternativeProduct[]>;
   // Carried forward from a category-page spec filter or the Brand Hub's "Continue with..."
   // link (via ?model=) — preselects the buyer's actual model instead of defaulting to
   // whichever product happens to sit first in the underlying array.
@@ -46,7 +50,7 @@ const FAQ_TEMPLATE = (mcatName: string, brandName: string) => [
   }
 ];
 
-export default function BrandMCatView({ brandMCat, brand, categoryName, products, suppliers, reviews, initialModelId }: BrandMCatViewProps) {
+export default function BrandMCatView({ brandMCat, brand, categoryName, products, suppliers, reviews, alternativesByProduct, initialModelId }: BrandMCatViewProps) {
   const router = useRouter();
   const { open: openBuyLeadForm } = useBuyLeadModal();
   const { shortlistedProducts, toggleShortlistProduct } = useShortlist();
@@ -155,6 +159,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
     [products, selectedModelId]
   );
 
+  // Same pattern as the product page's own Compare Alternatives — was completely missing
+  // here, so a buyer weighing this line against other manufacturers had no way to do it
+  // without leaving the page for each competing product individually.
+  const currentAlternatives = selectedProduct ? (alternativesByProduct[selectedProduct.id] || []) : [];
+
   // If an active filter drops the currently-selected model out of view, fall back to the
   // first model still visible rather than leaving Specifications showing a filtered-out
   // model the buyer can no longer see or tap on above.
@@ -185,6 +194,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
     { id: 'specifications', label: 'Specs', icon: ListChecks, show: !!selectedProduct },
     { id: 'compare-models', label: 'Compare', icon: GitCompare, show: filteredProducts.length > 1 },
     { id: 'nearby-options', label: 'Nearby', icon: ArrowUpDown, show: !!selectedProduct && products.length > 1 },
+    { id: 'compare-alternatives', label: 'Alternatives', icon: Scale, show: currentAlternatives.length > 0 },
     { id: 'verified-dealers', label: 'Dealers', icon: MapPin, show: true },
     { id: 'reviews', label: 'Reviews', icon: Star, show: reviews.length > 0 },
     { id: 'faq', label: 'FAQ', icon: HelpCircle, show: true },
@@ -260,6 +270,24 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
       productName: `${prod.name} (${prod.modelNumber})`,
       brandName: brand.name,
       requirement: buildRfqRequirement(prod)
+    });
+  };
+
+  const handleCompareAlternative = (alt: AlternativeProduct) => {
+    if (!selectedProduct) return;
+    openBuyLeadForm({
+      productName: `${selectedProduct.name} (comparing against ${alt.brandName} ${alt.modelNumber})`,
+      brandName: brand.name,
+      requirement: `Evaluating ${brand.name} ${selectedProduct.modelNumber} against ${alt.brandName} ${alt.modelNumber} (${alt.keySpecLabel}: ${alt.keySpecValue}, ${alt.priceRange}). Please share a competitive quote and help me understand how ${brand.name}'s offering compares.`
+    });
+  };
+
+  const handleDealerQuote = (supplierName: string) => {
+    if (!selectedProduct) { handleGetQuotes(); return; }
+    openBuyLeadForm({
+      productName: `${selectedProduct.name} (${selectedProduct.modelNumber})`,
+      brandName: brand.name,
+      requirement: `${buildRfqRequirement(selectedProduct)} Requesting this specifically from ${supplierName}.`
     });
   };
 
@@ -412,7 +440,8 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 space-y-8">
           {/* Applications */}
           <section id="applications" className="scroll-mt-[120px]">
-            <h2 className="font-heading font-bold text-sm text-heading mb-3">Popular Applications</h2>
+            <h2 className="font-heading font-bold text-sm text-heading">Popular Applications</h2>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">What {brandMCat.name} is built for.</p>
             <div className="flex flex-wrap gap-2">
               {brandMCat.applications.map((app, idx) => (
                 <span key={idx} className="bg-surface border border-line rounded-full px-3 py-1.5 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
@@ -424,10 +453,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
 
           {/* Model Picker */}
           <section id="select-model" className="scroll-mt-[120px]">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between">
               <h2 className="font-heading font-bold text-sm text-heading">Select a Model</h2>
               <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{filteredProducts.length} of {products.length}</span>
             </div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">Now find the model that fits the applications above.</p>
             {/* Filter chips — only rendered when there's enough spread in this line's data to
                 make filtering meaningful (see makeBuckets); a 3-model line just shows all 3,
                 no filter UI needed. Both filters compose (spec AND price) and share the same
@@ -554,7 +584,8 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               before it. */}
           {selectedProduct && (
             <section id="specifications" className="scroll-mt-[120px]">
-              <h2 className="font-heading font-bold text-sm text-heading mb-3">Specifications — {selectedProduct.modelNumber}</h2>
+              <h2 className="font-heading font-bold text-sm text-heading">Specifications — {selectedProduct.modelNumber}</h2>
+              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">The exact details for the model you just picked.</p>
               <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-16 h-16 bg-canvas rounded-xl border border-line flex items-center justify-center shrink-0 p-1.5">
@@ -563,6 +594,15 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                   <div className="min-w-0">
                     <h3 className="font-bold text-xs text-slate-900 dark:text-slate-50 leading-snug">{selectedProduct.name}</h3>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{selectedProduct.description}</p>
+                    {/* Certified Product — same TrustBadge convention already used on the
+                        individual product page; was missing here, so a buyer comparing
+                        models on this page had no way to see certification status without
+                        clicking into each one individually. */}
+                    {selectedProduct.certifications && selectedProduct.certifications.length > 0 && (
+                      <div className="mt-1.5">
+                        <TrustBadge type="certified-product" who={selectedProduct.certifiedBy || brand.name} since={selectedProduct.certifiedYear} />
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -573,16 +613,35 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-3 gap-2 border-t border-line pt-3 text-center">
-                  <div>
+                {/* Key Features — was real data (product.features) sitting completely
+                    unused on this page; a buyer had to click through to the product page
+                    to see what actually distinguishes this model beyond the numeric specs. */}
+                {selectedProduct.features.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 border-t border-line pt-3">
+                    {selectedProduct.features.map((feature, idx) => (
+                      <span key={idx} className="bg-accent-blue/5 border border-accent-blue/15 text-accent-blue rounded-full px-2.5 py-1 text-[9.5px] font-bold">
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {/* MOQ added alongside Price/Delivery/Warranty — real data (product.moq)
+                    that was missing from this page entirely; for a B2B bulk buyer, minimum
+                    order quantity is as decision-relevant as the price itself. */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border-t border-line pt-3 text-center">
+                  <div className="bg-canvas rounded-lg p-2 border border-line">
                     <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase">Price</span>
                     <span className="text-[11px] font-black text-heading">{selectedProduct.priceRange}</span>
                   </div>
-                  <div className="border-x border-line">
+                  <div className="bg-canvas rounded-lg p-2 border border-line">
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase">MOQ</span>
+                    <span className="text-[11px] font-bold text-slate-900 dark:text-slate-50">{selectedProduct.moq}</span>
+                  </div>
+                  <div className="bg-canvas rounded-lg p-2 border border-line">
                     <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase">Delivery</span>
                     <span className="text-[11px] font-bold text-slate-900 dark:text-slate-50">{selectedProduct.deliveryTime}</span>
                   </div>
-                  <div>
+                  <div className="bg-canvas rounded-lg p-2 border border-line">
                     <span className="text-[8px] text-slate-400 dark:text-slate-500 block font-bold uppercase">Warranty</span>
                     <span className="text-[11px] font-bold text-slate-900 dark:text-slate-50">{selectedProduct.warranty}</span>
                   </div>
@@ -604,10 +663,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
               the picker above, so an active filter narrows both consistently. */}
           {filteredProducts.length > 1 && (
             <section id="compare-models" className="scroll-mt-[120px]">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <h2 className="font-heading font-bold text-sm text-heading">Compare Models in This Line</h2>
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">{filteredProducts.length} models</span>
               </div>
+              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">Still deciding? Weigh it against the rest of the line.</p>
               <div className="bg-surface border border-line rounded-2xl overflow-hidden shadow-xs divide-y divide-line">
                 {(showAllCompareModels || filteredProducts.length <= 6
                   ? filteredProducts
@@ -665,9 +725,49 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
             </div>
           )}
 
+          {/* Compare Alternatives from Other Brands — same section/data pattern as the
+              product page, missing here entirely before: a buyer who'd exhausted same-line
+              options above (Nearby Options) had no way to see how this line stacks up
+              against other manufacturers without leaving the page. Scoped to whichever
+              model is currently selected, same as Specifications above it. */}
+          {selectedProduct && currentAlternatives.length > 0 && (
+            <div id="compare-alternatives" className="scroll-mt-[120px] bg-accent-blue/10 border border-accent-blue/25 rounded-2xl p-4 space-y-3 shadow-xs">
+              <div>
+                <h2 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
+                  <Scale className="w-4 h-4 text-accent-blue" />
+                  Compare Alternatives from Other Brands
+                </h2>
+                <p className="text-[10.5px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                  Similar products from other manufacturers, for reference — not sellers of this exact item. Tap one to request a comparable quote from {brand.name.split(' ')[0]}.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {currentAlternatives.map((alt) => (
+                  <button
+                    key={alt.id}
+                    onClick={() => handleCompareAlternative(alt)}
+                    className="text-left bg-surface border border-line hover:border-accent-blue/50 hover:shadow-sm rounded-xl p-2.5 space-y-1 transition cursor-pointer"
+                    title={`Request a comparable quote against ${alt.brandName} ${alt.modelNumber}`}
+                  >
+                    <span className="text-[10px] font-extrabold text-slate-900 dark:text-slate-50 block truncate">{alt.brandName}</span>
+                    <span className="text-[9px] text-slate-500 dark:text-slate-400 font-semibold block truncate">{alt.modelNumber}</span>
+                    <span className="text-[8.5px] text-slate-400 dark:text-slate-500 block">{alt.keySpecLabel}: {alt.keySpecValue}</span>
+                    <span className="text-[10px] font-black text-accent-blue block">{alt.priceRange}</span>
+                  </button>
+                ))}
+              </div>
+              <Link
+                href={`/compare?productId=${selectedProduct.id}`}
+                className="block w-full text-center px-4 py-2 bg-cta hover:bg-cta-hover text-white font-bold rounded-xl text-[11px] transition shadow-xs"
+              >
+                Compare Offers
+              </Link>
+            </div>
+          )}
+
           {/* Verified Dealers */}
           <section id="verified-dealers" className="scroll-mt-[120px]">
-            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <h2 className="font-heading font-bold text-sm text-heading">
                 Verified Dealers{!showAllModelsDealers && selectedProduct ? ` — ${selectedProduct.modelNumber}` : ''}
               </h2>
@@ -695,6 +795,7 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                 </div>
               )}
             </div>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">Settled on a model? Here's who actually sells it.</p>
             {visibleDealers.length === 0 ? (
               <div className="bg-surface border border-line rounded-2xl p-6 text-center text-slate-400 dark:text-slate-500 text-xs space-y-2">
                 <p>
@@ -741,6 +842,17 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
                         <span className="font-bold text-slate-900 dark:text-slate-50 block mt-0.5">{supp.experienceYears} Yrs</span>
                       </div>
                     </div>
+                    {/* Per-seller Get Quote — was missing here (only the generic page-level
+                        "Get Quotes" existed, not scoped to a specific named seller); matches
+                        the product page's "Get Quote From This Seller" convention on its own
+                        Sellers tab. */}
+                    <button
+                      onClick={() => handleDealerQuote(supp.name)}
+                      className="w-full py-1.5 bg-cta hover:bg-cta-hover text-white rounded-lg text-[10px] font-bold flex items-center justify-center gap-1.5 transition"
+                    >
+                      <Send className="w-3 h-3" />
+                      Get Quote From This Seller
+                    </button>
                   </div>
                 ))}
               </div>
@@ -805,10 +917,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
           {/* Ratings & Reviews */}
           {reviews.length > 0 && (
             <section id="reviews" className="scroll-mt-[120px]">
-              <h2 className="font-heading font-bold text-sm text-heading mb-3 flex items-center gap-1.5">
+              <h2 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
                 <AnimatedIcon icon={ShieldCheck} variant="pulse" className="w-4 h-4 text-accent-green" />
                 Buyer Ratings &amp; Reviews
               </h2>
+              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">Hear from buyers who've already purchased this line.</p>
               <div className="bg-surface border border-line rounded-2xl p-4 shadow-xs space-y-4">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl font-heading font-extrabold text-heading">{brand.rating}</span>
@@ -843,10 +956,11 @@ export default function BrandMCatView({ brandMCat, brand, categoryName, products
 
           {/* FAQs */}
           <section id="faq" className="scroll-mt-[120px]">
-            <h2 className="font-heading font-bold text-sm text-heading mb-3 flex items-center gap-1.5">
+            <h2 className="font-heading font-bold text-sm text-heading flex items-center gap-1.5">
               <AnimatedIcon icon={HelpCircle} variant="pulse" className="w-4 h-4 text-accent-blue" />
               Frequently Asked Questions
             </h2>
+            <p className="text-[10.5px] text-slate-500 dark:text-slate-400 mb-3 mt-0.5">Still have questions?</p>
             <div className="space-y-2">
               {faqs.map((faq, idx) => (
                 <div key={idx} className="bg-surface border border-line rounded-xl overflow-hidden">

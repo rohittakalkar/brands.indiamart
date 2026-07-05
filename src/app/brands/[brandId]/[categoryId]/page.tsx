@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import BrandMCatView from '@/components/BrandMCatView';
-import { getBrandById, getBrandMCats, getProducts, getSuppliers, getMcatById, getReviews } from '@/lib/data';
+import { getBrandById, getBrandMCats, getProducts, getSuppliers, getMcatById, getReviews, getAlternativeProducts } from '@/lib/data';
+import type { AlternativeProduct } from '@/types';
 
 type PageProps = {
   params: Promise<{ brandId: string; categoryId: string }>;
@@ -36,6 +37,16 @@ export default async function Page({ params, searchParams }: PageProps) {
   const productIds = new Set(products.map(p => p.id));
   const suppliers = getSuppliers({ brandId }).filter(s => s.productId && productIds.has(s.productId));
 
+  // Cross-brand "Compare Alternatives" (same pattern as the product page) keyed per model,
+  // since the buyer can switch which model is selected client-side — fetching per-product
+  // here and looking up by whichever is currently selected is simpler than re-fetching on
+  // every selection change.
+  const alternativesByProduct: Record<string, AlternativeProduct[]> = {};
+  for (const p of products) {
+    const alts = getAlternativeProducts(p.id);
+    if (alts.length > 0) alternativesByProduct[p.id] = alts;
+  }
+
   return (
     <BrandMCatView
       brandMCat={brandMCat}
@@ -44,6 +55,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       products={products}
       suppliers={suppliers}
       reviews={getReviews({ brandId: brand.id })}
+      alternativesByProduct={alternativesByProduct}
       initialModelId={model}
     />
   );

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Send, AlertCircle, Sparkles } from 'lucide-react';
 import { BuyLead } from '../types';
 import { useScrollChrome } from './ScrollChromeProvider';
+import { useBackToClose } from '../lib/useBackToClose';
 
 interface BuyLeadFormModalProps {
   isOpen: boolean;
@@ -38,6 +39,18 @@ export default function BuyLeadFormModal({ isOpen, onClose, onSubmit, initialDat
     setFrozen(isOpen);
     return () => setFrozen(false);
   }, [isOpen, setFrozen]);
+
+  // Pressing back while this is open used to silently navigate the page underneath while
+  // the modal stayed stuck on screen. Now it's trapped: back shows a confirmation (naming
+  // what's about to be lost when there's real entered data) before actually closing.
+  const hasEnteredData = productName.trim().length > 0 || requirement.trim().length > 0;
+  useBackToClose(
+    isOpen,
+    onClose,
+    hasEnteredData
+      ? `Leave this form? The requirement details you've entered${productName ? ` for "${productName}"` : ''} will be lost.`
+      : 'Leave this form?'
+  );
 
   if (!isOpen) return null;
 

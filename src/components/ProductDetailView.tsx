@@ -98,8 +98,11 @@ export default function ProductDetailView({ product, brand, category, brandMCat,
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-800/60 flex flex-col">
-      {/* Product Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-3.5 py-2.5 flex items-center justify-between sticky top-0 z-10 shrink-0">
+      {/* Product Header — the breadcrumb trail lives inside this same padded row (not a
+          separate section below with its own margin/padding), same convention as the
+          Brand-MCat header: one unified block sharing one left edge, instead of two rows
+          that drift out of alignment against each other. */}
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-4 py-2.5 flex items-center justify-between gap-2 sticky top-0 z-10 shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           {/* Always the Brand Model-Line page (this product's real parent in the
               Home > Category > Brand > Brand Model Line > Product chain) — never real
@@ -113,10 +116,14 @@ export default function ProductDetailView({ product, brand, category, brandMCat,
             alwaysCanonical
           />
           <div className="min-w-0">
-            <h2 className="font-extrabold text-xs text-slate-900 dark:text-slate-50 tracking-tight line-clamp-1">{product.name}</h2>
-            <Link href={`/brands/${brand.id}`} className="text-[8.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider hover:text-accent-blue transition">
-              {product.brandName}
-            </Link>
+            <Breadcrumb
+              segments={[
+                ...(category ? [{ label: category.name, href: `/categories/${category.id}` }] : []),
+                { label: brand.name, href: `/brands/${brand.id}` },
+                ...(category && brandMCat ? [{ label: brandMCat.name, href: `/brands/${brand.id}/${category.id}` }] : [])
+              ]}
+            />
+            <h2 className="font-extrabold text-xs text-slate-900 dark:text-slate-50 tracking-tight line-clamp-1 mt-0.5">{product.name}</h2>
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -144,21 +151,6 @@ export default function ProductDetailView({ product, brand, category, brandMCat,
       {/* Main product scroll area — bottom clearance only needs to clear the page's own
           compact CTA bar now (BottomNav no longer renders on this route). */}
       <div className="flex-1 overflow-y-auto pb-20 md:pb-6">
-        {/* Breadcrumb — always states the full Home > Category > Brand > Brand Model Line >
-            Model chain, regardless of how the buyer actually arrived here (direct search,
-            deep link, shared link, or normal click-through). Every rung except the current
-            page is a real link back to that exact screen. */}
-        <div className="bg-white dark:bg-slate-900 px-4 pt-2 pb-1">
-          <Breadcrumb
-            segments={[
-              ...(category ? [{ label: category.name, href: `/categories/${category.id}` }] : []),
-              { label: brand.name, href: `/brands/${brand.id}` },
-              ...(category && brandMCat ? [{ label: brandMCat.name, href: `/brands/${brand.id}/${category.id}` }] : []),
-              { label: product.name }
-            ]}
-          />
-        </div>
-
         {/* Product Image Panel */}
         <div className="relative bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 p-4 flex flex-col items-center">
           <img
@@ -211,8 +203,10 @@ export default function ProductDetailView({ product, brand, category, brandMCat,
           </div>
         </div>
 
-        {/* Tab switcher */}
-        <div className="bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800 mt-2 px-4 flex text-[11px] select-none sticky top-[46px] z-10 shadow-xs">
+        {/* Tab switcher — top offset matches the header's measured height (52.5px) now that
+            the breadcrumb lives inside it, so this bar sticks flush under the header instead
+            of leaving a gap or overlapping it. */}
+        <div className="bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800 mt-2 px-4 flex text-[11px] select-none sticky top-[52px] z-10 shadow-xs">
           <button
             onClick={() => setActiveTab('specs')}
             className={`flex-1 py-2.5 text-center font-bold relative transition ${activeTab === 'specs' ? 'text-accent-blue' : 'text-slate-500 dark:text-slate-400'}`}

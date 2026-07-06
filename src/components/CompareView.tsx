@@ -14,6 +14,7 @@ import { useBuyLeadModal } from './BuyLeadModalProvider';
 import { useScrollChrome } from './ScrollChromeProvider';
 import { BackButton } from './BackButton';
 import { Breadcrumb } from './Breadcrumb';
+import { useBackToClose } from '../lib/useBackToClose';
 
 interface CompareViewProps {
   suppliers: Supplier[];
@@ -40,6 +41,10 @@ export default function CompareView({ suppliers, allSuppliers, products, categor
     setFrozen(isAddOpen);
     return () => setFrozen(false);
   }, [isAddOpen, setFrozen]);
+
+  // Same back-button trap as the RFQ modal — otherwise pressing back while this sheet is
+  // open navigates the Compare page away underneath it instead of just closing the sheet.
+  useBackToClose(isAddOpen, () => setIsAddOpen(false), 'Leave without adding a seller?');
 
   const productsById = new Map(products.map(p => [p.id, p]));
 

@@ -35,7 +35,10 @@ export function Breadcrumb({ segments, className = '' }: BreadcrumbProps) {
             {seg.href && !isLast ? (
               <Link href={seg.href} className="shrink-0 hover:text-accent-blue">{seg.label}</Link>
             ) : (
-              <span className="shrink-0 text-slate-600 dark:text-slate-400 normal-case truncate max-w-[140px]">{seg.label}</span>
+              /* Current page — bolder and colored (not just the same muted gray as every
+                 other rung) so a buyer scanning the trail can immediately tell where they
+                 are, not just where they've been. */
+              <span className="shrink-0 font-extrabold text-accent-blue normal-case truncate max-w-[140px]" aria-current="page">{seg.label}</span>
             )}
           </Fragment>
         );
